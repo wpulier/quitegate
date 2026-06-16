@@ -1,0 +1,7 @@
+*
+!my-clerk-app
+!my-clerk-app/**
+my-clerk-app/.env*.local
+my-clerk-app/.next
+my-clerk-app/.vercel
+my-clerk-app/node_modules

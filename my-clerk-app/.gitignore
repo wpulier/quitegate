@@ -46,3 +46,4 @@ yarn-error.log*
 
 # supabase local state
 /supabase/.temp/
+.env*.local
