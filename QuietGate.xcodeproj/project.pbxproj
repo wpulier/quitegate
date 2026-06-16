@@ -1,0 +1,793 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00C6B887554BB32406577F68 /* LegacyProviderReadbackError.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC52F9B0A5882A50FB5BA117 /* LegacyProviderReadbackError.swift */; };
+		01E09F52B17A5C73BB6D6A9D /* AccessModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C9E1289903D976640AFF9D /* AccessModeTests.swift */; };
+		029A084EC6564B7EE8B8E6A7 /* QuietGateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */; };
+		03E45E39540A546303834DFB /* AppUpdateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67481EEAFE4705285370B181 /* AppUpdateServiceTests.swift */; };
+		071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10484E7F6F5747D99616D28 /* ProtectionStoreTestDoubles.swift */; };
+		13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */; };
+		1F2B54B7CB29F001397F5511 /* AppUpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A4E779C54400A7FC44E8947 /* AppUpdateService.swift */; };
+		20EA3EE19D2CBDF46A7A672F /* FocusWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4756C58C93EAC31A54A7D43 /* FocusWindow.swift */; };
+		227DB1AC963E20209757F7EF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087265EBD487F081769A0206 /* SettingsView.swift */; };
+		25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E83559A72E96D37ED558E9 /* ProtectionStore.swift */; };
+		2A7C2EE45B5490848D49E39F /* FirefoxExtension in Resources */ = {isa = PBXBuildFile; fileRef = 49108B605636DFE560B901A1 /* FirefoxExtension */; };
+		32372EB3B2FE64B8AF0A91B5 /* quietgate-native-host in Resources */ = {isa = PBXBuildFile; fileRef = F110EF06D260E09967CD6F85 /* quietgate-native-host */; };
+		32AEA6C71C4467C6940FA138 /* ProtectionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */; };
+		34A519910B35F34F15DB12D4 /* BlockRulesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB264978DFD0DC526DD449C0 /* BlockRulesSection.swift */; };
+		376815F7B8655861DA1ED147 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFA12DDF78911C0F4BAC8B0 /* ConnectionState.swift */; };
+		416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037C5FB406B8F0B9446463B /* ProtectionView.swift */; };
+		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
+		522F946F5B674055032FC0B0 /* AdultContentPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6581F448432CC167402E64 /* AdultContentPreset.swift */; };
+		543D3D77B8DCB58049FA2F27 /* AccessMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C718927D45622BE95F8A6 /* AccessMode.swift */; };
+		5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A31DDDECCBC62D89589294 /* AppBlocking.swift */; };
+		5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899CA3F2232649843D526BBF /* PlatformControlsTests.swift */; };
+		60DF86842AE89751B08E4B23 /* PlatformControlsChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */; };
+		63ABC33553530C34E6141185 /* LocalMacBlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC92C0665BEF24E2BD9493B /* LocalMacBlockingProvider.swift */; };
+		657F2FFA32B7C076D8B89CEA /* ReadinessCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */; };
+		67A953314D5B55EA2D0ACED0 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */; };
+		7409F88899BD8DDEE7E5A15E /* BrowserTuningSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE2CBCB3FB5414A38AC61AF /* BrowserTuningSettings.swift */; };
+		799B3C5F36B10074888C281D /* BlockRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92D3D43FDF93709049161548 /* BlockRules.swift */; };
+		7CFBEE12AFF4CA9BA9FA00E4 /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */; };
+		7E447253F97180178BDCEB74 /* AccessModeControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5E54ACCB18B6E5BDCFA66D /* AccessModeControl.swift */; };
+		806D5C06664E093FDAB14C17 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4022A534497D10734ECFB8 /* ContentView.swift */; };
+		83E70B835C2060EE16A968CD /* BrowserExtensionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */; };
+		84189CCEA3CDA4C8CE270671 /* ControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904A4A01A1D931693B9E434E /* ControlView.swift */; };
+		8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */; };
+		918CCE47CA5D5E2589A1C008 /* BrowserBlockingProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */; };
+		92597E236D5AC38BCEA2124C /* LegacyProviderStatusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */; };
+		92C3376EF7E3986A71EC3341 /* BrowserTuningFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD4CB5D18C983E5D2C8EB2D /* BrowserTuningFeature.swift */; };
+		981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */; };
+		9D5CAE4FB45940791F38CBF5 /* ProductComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */; };
+		9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875814D47F22199A45571212 /* LegacyProviderClientTests.swift */; };
+		A1E86D97B6260061856CF6BA /* LegacyProviderModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */; };
+		AA5A23A16B0FE2E3FE9FB253 /* LegacyProviderMacServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */; };
+		AD444AE42F87DCA8F0927C2C /* PlatformControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60AE1C57CC050901354EC9E0 /* PlatformControls.swift */; };
+		AE98A73A80696CF332722521 /* ChromeExtension in Resources */ = {isa = PBXBuildFile; fileRef = 1241FE0B2B9FABFC3754F3CA /* ChromeExtension */; };
+		B18F419F8670F9128564F674 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 023A0447C00AFA30E6D7EA30 /* KeychainStore.swift */; };
+		B4D3DF85BD0F2E8E7165C320 /* DisabledLegacyProviderServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1472E89F3657BB69577F593 /* DisabledLegacyProviderServices.swift */; };
+		B644B3B4452286150313F985 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A63BF32250707E748199B397 /* Assets.xcassets */; };
+		BFD740EBC2EE5EFF07CE5F3E /* ApplicationBlockingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */; };
+		C1D287B08C8955F1FA73E60A /* LegacyProviderContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */; };
+		C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */; };
+		CAA0FAE2C4FD4D35B3AC1F7E /* TuningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57935D992DB807B116F700E1 /* TuningView.swift */; };
+		CAB87C4B96F2644084DC7581 /* LocalMacBlockingProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */; };
+		CBE8CB4AEED57AE891EDF9E5 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04DD9329A65855473A7041DE /* MenuBarContentView.swift */; };
+		CCBCC872C054269985C4CF02 /* LegacyProviderStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */; };
+		D0736EBD1524D2B62BC90181 /* AppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48D70E7CB61ED25567925555 /* AppsView.swift */; };
+		D38AB5164ED59F3E12C79C50 /* FocusWindowScheduleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */; };
+		D5E88C806BE5EB2FD956F4C2 /* LegacyProviderClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5C3C0E169106BD429B796E /* LegacyProviderClient.swift */; };
+		D679E0BE8D81DE105F93851B /* BrowserExtensionBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9D0D6C462B904E4484093F /* BrowserExtensionBridgeTests.swift */; };
+		DA7B10BA71531BADB859B61B /* DomainNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */; };
+		E2706FF887583F7B49F586A1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CB16BD2B65FAC73392D34C8 /* Security.framework */; };
+		E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */; };
+		E9BF6A2093772B01DBE19349 /* BlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D288C7A057311BB070BB9CA /* BlockingProvider.swift */; };
+		EEA63F96F74571180223BDC4 /* BrowserBlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */; };
+		FC5772371753CFBB84446085 /* ChromeExtensionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D7329381712620908D66A209 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 017E4BD045B6A71A7806E69D;
+			remoteInfo = QuietGate;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		023A0447C00AFA30E6D7EA30 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		04DD9329A65855473A7041DE /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
+		05A31DDDECCBC62D89589294 /* AppBlocking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocking.swift; sourceTree = "<group>"; };
+		06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserExtensionBridge.swift; sourceTree = "<group>"; };
+		087265EBD487F081769A0206 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0C83EBBC9802A1BFFC76350D /* QuietGate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuietGate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductComponents.swift; sourceTree = "<group>"; };
+		0D9ED4A798405092F95055D8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		0DE2CBCB3FB5414A38AC61AF /* BrowserTuningSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTuningSettings.swift; sourceTree = "<group>"; };
+		1241FE0B2B9FABFC3754F3CA /* ChromeExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ChromeExtension; sourceTree = SOURCE_ROOT; };
+		18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimedSessionControl.swift; sourceTree = "<group>"; };
+		1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusWindowScheduleControl.swift; sourceTree = "<group>"; };
+		22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockingStoreTests.swift; sourceTree = "<group>"; };
+		2CB16BD2B65FAC73392D34C8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProtectionStore+LegacyProviderState.swift"; sourceTree = "<group>"; };
+		3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuietGateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderModels.swift; sourceTree = "<group>"; };
+		48D70E7CB61ED25567925555 /* AppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppsView.swift; sourceTree = "<group>"; };
+		49108B605636DFE560B901A1 /* FirefoxExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FirefoxExtension; sourceTree = SOURCE_ROOT; };
+		57935D992DB807B116F700E1 /* TuningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningView.swift; sourceTree = "<group>"; };
+		59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTests.swift; sourceTree = "<group>"; };
+		5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+		5F6581F448432CC167402E64 /* AdultContentPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdultContentPreset.swift; sourceTree = "<group>"; };
+		60AE1C57CC050901354EC9E0 /* PlatformControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControls.swift; sourceTree = "<group>"; };
+		67481EEAFE4705285370B181 /* AppUpdateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateServiceTests.swift; sourceTree = "<group>"; };
+		6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainNormalizerTests.swift; sourceTree = "<group>"; };
+		6B4022A534497D10734ECFB8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		6B9D0D6C462B904E4484093F /* BrowserExtensionBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserExtensionBridgeTests.swift; sourceTree = "<group>"; };
+		6BFA12DDF78911C0F4BAC8B0 /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
+		6D288C7A057311BB070BB9CA /* BlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockingProvider.swift; sourceTree = "<group>"; };
+		6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessCheck.swift; sourceTree = "<group>"; };
+		6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBlockingProvider.swift; sourceTree = "<group>"; };
+		74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderStatusServiceTests.swift; sourceTree = "<group>"; };
+		77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockingStore.swift; sourceTree = "<group>"; };
+		796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMacBlockingProviderTests.swift; sourceTree = "<group>"; };
+		7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBlockingProviderTests.swift; sourceTree = "<group>"; };
+		811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainNormalizer.swift; sourceTree = "<group>"; };
+		8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderStatusService.swift; sourceTree = "<group>"; };
+		875814D47F22199A45571212 /* LegacyProviderClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderClientTests.swift; sourceTree = "<group>"; };
+		899CA3F2232649843D526BBF /* PlatformControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsTests.swift; sourceTree = "<group>"; };
+		904A4A01A1D931693B9E434E /* ControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlView.swift; sourceTree = "<group>"; };
+		92D3D43FDF93709049161548 /* BlockRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockRules.swift; sourceTree = "<group>"; };
+		94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationBlockingService.swift; sourceTree = "<group>"; };
+		97E83559A72E96D37ED558E9 /* ProtectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStore.swift; sourceTree = "<group>"; };
+		9A4E779C54400A7FC44E8947 /* AppUpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateService.swift; sourceTree = "<group>"; };
+		9F2C718927D45622BE95F8A6 /* AccessMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessMode.swift; sourceTree = "<group>"; };
+		A10484E7F6F5747D99616D28 /* ProtectionStoreTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTestDoubles.swift; sourceTree = "<group>"; };
+		A4756C58C93EAC31A54A7D43 /* FocusWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusWindow.swift; sourceTree = "<group>"; };
+		A63BF32250707E748199B397 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B1C9E1289903D976640AFF9D /* AccessModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessModeTests.swift; sourceTree = "<group>"; };
+		B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionMode.swift; sourceTree = "<group>"; };
+		B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderContracts.swift; sourceTree = "<group>"; };
+		BE5E54ACCB18B6E5BDCFA66D /* AccessModeControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessModeControl.swift; sourceTree = "<group>"; };
+		C037C5FB406B8F0B9446463B /* ProtectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionView.swift; sourceTree = "<group>"; };
+		CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
+		CB264978DFD0DC526DD449C0 /* BlockRulesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockRulesSection.swift; sourceTree = "<group>"; };
+		D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeExtensionStatus.swift; sourceTree = "<group>"; };
+		DC52F9B0A5882A50FB5BA117 /* LegacyProviderReadbackError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderReadbackError.swift; sourceTree = "<group>"; };
+		DCD4CB5D18C983E5D2C8EB2D /* BrowserTuningFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTuningFeature.swift; sourceTree = "<group>"; };
+		DDC92C0665BEF24E2BD9493B /* LocalMacBlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMacBlockingProvider.swift; sourceTree = "<group>"; };
+		DF5C3C0E169106BD429B796E /* LegacyProviderClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderClient.swift; sourceTree = "<group>"; };
+		E1472E89F3657BB69577F593 /* DisabledLegacyProviderServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisabledLegacyProviderServices.swift; sourceTree = "<group>"; };
+		E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuietGateApp.swift; sourceTree = "<group>"; };
+		F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderMacServices.swift; sourceTree = "<group>"; };
+		F110EF06D260E09967CD6F85 /* quietgate-native-host */ = {isa = PBXFileReference; path = "quietgate-native-host"; sourceTree = "<group>"; };
+		F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsChecker.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4DA08EFFEADDB14C26880441 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2706FF887583F7B49F586A1 /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		006493ADF1319F67060F9678 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A63BF32250707E748199B397 /* Assets.xcassets */,
+				0D9ED4A798405092F95055D8 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		073ED66446800B330D1E1ABF /* QuietGate */ = {
+			isa = PBXGroup;
+			children = (
+				666727E9A47D570C0ECA5F6F /* App */,
+				34A862C7F057E1BC76FF026C /* LegacyProviderConnector */,
+				341F5CDACAFF5C474CC8B399 /* Models */,
+				006493ADF1319F67060F9678 /* Resources */,
+				539D2BC362E70BE2AECF4870 /* Services */,
+				73EEA0ED74C3984E6F6BF8A9 /* Stores */,
+				48C8C25C0447433ADDA3A65E /* Views */,
+			);
+			path = QuietGate;
+			sourceTree = "<group>";
+		};
+		0CE63AB76EBAC39F0A4F2571 /* Control */ = {
+			isa = PBXGroup;
+			children = (
+				BE5E54ACCB18B6E5BDCFA66D /* AccessModeControl.swift */,
+				1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */,
+				18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */,
+			);
+			path = Control;
+			sourceTree = "<group>";
+		};
+		1920BC17A12A463C24897D5C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2CB16BD2B65FAC73392D34C8 /* Security.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		341F5CDACAFF5C474CC8B399 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				9F2C718927D45622BE95F8A6 /* AccessMode.swift */,
+				5F6581F448432CC167402E64 /* AdultContentPreset.swift */,
+				05A31DDDECCBC62D89589294 /* AppBlocking.swift */,
+				6D288C7A057311BB070BB9CA /* BlockingProvider.swift */,
+				92D3D43FDF93709049161548 /* BlockRules.swift */,
+				6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */,
+				DCD4CB5D18C983E5D2C8EB2D /* BrowserTuningFeature.swift */,
+				0DE2CBCB3FB5414A38AC61AF /* BrowserTuningSettings.swift */,
+				D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */,
+				6BFA12DDF78911C0F4BAC8B0 /* ConnectionState.swift */,
+				A4756C58C93EAC31A54A7D43 /* FocusWindow.swift */,
+				DDC92C0665BEF24E2BD9493B /* LocalMacBlockingProvider.swift */,
+				60AE1C57CC050901354EC9E0 /* PlatformControls.swift */,
+				B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */,
+				6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		34A862C7F057E1BC76FF026C /* LegacyProviderConnector */ = {
+			isa = PBXGroup;
+			children = (
+				E1472E89F3657BB69577F593 /* DisabledLegacyProviderServices.swift */,
+				DF5C3C0E169106BD429B796E /* LegacyProviderClient.swift */,
+				B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */,
+				F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */,
+				42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */,
+				DC52F9B0A5882A50FB5BA117 /* LegacyProviderReadbackError.swift */,
+				8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */,
+				32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */,
+			);
+			path = LegacyProviderConnector;
+			sourceTree = "<group>";
+		};
+		449116EFB17D1692714BD7F9 /* build */ = {
+			isa = PBXGroup;
+			children = (
+				F110EF06D260E09967CD6F85 /* quietgate-native-host */,
+			);
+			name = build;
+			path = NativeHost/build;
+			sourceTree = "<group>";
+		};
+		48C8C25C0447433ADDA3A65E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				48D70E7CB61ED25567925555 /* AppsView.swift */,
+				CB264978DFD0DC526DD449C0 /* BlockRulesSection.swift */,
+				6B4022A534497D10734ECFB8 /* ContentView.swift */,
+				904A4A01A1D931693B9E434E /* ControlView.swift */,
+				04DD9329A65855473A7041DE /* MenuBarContentView.swift */,
+				C037C5FB406B8F0B9446463B /* ProtectionView.swift */,
+				087265EBD487F081769A0206 /* SettingsView.swift */,
+				57935D992DB807B116F700E1 /* TuningView.swift */,
+				0CE63AB76EBAC39F0A4F2571 /* Control */,
+				A9A826D8B7C542E69140F1B6 /* Shared */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		539D2BC362E70BE2AECF4870 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */,
+				9A4E779C54400A7FC44E8947 /* AppUpdateService.swift */,
+				06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */,
+				811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */,
+				023A0447C00AFA30E6D7EA30 /* KeychainStore.swift */,
+				CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */,
+				F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		6058B20950AD839C7073E5CE = {
+			isa = PBXGroup;
+			children = (
+				1241FE0B2B9FABFC3754F3CA /* ChromeExtension */,
+				49108B605636DFE560B901A1 /* FirefoxExtension */,
+				449116EFB17D1692714BD7F9 /* build */,
+				073ED66446800B330D1E1ABF /* QuietGate */,
+				AB1FD2770B604EF23DF7E703 /* QuietGateTests */,
+				1920BC17A12A463C24897D5C /* Frameworks */,
+				AE6AE2ACAE9921CD861AEBD2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		666727E9A47D570C0ECA5F6F /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		73EEA0ED74C3984E6F6BF8A9 /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */,
+				97E83559A72E96D37ED558E9 /* ProtectionStore.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		9CBD2ED50203707F1688198C /* TestSupport */ = {
+			isa = PBXGroup;
+			children = (
+				A10484E7F6F5747D99616D28 /* ProtectionStoreTestDoubles.swift */,
+			);
+			path = TestSupport;
+			sourceTree = "<group>";
+		};
+		A9A826D8B7C542E69140F1B6 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */,
+				0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		AB1FD2770B604EF23DF7E703 /* QuietGateTests */ = {
+			isa = PBXGroup;
+			children = (
+				B1C9E1289903D976640AFF9D /* AccessModeTests.swift */,
+				22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */,
+				67481EEAFE4705285370B181 /* AppUpdateServiceTests.swift */,
+				7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */,
+				6B9D0D6C462B904E4484093F /* BrowserExtensionBridgeTests.swift */,
+				6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */,
+				875814D47F22199A45571212 /* LegacyProviderClientTests.swift */,
+				74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */,
+				796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */,
+				899CA3F2232649843D526BBF /* PlatformControlsTests.swift */,
+				59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */,
+				9CBD2ED50203707F1688198C /* TestSupport */,
+			);
+			path = QuietGateTests;
+			sourceTree = "<group>";
+		};
+		AE6AE2ACAE9921CD861AEBD2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0C83EBBC9802A1BFFC76350D /* QuietGate.app */,
+				3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		017E4BD045B6A71A7806E69D /* QuietGate */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CBEA6FC45838242FBA4560FD /* Build configuration list for PBXNativeTarget "QuietGate" */;
+			buildPhases = (
+				21F7FFEDA48F5265F1661853 /* Build Native Host */,
+				D439F018AC80279910D9D7A5 /* Sources */,
+				10725717B42CC0CF0B29277A /* Resources */,
+				4DA08EFFEADDB14C26880441 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QuietGate;
+			packageProductDependencies = (
+			);
+			productName = QuietGate;
+			productReference = 0C83EBBC9802A1BFFC76350D /* QuietGate.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D8B23943A4C465B5EBF87BDF /* QuietGateTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 18EC80B09EFF6EC5B6BF269C /* Build configuration list for PBXNativeTarget "QuietGateTests" */;
+			buildPhases = (
+				82082CF3A6D02ADE6BBC28A2 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6AB2A036C5E89E636170B450 /* PBXTargetDependency */,
+			);
+			name = QuietGateTests;
+			packageProductDependencies = (
+			);
+			productName = QuietGateTests;
+			productReference = 3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F6CA6BD8CD26CEC23DEB2389 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					017E4BD045B6A71A7806E69D = {
+						DevelopmentTeam = V558WV68AM;
+						ProvisioningStyle = Manual;
+					};
+					D8B23943A4C465B5EBF87BDF = {
+						DevelopmentTeam = V558WV68AM;
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 3D22132E10E7A5DA3F18E7F7 /* Build configuration list for PBXProject "QuietGate" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 6058B20950AD839C7073E5CE;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AE6AE2ACAE9921CD861AEBD2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				017E4BD045B6A71A7806E69D /* QuietGate */,
+				D8B23943A4C465B5EBF87BDF /* QuietGateTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		10725717B42CC0CF0B29277A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B644B3B4452286150313F985 /* Assets.xcassets in Resources */,
+				AE98A73A80696CF332722521 /* ChromeExtension in Resources */,
+				2A7C2EE45B5490848D49E39F /* FirefoxExtension in Resources */,
+				32372EB3B2FE64B8AF0A91B5 /* quietgate-native-host in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		21F7FFEDA48F5265F1661853 /* Build Native Host */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/NativeHost/QuietGateNativeHost.swift",
+			);
+			name = "Build Native Host";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/NativeHost/build/quietgate-native-host",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = script/build_native_host.sh;
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		82082CF3A6D02ADE6BBC28A2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01E09F52B17A5C73BB6D6A9D /* AccessModeTests.swift in Sources */,
+				45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */,
+				03E45E39540A546303834DFB /* AppUpdateServiceTests.swift in Sources */,
+				918CCE47CA5D5E2589A1C008 /* BrowserBlockingProviderTests.swift in Sources */,
+				D679E0BE8D81DE105F93851B /* BrowserExtensionBridgeTests.swift in Sources */,
+				8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */,
+				9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */,
+				92597E236D5AC38BCEA2124C /* LegacyProviderStatusServiceTests.swift in Sources */,
+				CAB87C4B96F2644084DC7581 /* LocalMacBlockingProviderTests.swift in Sources */,
+				5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */,
+				071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */,
+				13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D439F018AC80279910D9D7A5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				543D3D77B8DCB58049FA2F27 /* AccessMode.swift in Sources */,
+				7E447253F97180178BDCEB74 /* AccessModeControl.swift in Sources */,
+				522F946F5B674055032FC0B0 /* AdultContentPreset.swift in Sources */,
+				5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */,
+				C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */,
+				1F2B54B7CB29F001397F5511 /* AppUpdateService.swift in Sources */,
+				BFD740EBC2EE5EFF07CE5F3E /* ApplicationBlockingService.swift in Sources */,
+				D0736EBD1524D2B62BC90181 /* AppsView.swift in Sources */,
+				799B3C5F36B10074888C281D /* BlockRules.swift in Sources */,
+				34A519910B35F34F15DB12D4 /* BlockRulesSection.swift in Sources */,
+				E9BF6A2093772B01DBE19349 /* BlockingProvider.swift in Sources */,
+				EEA63F96F74571180223BDC4 /* BrowserBlockingProvider.swift in Sources */,
+				83E70B835C2060EE16A968CD /* BrowserExtensionBridge.swift in Sources */,
+				92C3376EF7E3986A71EC3341 /* BrowserTuningFeature.swift in Sources */,
+				7409F88899BD8DDEE7E5A15E /* BrowserTuningSettings.swift in Sources */,
+				FC5772371753CFBB84446085 /* ChromeExtensionStatus.swift in Sources */,
+				376815F7B8655861DA1ED147 /* ConnectionState.swift in Sources */,
+				806D5C06664E093FDAB14C17 /* ContentView.swift in Sources */,
+				84189CCEA3CDA4C8CE270671 /* ControlView.swift in Sources */,
+				B4D3DF85BD0F2E8E7165C320 /* DisabledLegacyProviderServices.swift in Sources */,
+				DA7B10BA71531BADB859B61B /* DomainNormalizer.swift in Sources */,
+				20EA3EE19D2CBDF46A7A672F /* FocusWindow.swift in Sources */,
+				D38AB5164ED59F3E12C79C50 /* FocusWindowScheduleControl.swift in Sources */,
+				7CFBEE12AFF4CA9BA9FA00E4 /* HeaderView.swift in Sources */,
+				B18F419F8670F9128564F674 /* KeychainStore.swift in Sources */,
+				D5E88C806BE5EB2FD956F4C2 /* LegacyProviderClient.swift in Sources */,
+				C1D287B08C8955F1FA73E60A /* LegacyProviderContracts.swift in Sources */,
+				AA5A23A16B0FE2E3FE9FB253 /* LegacyProviderMacServices.swift in Sources */,
+				A1E86D97B6260061856CF6BA /* LegacyProviderModels.swift in Sources */,
+				00C6B887554BB32406577F68 /* LegacyProviderReadbackError.swift in Sources */,
+				CCBCC872C054269985C4CF02 /* LegacyProviderStatusService.swift in Sources */,
+				63ABC33553530C34E6141185 /* LocalMacBlockingProvider.swift in Sources */,
+				67A953314D5B55EA2D0ACED0 /* LoginItemService.swift in Sources */,
+				CBE8CB4AEED57AE891EDF9E5 /* MenuBarContentView.swift in Sources */,
+				AD444AE42F87DCA8F0927C2C /* PlatformControls.swift in Sources */,
+				60DF86842AE89751B08E4B23 /* PlatformControlsChecker.swift in Sources */,
+				9D5CAE4FB45940791F38CBF5 /* ProductComponents.swift in Sources */,
+				32AEA6C71C4467C6940FA138 /* ProtectionMode.swift in Sources */,
+				981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */,
+				25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */,
+				416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */,
+				029A084EC6564B7EE8B8E6A7 /* QuietGateApp.swift in Sources */,
+				657F2FFA32B7C076D8B89CEA /* ReadinessCheck.swift in Sources */,
+				227DB1AC963E20209757F7EF /* SettingsView.swift in Sources */,
+				E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */,
+				CAA0FAE2C4FD4D35B3AC1F7E /* TuningView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6AB2A036C5E89E636170B450 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 017E4BD045B6A71A7806E69D /* QuietGate */;
+			targetProxy = D7329381712620908D66A209 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0FC32AA0ABB49EC78236D046 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = V558WV68AM;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		11BEF2DBA0EA1BDC2402B5D9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.willpulier.QuietGateTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QuietGate.app/Contents/MacOS/QuietGate";
+			};
+			name = Debug;
+		};
+		22606387828D7E014AA0150D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = V558WV68AM;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B336307B0E3EAA39BDE901B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.willpulier.QuietGateTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QuietGate.app/Contents/MacOS/QuietGate";
+			};
+			name = Release;
+		};
+		F3A82D2EC8EA06AD4B18A6F9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = QuietGate/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.willpulier.QuietGate;
+				PRODUCT_NAME = QuietGate;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		FCA2ABBE37A5278184100B35 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = QuietGate/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.willpulier.QuietGate;
+				PRODUCT_NAME = QuietGate;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		18EC80B09EFF6EC5B6BF269C /* Build configuration list for PBXNativeTarget "QuietGateTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				11BEF2DBA0EA1BDC2402B5D9 /* Debug */,
+				B336307B0E3EAA39BDE901B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3D22132E10E7A5DA3F18E7F7 /* Build configuration list for PBXProject "QuietGate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FC32AA0ABB49EC78236D046 /* Debug */,
+				22606387828D7E014AA0150D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CBEA6FC45838242FBA4560FD /* Build configuration list for PBXNativeTarget "QuietGate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3A82D2EC8EA06AD4B18A6F9 /* Debug */,
+				FCA2ABBE37A5278184100B35 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
+}

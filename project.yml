@@ -1,0 +1,69 @@
+name: QuietGate
+options:
+  bundleIdPrefix: com.willpulier
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    DEVELOPMENT_TEAM: V558WV68AM
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+targets:
+  QuietGate:
+    type: application
+    platform: macOS
+    preBuildScripts:
+      - name: Build Native Host
+        script: script/build_native_host.sh
+        inputFiles:
+          - $(SRCROOT)/NativeHost/QuietGateNativeHost.swift
+        outputFiles:
+          - $(SRCROOT)/NativeHost/build/quietgate-native-host
+        showEnvVars: false
+    sources:
+      - QuietGate
+      - path: ChromeExtension
+        buildPhase: resources
+        type: folder
+      - path: FirefoxExtension
+        buildPhase: resources
+        type: folder
+      - path: NativeHost/build/quietgate-native-host
+        buildPhase: resources
+        type: file
+    dependencies:
+      - sdk: Security.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.willpulier.QuietGate
+        PRODUCT_NAME: QuietGate
+        INFOPLIST_FILE: QuietGate/Resources/Info.plist
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+  QuietGateTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - QuietGateTests
+    dependencies:
+      - target: QuietGate
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.willpulier.QuietGateTests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/QuietGate.app/Contents/MacOS/QuietGate"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+schemes:
+  QuietGate:
+    build:
+      targets:
+        QuietGate: all
+        QuietGateTests: [test]
+    test:
+      gatherCoverageData: false
+      targets:
+        - QuietGateTests

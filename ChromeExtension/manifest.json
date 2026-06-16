@@ -1,0 +1,95 @@
+{
+  "manifest_version": 3,
+  "name": "QuietGate Tuner",
+  "description": "QuietGate browser helper for site tuning and one-shot browser rule updates.",
+  "version": "0.1.12",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvjC874Q39LEu5fYoB0t7+GpMcFd7D46owwm8Nz0GzjJMjECwYVekOhTMoumfGJjktIh/sUvdN9ibbWJvAsGwZfCjczvEc7c+9EGfQ07MSwlX2lcqXOwTjmlUjwS59fXzCzbb6LWarZtP0oDAH67OihTcU0ybbJLDWeWHm9BM/aO2KGLYr8NKwji/4UTAulfUVzR8rNWY3kVSc5+PC/XLszRx/OOcYX0gf5Y2GhZs0uvmiDzU+RV4lutG84qx6WuNlAnyw0keO7sx3kvsehrsPxvwJ77BiX4CBScGu6ncJVJ4h1lCf2QBmEO5EbqYbhehb83kER02OgCop75oiv9K6wIDAQAB",
+  "permissions": ["activeTab", "declarativeNetRequest", "nativeMessaging", "scripting", "storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "adult-static-1",
+        "enabled": false,
+        "path": "rules/adult-static-1.json"
+      },
+      {
+        "id": "adult-static-2",
+        "enabled": false,
+        "path": "rules/adult-static-2.json"
+      },
+      {
+        "id": "adult-static-3",
+        "enabled": false,
+        "path": "rules/adult-static-3.json"
+      },
+      {
+        "id": "adult-static-4",
+        "enabled": false,
+        "path": "rules/adult-static-4.json"
+      }
+    ]
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "QuietGate"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
+      "css": ["content/youtube.css"],
+      "js": ["content/youtube.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*", "https://mobile.x.com/*"],
+      "js": ["content/x-page.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*", "https://mobile.x.com/*"],
+      "css": ["content/x.css"],
+      "js": ["content/x.js", "content/platform-controls.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.instagram.com/*", "https://instagram.com/*"],
+      "css": ["content/instagram.css"],
+      "js": ["content/instagram.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.reddit.com/*", "https://old.reddit.com/*", "https://new.reddit.com/*"],
+      "css": ["content/reddit.css"],
+      "js": ["content/reddit.js", "content/platform-controls.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "exclude_matches": [
+        "https://www.youtube.com/*",
+        "https://m.youtube.com/*",
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://mobile.x.com/*",
+        "https://www.instagram.com/*",
+        "https://instagram.com/*",
+        "https://www.reddit.com/*",
+        "https://old.reddit.com/*",
+        "https://new.reddit.com/*"
+      ],
+      "js": ["content/web-classifier.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked/*", "content/x-page.js", "rules/adult-domains.json"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ]
+}

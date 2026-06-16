@@ -1,0 +1,68 @@
+html .qg-x-hidden-media {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+html .qg-x-explicit-placeholder {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  margin: 0 !important;
+  padding: 13px 16px !important;
+  border-bottom: 1px solid rgba(83, 100, 113, 0.20) !important;
+  border-left: 4px solid rgb(29, 155, 240) !important;
+  background: rgba(29, 155, 240, 0.06) !important;
+  color: rgb(15, 20, 25) !important;
+  font: 13px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+html .qg-x-explicit-search-placeholder {
+  min-height: 86px !important;
+  margin-top: 0 !important;
+}
+
+html .qg-x-placeholder-logo {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+  background: rgb(15, 20, 25) !important;
+  color: rgb(255, 255, 255) !important;
+  font: 700 16px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+html .qg-x-placeholder-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+}
+
+html .qg-x-placeholder-title {
+  display: block !important;
+  color: rgb(15, 20, 25) !important;
+  font-weight: 700 !important;
+}
+
+html .qg-x-placeholder-detail {
+  display: block !important;
+  color: rgb(83, 100, 113) !important;
+}
+
+html.qg-x-explore-trends [data-testid="trend"],
+html.qg-x-explore-trends [aria-label*="Trending"],
+html.qg-x-explore-trends [aria-label="Timeline: Trending now"],
+html.qg-x-explore-trends a[href="/explore"],
+html.qg-x-explore-trends a[href^="/explore?"],
+html.qg-x-explore-trends a[href^="/i/trends"],
+html.qg-x-explore-trends a[aria-label="Search and explore"],
+html.qg-x-explore-trends [data-testid="AppTabBar_Explore_Link"] {
+  display: none !important;
+}

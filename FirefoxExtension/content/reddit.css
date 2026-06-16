@@ -1,0 +1,149 @@
+html.qg-reddit-popular-all a[href="/r/popular/"],
+html.qg-reddit-popular-all a[href="/r/popular"],
+html.qg-reddit-popular-all a[href="/r/all/"],
+html.qg-reddit-popular-all a[href="/r/all"],
+html.qg-reddit-popular-all a[href^="/r/popular/"],
+html.qg-reddit-popular-all a[href^="/r/all/"],
+html.qg-reddit-popular-all [aria-label="Popular"],
+html.qg-reddit-popular-all [aria-label="All"],
+html.qg-reddit-recommendations .qg-reddit-recommendation-item,
+html.qg-reddit-nsfw .qg-reddit-nsfw-item,
+html.qg-reddit-nsfw .qg-reddit-nsfw-media-item,
+html.qg-reddit-adult-context .qg-reddit-adult-context-hidden,
+html.qg-reddit-adult-context .qg-reddit-adult-context-sidebar,
+html.qg-reddit-adult-context .qg-reddit-adult-context-comment,
+html.qg-reddit-adult-context .qg-reddit-adult-context-media,
+html.qg-reddit-media .qg-reddit-media-item,
+html.qg-reddit-sidebars aside,
+html.qg-reddit-sidebars [data-testid="right-sidebar"],
+html.qg-reddit-sidebars #right-sidebar,
+html.qg-reddit-sidebars .side {
+  display: none !important;
+}
+
+html .qg-reddit-nsfw-placeholder {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  margin: 0 !important;
+  padding: 13px 16px !important;
+  border-bottom: 1px solid rgba(135, 138, 140, 0.24) !important;
+  border-left: 4px solid rgb(255, 69, 0) !important;
+  background: rgba(255, 69, 0, 0.07) !important;
+  color: rgb(33, 39, 42) !important;
+  font: 13px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+html .qg-reddit-nsfw-placeholder::before {
+  content: "Q" !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+  background: rgb(33, 39, 42) !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+html .qg-reddit-adult-context-shell {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: min(720px, calc(100% - 32px)) !important;
+  margin: 28px auto !important;
+  padding: 0 !important;
+  color: rgb(33, 39, 42) !important;
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+html .qg-reddit-adult-context-panel {
+  box-sizing: border-box !important;
+  display: flex !important;
+  gap: 18px !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  padding: 28px !important;
+  border: 1px solid rgba(135, 138, 140, 0.24) !important;
+  border-left: 5px solid rgb(255, 69, 0) !important;
+  border-radius: 8px !important;
+  background: rgb(255, 255, 255) !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.10) !important;
+}
+
+html .qg-reddit-mark {
+  box-sizing: border-box !important;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 10px !important;
+  background: rgb(33, 39, 42) !important;
+  color: #fff !important;
+  font-weight: 850 !important;
+  font-size: 22px !important;
+}
+
+html .qg-reddit-adult-context-copy {
+  min-width: 0 !important;
+}
+
+html .qg-reddit-eyebrow {
+  margin: 0 0 4px !important;
+  color: rgb(87, 111, 118) !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+}
+
+html .qg-reddit-adult-context-panel h1 {
+  margin: 0 !important;
+  color: rgb(33, 39, 42) !important;
+  font-size: 28px !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0 !important;
+}
+
+html .qg-reddit-adult-context-detail {
+  margin: 10px 0 0 !important;
+  color: rgb(83, 100, 113) !important;
+  font-size: 15px !important;
+}
+
+html .qg-reddit-adult-context-reason {
+  margin: 10px 0 0 !important;
+  color: rgb(110, 118, 125) !important;
+  font-size: 12px !important;
+  word-break: break-word !important;
+}
+
+html .qg-reddit-adult-context-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  margin-top: 18px !important;
+}
+
+html .qg-reddit-adult-context-actions button {
+  appearance: none !important;
+  min-height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(135, 138, 140, 0.45) !important;
+  background: #fff !important;
+  color: rgb(33, 39, 42) !important;
+  font: inherit !important;
+  font-weight: 750 !important;
+  cursor: pointer !important;
+}
+
+html .qg-reddit-adult-context-actions button.qg-primary {
+  border-color: rgb(255, 69, 0) !important;
+  background: rgb(255, 69, 0) !important;
+  color: #fff !important;
+}

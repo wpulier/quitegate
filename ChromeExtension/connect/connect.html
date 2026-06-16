@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QuietGate Browser Helper</title>
+    <link rel="stylesheet" href="../popup/popup.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>QuietGate</h1>
+        <p id="connectStatus">Connecting Browser Helper...</p>
+      </header>
+
+      <section aria-label="Connection details">
+        <p id="profileDetail">Connected in this browser profile.</p>
+        <p id="connectDetail">QuietGate is sending this browser the latest site tuning and browser rules.</p>
+        <button id="syncNow" type="button">Apply Now</button>
+      </section>
+    </main>
+
+    <script src="connect.js"></script>
+  </body>
+</html>

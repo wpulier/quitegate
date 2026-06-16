@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>QuietGate</h1>
+      <p id="syncStatus">Browser tuner</p>
+      <p id="ruleStatus" hidden></p>
+      </header>
+
+      <section class="current-site" aria-label="Current site">
+        <p id="currentSiteStatus">Current site tools</p>
+        <button id="reportAdultSite" type="button">Block current site</button>
+      </section>
+
+      <label class="field">
+        <span>Mode</span>
+        <select id="mode">
+          <option value="open">Open</option>
+          <option value="focus">Focus</option>
+          <option value="strict">Strict</option>
+        </select>
+      </label>
+
+      <section aria-label="YouTube rules">
+        <label><input id="youtubeHome" type="checkbox"> Hide YouTube Home</label>
+        <label><input id="youtubeVideoSidebar" type="checkbox"> Hide Video Sidebar</label>
+        <label><input id="youtubeRecommendations" type="checkbox"> Hide Recommended</label>
+        <label><input id="youtubeLiveChat" type="checkbox"> Hide Live Chat</label>
+        <label><input id="youtubePlaylists" type="checkbox"> Hide Playlists</label>
+        <label><input id="youtubeFundraisers" type="checkbox"> Hide Fundraisers</label>
+        <label><input id="youtubeEndScreens" type="checkbox"> Hide End Screen Feed</label>
+        <label><input id="youtubeEndScreenCards" type="checkbox"> Hide End Screen Cards</label>
+        <label><input id="youtubeShorts" type="checkbox"> Hide Shorts</label>
+        <label><input id="youtubeComments" type="checkbox"> Hide Comments</label>
+        <label><input id="youtubeMixes" type="checkbox"> Hide Mixes</label>
+        <label><input id="youtubeMerch" type="checkbox"> Hide Merch, Tickets, Offers</label>
+        <label><input id="youtubeVideoInfo" type="checkbox"> Hide Video Info</label>
+        <label><input id="youtubeTopHeader" type="checkbox"> Hide Top Header</label>
+        <label><input id="youtubeNotifications" type="checkbox"> Hide Notifications</label>
+        <label><input id="youtubeSearch" type="checkbox"> Hide Inapt Search Results</label>
+        <label><input id="youtubeExplore" type="checkbox"> Hide Explore and Trending</label>
+        <label><input id="youtubeMoreFromYouTube" type="checkbox"> Hide More from YouTube</label>
+        <label><input id="youtubeSubscriptions" type="checkbox"> Hide Subscriptions</label>
+        <label><input id="youtubeAutoplay" type="checkbox"> Disable Autoplay</label>
+        <label><input id="youtubeAnnotations" type="checkbox"> Disable Annotations</label>
+        <label><input id="youtubeUsageTracking" type="checkbox"> Track Time and Videos</label>
+        <label><input id="youtubeDailyLimit" type="checkbox"> Enforce Daily Time Limit</label>
+        <label class="field">
+          <span>Daily limit minutes</span>
+          <input id="youtubeDailyLimitMinutes" type="number" min="5" max="480" step="5">
+        </label>
+      </section>
+
+      <section aria-label="X rules">
+        <label><input id="xSensitiveMedia" type="checkbox"> Hide Sensitive Media</label>
+        <label><input id="xExplicitContent" type="checkbox"> Hide Explicit-Cue Posts</label>
+        <label><input id="xExplicitSearch" type="checkbox"> Hide Explicit Search Results</label>
+        <label><input id="xVideos" type="checkbox"> Hide Videos and GIFs</label>
+        <label><input id="xPhotos" type="checkbox"> Hide Tweet Photos</label>
+        <label><input id="xMediaCards" type="checkbox"> Hide Media Cards</label>
+        <label><input id="xExploreTrends" type="checkbox"> Hide Explore and Trends</label>
+      </section>
+
+      <section aria-label="Instagram rules">
+        <label><input id="instagramReels" type="checkbox"> Hide Reels</label>
+        <label><input id="instagramExplore" type="checkbox"> Hide Explore</label>
+        <label><input id="instagramSuggested" type="checkbox"> Hide Suggested Posts</label>
+        <label><input id="instagramStories" type="checkbox"> Hide Stories</label>
+      </section>
+
+      <section aria-label="Reddit rules">
+        <label><input id="redditPopularAll" type="checkbox"> Hide Popular and All</label>
+        <label><input id="redditRecommendations" type="checkbox"> Hide Recommendations</label>
+        <label><input id="redditNSFW" type="checkbox"> Hide NSFW Posts and Communities</label>
+        <label><input id="redditMedia" type="checkbox"> Hide Media Posts</label>
+        <label><input id="redditSidebars" type="checkbox"> Hide Sidebars</label>
+      </section>
+
+      <label class="field">
+        <span>Explicit action</span>
+        <select id="explicitHideStyle">
+          <option value="post">Whole post</option>
+          <option value="media">Media only</option>
+          <option value="placeholder">Placeholder</option>
+        </select>
+      </label>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

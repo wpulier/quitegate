@@ -1,0 +1,12 @@
+html.qg-instagram-reels a[href^="/reel/"],
+html.qg-instagram-reels a[href^="/reels/"],
+html.qg-instagram-reels [aria-label="Reels"],
+html.qg-instagram-reels [aria-label*="Reels"],
+html.qg-instagram-explore a[href="/explore/"],
+html.qg-instagram-explore a[href^="/explore/"],
+html.qg-instagram-explore [aria-label="Explore"],
+html.qg-instagram-explore [aria-label*="Explore"],
+html .qg-instagram-suggested-item,
+html .qg-instagram-stories-item {
+  display: none !important;
+}
