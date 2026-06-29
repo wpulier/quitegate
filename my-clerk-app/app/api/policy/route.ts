@@ -5,41 +5,43 @@ import { parsePolicyUpdateRequest } from "@/lib/policy-contract";
 import {
   currentClerkIdentity,
   getQuietGatePolicy,
+  hasQuietGateDataConfig,
   PolicyVersionConflictError,
   updateQuietGatePolicy,
 } from "@/lib/quietgate-supabase";
-import { hasSupabasePublicConfig } from "@/lib/supabase-clerk";
 
-export async function GET() {
-  if (!hasSupabasePublicConfig()) {
+export async function GET(request: NextRequest) {
+  if (!hasQuietGateDataConfig()) {
     return fail(
       503,
       "supabase_not_configured",
-      "Supabase public configuration is not set.",
+      "Supabase configuration is not set.",
     );
   }
 
-  if (!(await currentClerkIdentity())) {
+  const identity = await currentClerkIdentity(request);
+  if (!identity) {
     return fail(401, "unauthorized", "Unauthorized.");
   }
 
   try {
-    return ok(await getQuietGatePolicy());
+    return ok(await getQuietGatePolicy(identity));
   } catch (error) {
     return upstreamFailure(error);
   }
 }
 
 export async function PUT(request: NextRequest) {
-  if (!hasSupabasePublicConfig()) {
+  if (!hasQuietGateDataConfig()) {
     return fail(
       503,
       "supabase_not_configured",
-      "Supabase public configuration is not set.",
+      "Supabase configuration is not set.",
     );
   }
 
-  if (!(await currentClerkIdentity())) {
+  const identity = await currentClerkIdentity(request);
+  if (!identity) {
     return fail(401, "unauthorized", "Unauthorized.");
   }
 
@@ -49,6 +51,7 @@ export async function PUT(request: NextRequest) {
     const policy = await updateQuietGatePolicy(
       updateRequest.expectedSettingsVersion,
       updateRequest.policy,
+      identity,
     );
 
     return ok(policy);

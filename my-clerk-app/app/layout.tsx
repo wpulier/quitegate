@@ -21,8 +21,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuietGate",
-  description: "QuietGate account and protection dashboard.",
+  title: "Tortoise",
+  description: "Tortoise account, device, and protection dashboard.",
 };
 
 export default function RootLayout({
@@ -40,7 +40,7 @@ export default function RootLayout({
           <header className="border-b border-zinc-200 bg-white">
             <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
               <Link href="/" className="text-lg font-semibold tracking-tight">
-                QuietGate
+                Tortoise
               </Link>
               <div className="flex items-center gap-3">
                 <Show when="signed-out">

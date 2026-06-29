@@ -70,6 +70,16 @@
 		E9BF6A2093772B01DBE19349 /* BlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D288C7A057311BB070BB9CA /* BlockingProvider.swift */; };
 		EEA63F96F74571180223BDC4 /* BrowserBlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */; };
 		FC5772371753CFBB84446085 /* ChromeExtensionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */; };
+		A00000000000000000000020 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000010 /* AppConfig.swift */; };
+		A00000000000000000000021 /* InstallationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000011 /* InstallationStore.swift */; };
+		A00000000000000000000022 /* TortoiseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* TortoiseModels.swift */; };
+		A00000000000000000000023 /* TortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* TortoiseAPIClient.swift */; };
+		A00000000000000000000024 /* AccountHubModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000014 /* AccountHubModel.swift */; };
+		A00000000000000000000025 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000015 /* ContentView.swift */; };
+		A00000000000000000000026 /* TortoiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000016 /* TortoiseApp.swift */; };
+		A00000000000000000000027 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A63BF32250707E748199B397 /* Assets.xcassets */; };
+		A00000000000000000000033 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000031 /* ClerkKit */; };
+		A00000000000000000000034 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000032 /* ClerkKitUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -149,6 +159,16 @@
 		F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderMacServices.swift; sourceTree = "<group>"; };
 		F110EF06D260E09967CD6F85 /* quietgate-native-host */ = {isa = PBXFileReference; path = "quietgate-native-host"; sourceTree = "<group>"; };
 		F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsChecker.swift; sourceTree = "<group>"; };
+		A00000000000000000000001 /* Tortoise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tortoise.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000010 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		A00000000000000000000011 /* InstallationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallationStore.swift; sourceTree = "<group>"; };
+		A00000000000000000000012 /* TortoiseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseModels.swift; sourceTree = "<group>"; };
+		A00000000000000000000013 /* TortoiseAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseAPIClient.swift; sourceTree = "<group>"; };
+		A00000000000000000000014 /* AccountHubModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountHubModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000015 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A00000000000000000000016 /* TortoiseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A00000000000000000000018 /* Tortoise.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tortoise.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +177,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				E2706FF887583F7B49F586A1 /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000033 /* ClerkKit in Frameworks */,
+				A00000000000000000000034 /* ClerkKitUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,6 +317,7 @@
 				49108B605636DFE560B901A1 /* FirefoxExtension */,
 				449116EFB17D1692714BD7F9 /* build */,
 				073ED66446800B330D1E1ABF /* QuietGate */,
+				A00000000000000000000002 /* Tortoise */,
 				AB1FD2770B604EF23DF7E703 /* QuietGateTests */,
 				1920BC17A12A463C24897D5C /* Frameworks */,
 				AE6AE2ACAE9921CD861AEBD2 /* Products */,
@@ -352,8 +382,33 @@
 			children = (
 				0C83EBBC9802A1BFFC76350D /* QuietGate.app */,
 				3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */,
+				A00000000000000000000001 /* Tortoise.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000002 /* Tortoise */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000014 /* AccountHubModel.swift */,
+				A00000000000000000000010 /* AppConfig.swift */,
+				A00000000000000000000015 /* ContentView.swift */,
+				A00000000000000000000011 /* InstallationStore.swift */,
+				A00000000000000000000013 /* TortoiseAPIClient.swift */,
+				A00000000000000000000016 /* TortoiseApp.swift */,
+				A00000000000000000000012 /* TortoiseModels.swift */,
+				A00000000000000000000003 /* Resources */,
+			);
+			path = Tortoise;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000003 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000017 /* Info.plist */,
+				A00000000000000000000018 /* Tortoise.entitlements */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -397,6 +452,27 @@
 			productReference = 3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		A00000000000000000000007 /* Tortoise */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000036 /* Build configuration list for PBXNativeTarget "Tortoise" */;
+			buildPhases = (
+				A00000000000000000000004 /* Sources */,
+				A00000000000000000000006 /* Frameworks */,
+				A00000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tortoise;
+			packageProductDependencies = (
+				A00000000000000000000031 /* ClerkKit */,
+				A00000000000000000000032 /* ClerkKitUI */,
+			);
+			productName = Tortoise;
+			productReference = A00000000000000000000001 /* Tortoise.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -414,6 +490,10 @@
 						DevelopmentTeam = V558WV68AM;
 						ProvisioningStyle = Manual;
 					};
+					A00000000000000000000007 = {
+						CreatedOnToolsVersion = 16.0;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 3D22132E10E7A5DA3F18E7F7 /* Build configuration list for PBXProject "QuietGate" */;
@@ -425,6 +505,9 @@
 			);
 			mainGroup = 6058B20950AD839C7073E5CE;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AE6AE2ACAE9921CD861AEBD2 /* Products */;
 			projectDirPath = "";
@@ -432,6 +515,7 @@
 			targets = (
 				017E4BD045B6A71A7806E69D /* QuietGate */,
 				D8B23943A4C465B5EBF87BDF /* QuietGateTests */,
+				A00000000000000000000007 /* Tortoise */,
 			);
 		};
 /* End PBXProject section */
@@ -445,6 +529,14 @@
 				AE98A73A80696CF332722521 /* ChromeExtension in Resources */,
 				2A7C2EE45B5490848D49E39F /* FirefoxExtension in Resources */,
 				32372EB3B2FE64B8AF0A91B5 /* quietgate-native-host in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000027 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -544,6 +636,20 @@
 				227DB1AC963E20209757F7EF /* SettingsView.swift in Sources */,
 				E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */,
 				CAA0FAE2C4FD4D35B3AC1F7E /* TuningView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000024 /* AccountHubModel.swift in Sources */,
+				A00000000000000000000020 /* AppConfig.swift in Sources */,
+				A00000000000000000000025 /* ContentView.swift in Sources */,
+				A00000000000000000000021 /* InstallationStore.swift in Sources */,
+				A00000000000000000000023 /* TortoiseAPIClient.swift in Sources */,
+				A00000000000000000000026 /* TortoiseApp.swift in Sources */,
+				A00000000000000000000022 /* TortoiseModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -757,6 +863,66 @@
 			};
 			name = Release;
 		};
+		A00000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsueW91cnRvcnRvaXNlLmNvbSQ";
+				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise;
+				PRODUCT_NAME = Tortoise;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TORTOISE_API_BASE_URL = "https://www.yourtortoise.com";
+			};
+			name = Debug;
+		};
+		A00000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsueW91cnRvcnRvaXNlLmNvbSQ";
+				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise;
+				PRODUCT_NAME = Tortoise;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TORTOISE_API_BASE_URL = "https://www.yourtortoise.com";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -787,7 +953,40 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		A00000000000000000000036 /* Build configuration list for PBXNativeTarget "Tortoise" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000008 /* Debug */,
+				A00000000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A00000000000000000000031 /* ClerkKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKit;
+		};
+		A00000000000000000000032 /* ClerkKitUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKitUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
 }

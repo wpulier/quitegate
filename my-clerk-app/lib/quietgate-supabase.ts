@@ -1,13 +1,23 @@
 import "server-only";
 
-import { auth } from "@clerk/nextjs/server";
 import {
   defaultQuietGatePolicy,
   parsePolicy,
   type PolicyEnvelope,
   type QuietGatePolicy,
 } from "@/lib/policy-contract";
-import { createClerkSupabaseClient } from "@/lib/supabase-clerk";
+import {
+  createClerkSupabaseClient,
+  hasSupabasePublicConfig,
+} from "@/lib/supabase-clerk";
+import {
+  createSupabaseAdminClient,
+  hasSupabaseAdminConfig,
+} from "@/lib/supabase-admin";
+import {
+  currentQuietGateIdentity,
+  type QuietGateIdentity,
+} from "@/lib/quietgate-auth";
 import type {
   DeviceHealthRequest,
   DeviceRegistrationRequest,
@@ -42,18 +52,28 @@ export class PolicyVersionConflictError extends Error {
   }
 }
 
-export async function currentClerkIdentity() {
-  const { sessionClaims, userId } = await auth();
+type QuietGateSupabaseClient = Awaited<
+  ReturnType<typeof createClerkSupabaseClient>
+>;
 
-  if (!userId) {
-    return null;
+export function hasQuietGateDataConfig() {
+  return hasSupabaseAdminConfig() || hasSupabasePublicConfig();
+}
+
+export async function currentClerkIdentity(request?: Request) {
+  return currentQuietGateIdentity(request);
+}
+
+async function createQuietGateDataClient(identity?: QuietGateIdentity) {
+  if (hasSupabaseAdminConfig()) {
+    return createSupabaseAdminClient();
   }
 
-  const emailClaim = sessionClaims?.email;
-  return {
-    userId,
-    email: typeof emailClaim === "string" ? emailClaim : null,
-  };
+  if (identity?.source === "bearer") {
+    throw new Error("Supabase server configuration is not set.");
+  }
+
+  return createClerkSupabaseClient();
 }
 
 function toPolicyEnvelope(row: PolicyRow): PolicyEnvelope {
@@ -73,7 +93,7 @@ function toPolicyEnvelope(row: PolicyRow): PolicyEnvelope {
 }
 
 async function selectPolicyEnvelope(
-  supabase: Awaited<ReturnType<typeof createClerkSupabaseClient>>,
+  supabase: QuietGateSupabaseClient,
   userId: string,
 ) {
   const { data, error } = await supabase
@@ -89,14 +109,17 @@ async function selectPolicyEnvelope(
   return data ? toPolicyEnvelope(data as PolicyRow) : null;
 }
 
-export async function ensureQuietGateAccount(primaryEmail?: string | null) {
-  const clerkUser = await currentClerkIdentity();
+export async function ensureQuietGateAccount(
+  primaryEmail?: string | null,
+  identity?: QuietGateIdentity | null,
+) {
+  const clerkUser = identity ?? (await currentClerkIdentity());
 
   if (!clerkUser) {
     throw new Error("Unauthorized");
   }
 
-  const supabase = await createClerkSupabaseClient();
+  const supabase = await createQuietGateDataClient(clerkUser);
   const email = primaryEmail ?? clerkUser.email ?? null;
   const { data: existingUser, error: existingUserError } = await supabase
     .from("quietgate_users")
@@ -162,17 +185,18 @@ export async function ensureQuietGateAccount(primaryEmail?: string | null) {
   return { user, policy } satisfies QuietGateAccount;
 }
 
-export async function getQuietGatePolicy() {
-  const account = await ensureQuietGateAccount();
+export async function getQuietGatePolicy(identity?: QuietGateIdentity | null) {
+  const account = await ensureQuietGateAccount(null, identity);
   return account.policy;
 }
 
 export async function updateQuietGatePolicy(
   expectedSettingsVersion: number,
   policy: QuietGatePolicy,
+  identity?: QuietGateIdentity | null,
 ) {
-  const account = await ensureQuietGateAccount();
-  const supabase = await createClerkSupabaseClient();
+  const account = await ensureQuietGateAccount(null, identity);
+  const supabase = await createQuietGateDataClient(identity ?? undefined);
   const normalizedPolicy = parsePolicy(policy);
   const { data, error } = await supabase
     .from("quietgate_policies")
@@ -199,12 +223,13 @@ export async function updateQuietGatePolicy(
   return toPolicyEnvelope(data as PolicyRow);
 }
 
-export async function listQuietGateDevices() {
-  const supabase = await createClerkSupabaseClient();
-  await ensureQuietGateAccount();
+export async function listQuietGateDevices(identity?: QuietGateIdentity | null) {
+  const account = await ensureQuietGateAccount(null, identity);
+  const supabase = await createQuietGateDataClient(identity ?? undefined);
   const { data, error } = await supabase
     .from("quietgate_devices")
     .select("*")
+    .eq("user_id", account.user.id)
     .is("revoked_at", null)
     .order("last_seen_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
@@ -216,12 +241,13 @@ export async function listQuietGateDevices() {
   return data ?? [];
 }
 
-export async function countQuietGateDevices() {
-  const supabase = await createClerkSupabaseClient();
-  await ensureQuietGateAccount();
+export async function countQuietGateDevices(identity?: QuietGateIdentity | null) {
+  const account = await ensureQuietGateAccount(null, identity);
+  const supabase = await createQuietGateDataClient(identity ?? undefined);
   const { count, error } = await supabase
     .from("quietgate_devices")
     .select("id", { count: "exact", head: true })
+    .eq("user_id", account.user.id)
     .is("revoked_at", null);
 
   if (error) {
@@ -233,8 +259,9 @@ export async function countQuietGateDevices() {
 
 export async function registerQuietGateDevice(
   input: DeviceRegistrationRequest,
+  identity?: QuietGateIdentity | null,
 ) {
-  const account = await ensureQuietGateAccount();
+  const account = await ensureQuietGateAccount(null, identity);
   const now = new Date().toISOString();
   const payload = {
     user_id: account.user.id,
@@ -249,7 +276,7 @@ export async function registerQuietGateDevice(
     revoked_at: null,
   };
 
-  const supabase = await createClerkSupabaseClient();
+  const supabase = await createQuietGateDataClient(identity ?? undefined);
   const { data, error } = await supabase
     .from("quietgate_devices")
     .upsert(payload, { onConflict: "user_id,installation_id" })
@@ -266,8 +293,10 @@ export async function registerQuietGateDevice(
 export async function recordQuietGateDeviceHealth(
   deviceId: string,
   input: DeviceHealthRequest,
+  identity?: QuietGateIdentity | null,
 ) {
-  const supabase = await createClerkSupabaseClient();
+  const account = await ensureQuietGateAccount(null, identity);
+  const supabase = await createQuietGateDataClient(identity ?? undefined);
   const { data: device, error: deviceError } = await supabase
     .from("quietgate_devices")
     .update({
@@ -277,6 +306,7 @@ export async function recordQuietGateDeviceHealth(
       last_seen_at: new Date().toISOString(),
     })
     .eq("id", deviceId)
+    .eq("user_id", account.user.id)
     .is("revoked_at", null)
     .select("*")
     .maybeSingle();

@@ -4,26 +4,27 @@ import { fail, ok, upstreamFailure, validationFailure } from "@/lib/api-response
 import { parseDeviceRegistrationRequest } from "@/lib/device-contract";
 import {
   currentClerkIdentity,
+  hasQuietGateDataConfig,
   listQuietGateDevices,
   registerQuietGateDevice,
 } from "@/lib/quietgate-supabase";
-import { hasSupabasePublicConfig } from "@/lib/supabase-clerk";
 
-export async function GET() {
-  if (!hasSupabasePublicConfig()) {
+export async function GET(request: NextRequest) {
+  if (!hasQuietGateDataConfig()) {
     return fail(
       503,
       "supabase_not_configured",
-      "Supabase public configuration is not set.",
+      "Supabase configuration is not set.",
     );
   }
 
-  if (!(await currentClerkIdentity())) {
+  const identity = await currentClerkIdentity(request);
+  if (!identity) {
     return fail(401, "unauthorized", "Unauthorized.");
   }
 
   try {
-    const devices = await listQuietGateDevices();
+    const devices = await listQuietGateDevices(identity);
     return ok({ devices });
   } catch (error) {
     return upstreamFailure(error);
@@ -31,22 +32,23 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!hasSupabasePublicConfig()) {
+  if (!hasQuietGateDataConfig()) {
     return fail(
       503,
       "supabase_not_configured",
-      "Supabase public configuration is not set.",
+      "Supabase configuration is not set.",
     );
   }
 
-  if (!(await currentClerkIdentity())) {
+  const identity = await currentClerkIdentity(request);
+  if (!identity) {
     return fail(401, "unauthorized", "Unauthorized.");
   }
 
   try {
     const body = await request.json();
     const registration = parseDeviceRegistrationRequest(body);
-    const device = await registerQuietGateDevice(registration);
+    const device = await registerQuietGateDevice(registration, identity);
 
     return ok({ device }, 201);
   } catch (error) {

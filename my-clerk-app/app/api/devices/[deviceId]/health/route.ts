@@ -4,9 +4,9 @@ import { fail, ok, upstreamFailure, validationFailure } from "@/lib/api-response
 import { parseDeviceHealthRequest } from "@/lib/device-contract";
 import {
   currentClerkIdentity,
+  hasQuietGateDataConfig,
   recordQuietGateDeviceHealth,
 } from "@/lib/quietgate-supabase";
-import { hasSupabasePublicConfig } from "@/lib/supabase-clerk";
 
 type RouteContext = {
   params: Promise<{
@@ -17,15 +17,16 @@ type RouteContext = {
 const deviceIdSchema = z.string().uuid();
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  if (!hasSupabasePublicConfig()) {
+  if (!hasQuietGateDataConfig()) {
     return fail(
       503,
       "supabase_not_configured",
-      "Supabase public configuration is not set.",
+      "Supabase configuration is not set.",
     );
   }
 
-  if (!(await currentClerkIdentity())) {
+  const identity = await currentClerkIdentity(request);
+  if (!identity) {
     return fail(401, "unauthorized", "Unauthorized.");
   }
 
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const result = await recordQuietGateDeviceHealth(
       parsedDeviceId,
       healthPayload,
+      identity,
     );
 
     if (!result) {

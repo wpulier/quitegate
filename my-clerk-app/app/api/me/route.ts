@@ -3,30 +3,32 @@ import {
   countQuietGateDevices,
   currentClerkIdentity,
   ensureQuietGateAccount,
+  hasQuietGateDataConfig,
 } from "@/lib/quietgate-supabase";
-import { hasSupabasePublicConfig } from "@/lib/supabase-clerk";
+import { type NextRequest } from "next/server";
 
-export async function GET() {
-  const clerkUser = await currentClerkIdentity();
+export async function GET(request: NextRequest) {
+  const clerkUser = await currentClerkIdentity(request);
 
   if (!clerkUser) {
     return fail(401, "unauthorized", "Unauthorized.");
   }
 
-  if (!hasSupabasePublicConfig()) {
+  if (!hasQuietGateDataConfig()) {
     return fail(
       503,
       "supabase_not_configured",
-      "Supabase public configuration is not set.",
+      "Supabase configuration is not set.",
     );
   }
 
   try {
-    const account = await ensureQuietGateAccount(clerkUser.email);
-    const deviceCount = await countQuietGateDevices();
+    const account = await ensureQuietGateAccount(clerkUser.email, clerkUser);
+    const deviceCount = await countQuietGateDevices(clerkUser);
 
     return ok({
       clerkUserId: clerkUser.userId,
+      authSource: clerkUser.source,
       user: {
         id: account.user.id,
         primaryEmail: account.user.primary_email,
