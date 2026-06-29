@@ -871,7 +871,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -901,7 +901,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
