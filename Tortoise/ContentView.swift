@@ -19,6 +19,7 @@ struct ContentView: View {
             accountCard
             policyCard
             deviceCard
+            coverageCard
             setupCard
           }
         }
@@ -78,6 +79,9 @@ struct ContentView: View {
         .font(.largeTitle)
         .fontWeight(.semibold)
         .fixedSize(horizontal: false, vertical: true)
+      Text("iOS v1 is an account hub: it signs in, registers this device, syncs policy, and shows what is not enforceable here yet.")
+        .font(.body)
+        .foregroundStyle(.secondary)
       Text(model.syncMessage)
         .font(.body)
         .foregroundStyle(.secondary)
@@ -124,11 +128,15 @@ struct ContentView: View {
   private var deviceCard: some View {
     StatusCard(
       title: "This iPhone",
-      status: model.snapshot.device == nil ? "Setup incomplete" : "Signed in"
+      status: model.snapshot.device == nil
+        ? "Setup incomplete"
+        : model.snapshot.policy == nil ? "Signed in" : "Synced"
     ) {
       LabeledContent("Device", value: model.snapshot.device?.name ?? UIDevice.current.name)
       LabeledContent("Registered", value: model.snapshot.device == nil ? "No" : "Yes")
       LabeledContent("Last sync", value: model.snapshot.lastSyncedAt?.formatted(date: .abbreviated, time: .shortened) ?? "Never")
+      Text("This confirms account and policy sync only. It does not mean iOS is blocking browser content yet.")
+        .foregroundStyle(.secondary)
       Button {
         Task {
           await model.refresh(using: clerk)
@@ -145,12 +153,22 @@ struct ContentView: View {
     }
   }
 
+  private var coverageCard: some View {
+    StatusCard(title: "Protection coverage", status: "Account hub only") {
+      CapabilityRow(title: "Account sync", status: model.snapshot.device == nil ? "Setup incomplete" : "Live")
+      CapabilityRow(title: "Shared policy", status: model.snapshot.policy == nil ? "Unavailable" : "Current")
+      CapabilityRow(title: "Adult web blocking on iOS", status: "Planned")
+      CapabilityRow(title: "X, Reddit, YouTube, Instagram tuning on iOS", status: "Not available in v1")
+      CapabilityRow(title: "Mac and Chrome enforcement", status: "Shown from device health")
+    }
+  }
+
   private var setupCard: some View {
     StatusCard(title: "Setup checklist", status: "Account hub v1") {
       ChecklistRow(title: "Sign in", isComplete: clerk.session != nil)
       ChecklistRow(title: "Register iOS device", isComplete: model.snapshot.device != nil)
       ChecklistRow(title: "Pull shared policy", isComplete: model.snapshot.policy != nil)
-      ChecklistRow(title: "Enable iOS enforcement", isComplete: false)
+      ChecklistRow(title: "iOS enforcement", isComplete: false, note: "Not available in v1")
     }
   }
 }
@@ -184,6 +202,7 @@ private struct StatusCard<Content: View>: View {
 private struct ChecklistRow: View {
   let title: String
   let isComplete: Bool
+  var note: String? = nil
 
   var body: some View {
     HStack(spacing: 10) {
@@ -191,7 +210,28 @@ private struct ChecklistRow: View {
         .foregroundStyle(isComplete ? .green : .secondary)
       Text(title)
       Spacer()
+      if let note {
+        Text(note)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
     }
     .foregroundStyle(isComplete ? .primary : .secondary)
+  }
+}
+
+private struct CapabilityRow: View {
+  let title: String
+  let status: String
+
+  var body: some View {
+    HStack(alignment: .firstTextBaseline, spacing: 12) {
+      Text(title)
+      Spacer()
+      Text(status)
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+    }
   }
 }

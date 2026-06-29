@@ -238,7 +238,40 @@ export async function listQuietGateDevices(identity?: QuietGateIdentity | null) 
     throw new Error(error.message);
   }
 
-  return data ?? [];
+  const devices = (data ?? []) as Array<Record<string, unknown>>;
+  const deviceIds = devices
+    .map((device) => device.id)
+    .filter((id): id is string => typeof id === "string");
+
+  if (deviceIds.length === 0) {
+    return devices;
+  }
+
+  const { data: healthRows, error: healthError } = await supabase
+    .from("quietgate_device_health")
+    .select(
+      "id, device_id, reported_at, app_version, helper_version, ruleset_version, script_versions, canary_status, adult_protection, platform_metadata",
+    )
+    .in("device_id", deviceIds)
+    .order("reported_at", { ascending: false });
+
+  if (healthError) {
+    throw new Error(healthError.message);
+  }
+
+  const latestHealthByDevice = new Map<string, Record<string, unknown>>();
+  for (const health of (healthRows ?? []) as Array<Record<string, unknown>>) {
+    const deviceId = health.device_id;
+    if (typeof deviceId === "string" && !latestHealthByDevice.has(deviceId)) {
+      latestHealthByDevice.set(deviceId, health);
+    }
+  }
+
+  return devices.map((device) => ({
+    ...device,
+    latest_health:
+      typeof device.id === "string" ? latestHealthByDevice.get(device.id) ?? null : null,
+  }));
 }
 
 export async function countQuietGateDevices(identity?: QuietGateIdentity | null) {
@@ -329,6 +362,7 @@ export async function recordQuietGateDeviceHealth(
       script_versions: input.scriptVersions,
       canary_status: input.canaryStatus,
       adult_protection: input.adultProtection,
+      platform_metadata: input.platformMetadata,
     })
     .select("id, device_id, reported_at")
     .single();

@@ -5,111 +5,51 @@ import {
   hasQuietGateDataConfig,
   listQuietGateDevices,
 } from "@/lib/quietgate-supabase";
-
-type DeviceRow = {
-  id?: string;
-  platform?: string;
-  name?: string | null;
-  app_version?: string | null;
-  helper_version?: string | null;
-  last_seen_at?: string | null;
-  platform_metadata?: unknown;
-};
-
-type DeviceStatus = "Not installed" | "Signed in" | "Setup incomplete" | "Protected" | "Stale";
+import {
+  buildCoverageRows,
+  deviceDetail,
+  formatDate,
+  newestDevice,
+  presentDeviceStatus,
+  statusTone,
+  type DashboardDevice,
+  type DeviceStatus,
+} from "@/lib/protection-status";
+import type { PolicyEnvelope } from "@/lib/policy-contract";
 
 const deviceGroups = [
   {
     title: "Mac app",
     platforms: ["macos"],
-    empty: "Install and sign in from the Mac app to sync policy and protection health.",
-    action: "Mac setup pending",
+    empty: "Install and sign in from the Mac app to edit policy and enforce desktop/browser protection.",
+    action: "Download Mac",
   },
   {
     title: "iPhone and iPad",
     platforms: ["ios"],
-    empty: "Install the TestFlight build, sign in, and register this account.",
-    action: "TestFlight pending",
+    empty: "Install the TestFlight build and sign in to sync account, policy, and setup status.",
+    action: "Open TestFlight",
+    href: "https://testflight.apple.com/",
   },
   {
     title: "Chrome extension",
     platforms: ["chrome_extension", "chrome"],
     empty: "Connect the browser extension to apply web policy from this account.",
-    action: "Connect extension",
+    action: "Connect Chrome",
     href: "/extension/connect",
   },
 ];
 
-function statusTone(status: DeviceStatus) {
-  switch (status) {
-    case "Protected":
-      return "bg-emerald-50 text-emerald-700 ring-emerald-200";
-    case "Signed in":
-      return "bg-blue-50 text-blue-700 ring-blue-200";
-    case "Setup incomplete":
-      return "bg-amber-50 text-amber-700 ring-amber-200";
-    case "Stale":
-      return "bg-zinc-100 text-zinc-700 ring-zinc-200";
-    default:
-      return "bg-zinc-100 text-zinc-600 ring-zinc-200";
-  }
-}
-
-function isStale(lastSeenAt?: string | null) {
-  if (!lastSeenAt) {
-    return false;
-  }
-
-  const lastSeen = Date.parse(lastSeenAt);
-  return Number.isFinite(lastSeen) && Date.now() - lastSeen > 24 * 60 * 60 * 1000;
-}
-
-function metadataRecord(device: DeviceRow) {
-  const metadata = device.platform_metadata;
-  return metadata && typeof metadata === "object"
-    ? (metadata as Record<string, unknown>)
-    : {};
-}
-
-function deviceStatus(device?: DeviceRow): DeviceStatus {
-  if (!device) {
-    return "Not installed";
-  }
-
-  if (isStale(device.last_seen_at)) {
-    return "Stale";
-  }
-
-  const metadata = metadataRecord(device);
-  if (metadata.protected === true || metadata.setupStatus === "protected") {
-    return "Protected";
-  }
-
-  if (metadata.setupStatus === "incomplete") {
-    return "Setup incomplete";
-  }
-
-  return "Signed in";
-}
-
-function formatDate(value?: string | null) {
-  if (!value) {
-    return "Never";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown";
-  }
-
-  return date.toLocaleString("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-function newestDevice(devices: DeviceRow[], platforms: string[]) {
-  return devices.find((device) => platforms.includes(device.platform ?? ""));
+function StatusPill({ status }: { status: DeviceStatus | string }) {
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${statusTone(
+        status as DeviceStatus,
+      )}`}
+    >
+      {status}
+    </span>
+  );
 }
 
 function DeviceCard({
@@ -117,15 +57,17 @@ function DeviceCard({
   device,
   empty,
   href,
+  policy,
   title,
 }: {
   action: string;
-  device?: DeviceRow;
+  device?: DashboardDevice;
   empty: string;
   href?: string;
+  policy: PolicyEnvelope | null;
   title: string;
 }) {
-  const status = deviceStatus(device);
+  const status = presentDeviceStatus(device, policy);
 
   return (
     <article className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
@@ -135,12 +77,13 @@ function DeviceCard({
           <p className="mt-2 text-sm leading-6 text-zinc-600">
             {device?.name || empty}
           </p>
+          {device ? (
+            <p className="mt-2 text-xs leading-5 text-zinc-500">
+              {deviceDetail(device)}
+            </p>
+          ) : null}
         </div>
-        <span
-          className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${statusTone(status)}`}
-        >
-          {status}
-        </span>
+        <StatusPill status={status} />
       </div>
       <dl className="mt-5 grid gap-3 text-sm text-zinc-600 sm:grid-cols-2">
         <div>
@@ -168,34 +111,55 @@ function DeviceCard({
   );
 }
 
+function SetupLink({
+  description,
+  href,
+  label,
+  title,
+}: {
+  description: string;
+  href?: string;
+  label: string;
+  title: string;
+}) {
+  const content = (
+    <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-300">
+      <h3 className="text-base font-semibold text-zinc-950">{title}</h3>
+      <p className="mt-2 min-h-12 text-sm leading-6 text-zinc-600">{description}</p>
+      <p className="mt-4 text-sm font-medium text-zinc-950">{label}</p>
+    </div>
+  );
+
+  return href ? <a href={href}>{content}</a> : content;
+}
+
 export default async function Home() {
   const { userId } = await auth();
   const user = userId ? await currentUser() : null;
   const email = user?.primaryEmailAddress?.emailAddress ?? null;
   const dataConfigured = hasQuietGateDataConfig();
   let quietGateUserId: string | null = null;
-  let devices: DeviceRow[] = [];
-  let policyMode: string | null = null;
-  let adultBlocking = false;
-  let settingsVersion: number | null = null;
-  let updatedAt: string | null = null;
+  let devices: DashboardDevice[] = [];
+  let policyEnvelope: PolicyEnvelope | null = null;
   let syncUnavailable = false;
 
   if (userId && dataConfigured) {
     try {
       const account = await ensureQuietGateAccount(email);
       quietGateUserId = account.user.id;
-      policyMode = account.policy.policy.mode;
-      adultBlocking = account.policy.policy.adultBlockingEnabled;
-      settingsVersion = account.policy.settingsVersion;
-      updatedAt = account.policy.updatedAt;
-      devices = (await listQuietGateDevices()) as DeviceRow[];
+      policyEnvelope = account.policy;
+      devices = (await listQuietGateDevices()) as DashboardDevice[];
     } catch {
       syncUnavailable = true;
     }
   }
 
   const signedIn = Boolean(userId);
+  const policyMode = policyEnvelope?.policy.mode ?? null;
+  const adultBlocking = policyEnvelope?.policy.adultBlockingEnabled ?? false;
+  const settingsVersion = policyEnvelope?.settingsVersion ?? null;
+  const updatedAt = policyEnvelope?.updatedAt ?? null;
+  const coverageRows = buildCoverageRows(policyEnvelope, devices);
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-zinc-50">
@@ -206,12 +170,12 @@ export default async function Home() {
               Account hub
             </p>
             <h1 className="text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl">
-              Tortoise connects your Mac, iPhone, and browser protection.
+              Tortoise shows what is desired, installed, and actually live.
             </h1>
             <p className="mt-5 text-lg leading-8 text-zinc-600">
-              Use this dashboard for account status, setup progress, device
-              health, and recovery. Protection itself runs in the native apps
-              and browser extension.
+              Supabase policy is the source of truth for desired settings.
+              Device health is the source of truth for what the Mac, iPhone,
+              and browser extension can enforce right now.
             </p>
           </div>
 
@@ -248,8 +212,8 @@ export default async function Home() {
               {signedIn ? "Beta access" : "Account required"}
             </h2>
             <p className="mt-3 text-sm leading-6 text-zinc-600">
-              Billing is account-level. TestFlight builds use beta access until
-              paid plans are turned on.
+              Billing is account-level. TestFlight and early Mac builds use
+              beta access until paid plans are turned on.
             </p>
           </section>
 
@@ -259,7 +223,7 @@ export default async function Home() {
               {!signedIn
                 ? "Waiting for sign in"
                 : !dataConfigured || syncUnavailable
-                  ? "Policy sync unavailable"
+                  ? "Sync unavailable"
                   : "Current"}
             </h2>
             <p className="mt-3 text-sm leading-6 text-zinc-600">
@@ -268,7 +232,7 @@ export default async function Home() {
                 : !dataConfigured
                   ? "Reconnect Supabase server configuration."
                   : syncUnavailable
-                    ? "Try again after the account database is reachable."
+                    ? "Try again after account services are reachable."
                     : `${policyMode ?? "open"} mode, version ${settingsVersion ?? 0}.`}
             </p>
           </section>
@@ -278,10 +242,50 @@ export default async function Home() {
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold tracking-tight text-zinc-950">
+                Downloads and setup
+              </h2>
+              <p className="mt-1 text-sm text-zinc-600">
+                The apps are the primary surfaces. The web dashboard keeps setup
+                and recovery clear.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-4">
+            <SetupLink
+              title="Mac"
+              description="Desktop policy editing and browser/helper enforcement live here first."
+              label="Download Mac"
+            />
+            <SetupLink
+              title="iOS"
+              description="Account hub, TestFlight setup, policy sync, and honest iOS capability status."
+              label="Install TestFlight"
+              href="https://testflight.apple.com/"
+            />
+            <SetupLink
+              title="Chrome"
+              description="Connect the extension when browser policy should follow this account."
+              label="Connect Chrome"
+              href="/extension/connect"
+            />
+            <SetupLink
+              title="Web"
+              description="Review account, billing, devices, coverage, and recovery state."
+              label="Open dashboard"
+              href="/"
+            />
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-zinc-950">
                 Devices
               </h2>
               <p className="mt-1 text-sm text-zinc-600">
-                Setup status for each interaction surface.
+                A device is protected only when recent health proves the current
+                policy is enforced.
               </p>
             </div>
           </div>
@@ -293,6 +297,7 @@ export default async function Home() {
                 device={newestDevice(devices, group.platforms)}
                 empty={group.empty}
                 href={group.href}
+                policy={policyEnvelope}
                 title={group.title}
               />
             ))}
@@ -307,21 +312,61 @@ export default async function Home() {
                 {policyMode ? `${policyMode} mode` : "No policy loaded"}
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
-                Adult blocking is {adultBlocking ? "on" : "off"}. Local app
-                settings are cached copies; Supabase remains the canonical
-                policy source.
+                Adult blocking is {adultBlocking ? "on" : "off"}. Local
+                Mac/iOS values are cached copies. Health reports can prove
+                enforcement, but they never overwrite policy.
               </p>
             </div>
             <dl className="grid min-w-64 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-1">
               <div>
                 <dt className="font-medium text-zinc-500">Version</dt>
-                <dd className="mt-1 text-zinc-950">{settingsVersion ?? "Unavailable"}</dd>
+                <dd className="mt-1 text-zinc-950">
+                  {settingsVersion ?? "Unavailable"}
+                </dd>
               </div>
               <div>
                 <dt className="font-medium text-zinc-500">Last updated</dt>
                 <dd className="mt-1 text-zinc-950">{formatDate(updatedAt)}</dd>
               </div>
             </dl>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+          <div>
+            <p className="text-sm font-medium text-zinc-500">Protection coverage</p>
+            <h2 className="mt-2 text-2xl font-semibold text-zinc-950">
+              Policy versus platform reality
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">
+              This table separates desired account settings from per-device
+              capability. It should never imply that iOS is enforcing a Mac or
+              browser-only protection.
+            </p>
+          </div>
+          <div className="mt-6 overflow-hidden rounded-lg border border-zinc-200">
+            <table className="min-w-full divide-y divide-zinc-200 text-sm">
+              <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3">Protection</th>
+                  <th className="px-4 py-3">Policy</th>
+                  <th className="px-4 py-3">Mac</th>
+                  <th className="px-4 py-3">iPhone/iPad</th>
+                  <th className="px-4 py-3">Chrome</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 bg-white text-zinc-700">
+                {coverageRows.map((row) => (
+                  <tr key={row.id}>
+                    <td className="px-4 py-3 font-medium text-zinc-950">{row.label}</td>
+                    <td className="px-4 py-3">{row.policyState}</td>
+                    <td className="px-4 py-3">{row.mac}</td>
+                    <td className="px-4 py-3">{row.ios}</td>
+                    <td className="px-4 py-3">{row.chrome}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       </section>

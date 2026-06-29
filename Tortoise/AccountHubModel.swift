@@ -32,9 +32,10 @@ final class AccountHubModel: ObservableObject {
         name: UIDevice.current.name,
         appVersion: Bundle.main.appVersion,
         platformMetadata: [
-          "setupStatus": "signed_in",
-          "systemName": UIDevice.current.systemName,
-          "systemVersion": UIDevice.current.systemVersion
+          "setupStatus": .string("signed_in"),
+          "systemName": .string(UIDevice.current.systemName),
+          "systemVersion": .string(UIDevice.current.systemVersion),
+          "capabilities": .object(Self.iosCapabilities)
         ]
       )
       let registeredDevice = try await apiClient.registerDevice(
@@ -49,14 +50,17 @@ final class AccountHubModel: ObservableObject {
         health: DeviceHealth(
           appVersion: Bundle.main.appVersion,
           platformMetadata: [
-            "setupStatus": "signed_in",
-            "policyVersion": "\(policy.settingsVersion)"
+            "setupStatus": .string("signed_in"),
+            "policyVersion": .string("\(policy.settingsVersion)"),
+            "capabilities": .object(Self.iosCapabilities)
           ],
           canaryStatus: [
-            "accountHub": "ok"
+            "accountHub": .string("live"),
+            "policySync": .string("live")
           ],
           adultProtection: [
-            "iosEnforcement": "not_enabled_v1"
+            "iosEnforcement": .string("not_supported_v1"),
+            "sourceOfTruth": .string("supabase_policy")
           ]
         )
       )
@@ -67,11 +71,23 @@ final class AccountHubModel: ObservableObject {
         devices: devices,
         lastSyncedAt: Date()
       )
-      syncMessage = "This device is registered and policy is current."
+      syncMessage = "This iPhone is registered and policy is current. iOS enforcement is not available in v1."
     } catch {
       syncMessage = "Policy sync unavailable. Try again after account services are reachable."
     }
   }
+
+  private static let iosCapabilities: [String: JSONValue] = [
+    "accountHub": .string("supported"),
+    "policySync": .string("supported"),
+    "deviceHealth": .string("supported"),
+    "adultWebBlocking": .string("planned"),
+    "xTuning": .string("not_supported_v1"),
+    "redditTuning": .string("not_supported_v1"),
+    "youtubeTuning": .string("not_supported_v1"),
+    "instagramBlocking": .string("not_supported_v1"),
+    "macAppBlocking": .string("not_supported")
+  ]
 }
 
 private extension Bundle {
