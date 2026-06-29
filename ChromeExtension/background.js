@@ -1,5 +1,8 @@
 const HOST_NAME = "com.willpulier.quietgate";
+const QUIETGATE_WEB_ORIGIN = "https://www.yourtortoise.com";
 const NATIVE_SYNC_TIMEOUT_MS = 3000;
+const REMOTE_SYNC_ALARM = "quietgate.remotePolicySync";
+const REMOTE_SYNC_PERIOD_MINUTES = 15;
 const QUIETGATE_RULE_ID_BASE = 100000;
 const QUIETGATE_MAX_RULES = 30000;
 const X_INITIATOR_DOMAINS = ["x.com", "twitter.com", "mobile.x.com"];
@@ -339,6 +342,117 @@ function normalizePlatformControlPayload(payload) {
       blurMatureMedia: typeof payload.blurMatureMedia === "boolean" ? payload.blurMatureMedia : null
     }
   };
+}
+
+function manifestPermissions() {
+  const manifest = chrome.runtime.getManifest();
+  return Array.isArray(manifest.permissions) ? manifest.permissions : [];
+}
+
+function supportsNativeMessaging() {
+  return manifestPermissions().includes("nativeMessaging");
+}
+
+function extensionVersion() {
+  return chrome.runtime.getManifest().version;
+}
+
+function base64URL(bytes) {
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function randomString(byteCount = 32) {
+  const bytes = new Uint8Array(byteCount);
+  crypto.getRandomValues(bytes);
+  return base64URL(bytes);
+}
+
+async function ensureInstallationId() {
+  const stored = await chrome.storage.local.get({ extensionInstallationId: null });
+  if (stored.extensionInstallationId) {
+    return stored.extensionInstallationId;
+  }
+  const installationId = `chrome-${randomString(24)}`;
+  await chrome.storage.local.set({ extensionInstallationId: installationId });
+  return installationId;
+}
+
+function policyEnvelopeToSettings(envelope) {
+  const policy = envelope?.policy || {};
+  const browserPolicy = policy.browser || {};
+  return normalizeSettings({
+    mode: policy.mode,
+    features: browserPolicy.features || {},
+    blockedDomains: browserPolicy.blockedDomains || [],
+    blockedCategories: browserPolicy.blockedCategories || [],
+    options: browserPolicy.options || {},
+    settingsVersion: `policy:${Number(envelope?.settingsVersion) || 0}`,
+    updatedAt: envelope?.updatedAt || new Date().toISOString()
+  });
+}
+
+async function signedOutLocalSettings() {
+  const stored = await chrome.storage.local.get({ localAdultBlockingEnabled: false });
+  return normalizeSettings({
+    ...DEFAULT_SETTINGS,
+    blockedCategories: stored.localAdultBlockingEnabled ? ["adultContent"] : [],
+    settingsVersion: stored.localAdultBlockingEnabled
+      ? "signed-out:adultContent"
+      : DEFAULT_SETTINGS.settingsVersion,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+async function requiredHostPermissionSnapshot() {
+  const origins = chrome.runtime.getManifest().host_permissions || [];
+  const optionalAllSites = ["http://*/*", "https://*/*"];
+  const result = {
+    requiredHosts: origins,
+    optionalAllSites: false,
+    incognitoAllowed: false
+  };
+  try {
+    result.optionalAllSites = await chrome.permissions.contains({ origins: optionalAllSites });
+  } catch (_error) {
+    result.optionalAllSites = false;
+  }
+  try {
+    result.incognitoAllowed = await chrome.extension.isAllowedIncognitoAccess();
+  } catch (_error) {
+    result.incognitoAllowed = false;
+  }
+  return result;
+}
+
+async function quietGateFetch(path, options = {}, token = null) {
+  const headers = {
+    Accept: "application/json",
+    ...(options.headers || {})
+  };
+  if (options.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${QUIETGATE_WEB_ORIGIN}${path}`, {
+    ...options,
+    headers
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || payload?.ok === false) {
+    const error = payload?.error?.message || `QuietGate API returned ${response.status}.`;
+    throw new Error(error);
+  }
+  return payload?.data ?? payload;
 }
 
 async function savePlatformControlPayload(payload) {
@@ -1222,8 +1336,47 @@ async function ensureTunerInSupportedTabs() {
   }
 }
 
+async function redirectBlockedYouTubeRoute(tabId, value) {
+  if (!tabId || !value) {
+    return;
+  }
+  let url;
+  try {
+    url = new URL(value);
+  } catch (_error) {
+    return;
+  }
+  if (!["www.youtube.com", "m.youtube.com"].includes(url.hostname)) {
+    return;
+  }
+
+  const settings = await currentStoredSettings();
+  const features = settings.features || {};
+  const shouldRedirect =
+    (features.youtubeShorts && url.pathname.startsWith("/shorts")) ||
+    (features.youtubeExplore && /^\/feed\/(?:explore|trending)/.test(url.pathname)) ||
+    (features.youtubeSubscriptions && url.pathname.startsWith("/feed/subscriptions"));
+  if (!shouldRedirect) {
+    return;
+  }
+
+  try {
+    await chrome.tabs.update(tabId, { url: "https://www.youtube.com/" });
+  } catch (_error) {
+    // The content script redirect remains the primary path for tabs that cannot be updated.
+  }
+}
+
 async function ensureWebClassifierInOpenTabs(settings) {
   if (!adultCategoryEnabled(settings) && customBlockedDomains(settings).length === 0) {
+    return;
+  }
+  try {
+    const hasAllSites = await chrome.permissions.contains({ origins: ["http://*/*", "https://*/*"] });
+    if (!hasAllSites) {
+      return;
+    }
+  } catch (_error) {
     return;
   }
   const tabs = await chrome.tabs.query({ url: ["http://*/*", "https://*/*"] });
@@ -1260,6 +1413,11 @@ async function saveSettings(settings, source, blockedRuleCount, metadata = {}) {
 
 function sendNativeMessage(message) {
   return new Promise((resolve) => {
+    if (!supportsNativeMessaging()) {
+      resolve({ ok: false, error: "QuietGate native messaging is not available in this extension build." });
+      return;
+    }
+
     let settled = false;
     const timeout = setTimeout(() => {
       if (settled) {
@@ -1354,6 +1512,181 @@ async function youtubeUsageSnapshot(settings = null) {
   };
 }
 
+async function extensionAuthStatus() {
+  const stored = await chrome.storage.local.get({
+    extensionDevice: null,
+    extensionDeviceToken: null,
+    extensionInstallationId: null,
+    extensionLastSyncAt: null,
+    extensionSyncError: null,
+    policySettingsVersion: null,
+    source: null,
+    blockedRuleCount: 0,
+    localAdultBlockingEnabled: false
+  });
+  const permissions = await requiredHostPermissionSnapshot();
+  return {
+    ok: true,
+    signedIn: Boolean(stored.extensionDeviceToken && stored.extensionDevice),
+    device: stored.extensionDevice || null,
+    installationId: stored.extensionInstallationId || null,
+    extensionVersion: extensionVersion(),
+    source: stored.source || null,
+    policySettingsVersion: stored.policySettingsVersion || null,
+    lastSyncAt: stored.extensionLastSyncAt || null,
+    syncError: stored.extensionSyncError || null,
+    blockedRuleCount: Number(stored.blockedRuleCount) || 0,
+    localAdultBlockingEnabled: Boolean(stored.localAdultBlockingEnabled),
+    permissions
+  };
+}
+
+async function saveRemoteSettings(envelope, options = {}) {
+  const settings = policyEnvelopeToSettings(envelope);
+  const stored = await chrome.storage.local.get({
+    lastAppliedSettingsVersion: null,
+    blockedRuleCount: 0
+  });
+  let blockedRuleCount = Number(stored.blockedRuleCount) || 0;
+  if (options.forceApply || stored.lastAppliedSettingsVersion !== settings.settingsVersion) {
+    blockedRuleCount = await applyDynamicBlockRules(settings);
+  }
+  const savedSettings = await saveSettings(settings, "remote", blockedRuleCount, {
+    browserID: await quietGateBrowserID()
+  });
+  await chrome.storage.local.set({
+    policySettingsVersion: Number(envelope?.settingsVersion) || 0,
+    policyUpdatedAt: envelope?.updatedAt || null,
+    extensionLastSyncAt: new Date().toISOString(),
+    extensionSyncError: null,
+    lastAppliedSettingsVersion: savedSettings.settingsVersion,
+    lastAppliedAt: new Date().toISOString()
+  });
+  await ensureTunerInSupportedTabs();
+  await ensureWebClassifierInOpenTabs(savedSettings);
+  await recordRemoteHealth(savedSettings, blockedRuleCount, { lastSyncAt: new Date().toISOString() });
+  return { ok: true, settings: savedSettings, blockedRuleCount, source: "remote" };
+}
+
+async function syncRemotePolicy(options = {}) {
+  const stored = await chrome.storage.local.get({ extensionDeviceToken: null });
+  if (!stored.extensionDeviceToken) {
+    return { ok: false, error: "QuietGate extension is not signed in." };
+  }
+  try {
+    const response = await quietGateFetch("/api/extension/policy", {
+      method: "GET",
+      cache: "no-store"
+    }, stored.extensionDeviceToken);
+    if (response?.device) {
+      await chrome.storage.local.set({ extensionDevice: response.device });
+    }
+    return await saveRemoteSettings(response?.policy, options);
+  } catch (error) {
+    const message = error?.message || String(error);
+    await chrome.storage.local.set({
+      extensionSyncError: message,
+      extensionLastSyncAt: new Date().toISOString()
+    });
+    return { ok: false, error: message };
+  }
+}
+
+async function syncSignedOutSettings(options = {}) {
+  const settings = await signedOutLocalSettings();
+  const stored = await chrome.storage.local.get({
+    lastAppliedSettingsVersion: null,
+    blockedRuleCount: 0
+  });
+  let blockedRuleCount = Number(stored.blockedRuleCount) || 0;
+  if (options.forceApply || stored.lastAppliedSettingsVersion !== settings.settingsVersion) {
+    blockedRuleCount = await applyDynamicBlockRules(settings);
+  }
+  const savedSettings = await saveSettings(settings, "local", blockedRuleCount, {
+    browserID: await quietGateBrowserID()
+  });
+  await chrome.storage.local.set({
+    lastAppliedSettingsVersion: savedSettings.settingsVersion,
+    lastAppliedAt: new Date().toISOString(),
+    extensionSyncError: null
+  });
+  await ensureTunerInSupportedTabs();
+  await ensureWebClassifierInOpenTabs(savedSettings);
+  return { ok: true, settings: savedSettings, blockedRuleCount, source: "local" };
+}
+
+async function syncQuietGateSettings(options = {}) {
+  const stored = await chrome.storage.local.get({ extensionDeviceToken: null });
+  if (stored.extensionDeviceToken) {
+    const response = await syncRemotePolicy(options);
+    if (response?.ok) {
+      return response;
+    }
+    return response;
+  }
+  const fixtureState = await chrome.storage.local.get({ source: null });
+  if (fixtureState.source === "smoke") {
+    return {
+      ok: true,
+      settings: await currentStoredSettings(),
+      blockedRuleCount: Number((await chrome.storage.local.get({ blockedRuleCount: 0 })).blockedRuleCount) || 0,
+      source: "smoke"
+    };
+  }
+  if (supportsNativeMessaging()) {
+    return syncNativeSettings(options);
+  }
+  return syncSignedOutSettings(options);
+}
+
+async function recordRemoteHealth(settings = null, blockedRuleCount = null, metadata = {}) {
+  const stored = await chrome.storage.local.get({
+    extensionDeviceToken: null,
+    source: null,
+    blockedRuleCount: 0,
+    missedAdultSites: []
+  });
+  if (!stored.extensionDeviceToken) {
+    return { ok: true, skipped: true };
+  }
+  const normalized = settings ? normalizeSettings(settings) : await currentStoredSettings();
+  const ruleCount = blockedRuleCount == null
+    ? Number(stored.blockedRuleCount) || 0
+    : Number(blockedRuleCount) || 0;
+  const permissions = await requiredHostPermissionSnapshot();
+  const payload = {
+    extensionVersion: extensionVersion(),
+    rulesetVersion: normalized.settingsVersion,
+    scriptVersions: TUNER_VERSIONS,
+    canaryStatus: {
+      redgifs: adultCategoryEnabled(normalized),
+      x: Boolean(normalized.features?.xSensitiveMedia || normalized.features?.xExplicitContent || normalized.features?.xExplicitSearch),
+      reddit: Boolean(normalized.features?.redditNSFW)
+    },
+    adultProtection: await adultProtectionHealth(normalized, ruleCount),
+    platformMetadata: {
+      source: stored.source || metadata.source || null,
+      browserID: await quietGateBrowserID(),
+      manifestVersion: chrome.runtime.getManifest().manifest_version
+    },
+    enabledPermissions: permissions,
+    recentBlockCounters: {
+      missedAdultSiteReports: Array.isArray(stored.missedAdultSites) ? stored.missedAdultSites.length : 0,
+      blockedRuleCount: ruleCount
+    },
+    lastSyncAt: metadata.lastSyncAt || null
+  };
+  try {
+    await quietGateFetch("/api/extension/health", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }, stored.extensionDeviceToken);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error?.message || String(error) };
+  }
+}
+
 async function recordAppliedSettings(settingsVersion, blockedRuleCount, lastError = null, settings = null) {
   const browserID = await quietGateBrowserID();
   const stored = await chrome.storage.local.get({ platformControls: {} });
@@ -1371,6 +1704,10 @@ async function recordAppliedSettings(settingsVersion, blockedRuleCount, lastErro
   };
   if (browserID) {
     message.browserID = browserID;
+  }
+  if (!supportsNativeMessaging()) {
+    const remoteResponse = await recordRemoteHealth(settings, blockedRuleCount, { source: "extension" });
+    return remoteResponse?.ok ? { ok: true } : remoteResponse;
   }
   return sendNativeMessage(message);
 }
@@ -1491,50 +1828,234 @@ async function recordYouTubeUsageChange() {
   };
 }
 
+async function startExtensionConnect() {
+  const installationId = await ensureInstallationId();
+  const nonce = randomString(24);
+  const payload = {
+    installationId,
+    nonce,
+    extensionId: chrome.runtime.id,
+    extensionVersion: extensionVersion(),
+    createdAt: Date.now()
+  };
+  await chrome.storage.local.set({ pendingExtensionAuth: payload });
+  const params = new URLSearchParams({
+    installationId,
+    nonce,
+    extensionId: chrome.runtime.id,
+    extensionVersion: extensionVersion()
+  });
+  await chrome.tabs.create({ url: `${QUIETGATE_WEB_ORIGIN}/extension/connect?${params.toString()}` });
+  return { ok: true, installationId };
+}
+
+async function completeExtensionLink(payload, sender = null) {
+  const senderURL = sender?.url || sender?.origin || "";
+  if (senderURL && !senderURL.startsWith(QUIETGATE_WEB_ORIGIN)) {
+    return { ok: false, error: "QuietGate rejected a link message from an unknown origin." };
+  }
+
+  const stored = await chrome.storage.local.get({ pendingExtensionAuth: null });
+  const pending = stored.pendingExtensionAuth;
+  if (!pending) {
+    return { ok: false, error: "No pending QuietGate extension connection." };
+  }
+
+  const code = String(payload?.code || "");
+  const nonce = String(payload?.nonce || "");
+  const installationId = String(payload?.installationId || "");
+  const extensionId = String(payload?.extensionId || chrome.runtime.id);
+  const extensionVersionValue = String(payload?.extensionVersion || extensionVersion());
+  if (
+    !code ||
+    nonce !== pending.nonce ||
+    installationId !== pending.installationId ||
+    extensionId !== chrome.runtime.id
+  ) {
+    return { ok: false, error: "QuietGate extension connection did not match the pending request." };
+  }
+
+  const result = await quietGateFetch("/api/extension/exchange", {
+    method: "POST",
+    body: JSON.stringify({
+      code,
+      nonce,
+      installationId,
+      extensionId,
+      extensionVersion: extensionVersionValue
+    })
+  });
+  await chrome.storage.local.set({
+    extensionDeviceToken: result.deviceToken,
+    extensionDevice: result.device,
+    extensionInstallationId: installationId,
+    pendingExtensionAuth: null,
+    extensionSyncError: null
+  });
+  await syncRemotePolicy({ forceApply: true });
+  return { ok: true, device: result.device };
+}
+
+async function revokeExtensionDevice() {
+  const stored = await chrome.storage.local.get({ extensionDeviceToken: null });
+  if (stored.extensionDeviceToken) {
+    try {
+      await quietGateFetch("/api/extension/revoke", { method: "POST" }, stored.extensionDeviceToken);
+    } catch (_error) {
+      // Local token removal still needs to happen when the server is unreachable.
+    }
+  }
+  await chrome.storage.local.remove([
+    "extensionDeviceToken",
+    "extensionDevice",
+    "policySettingsVersion",
+    "policyUpdatedAt",
+    "extensionSyncError"
+  ]);
+  return syncSignedOutSettings({ forceApply: true });
+}
+
+async function requestAllSitesPermission() {
+  const origins = ["http://*/*", "https://*/*"];
+  const granted = await chrome.permissions.request({ origins });
+  if (!granted) {
+    return { ok: false, error: "All-sites permission was not granted." };
+  }
+  const settings = await currentStoredSettings();
+  await ensureWebClassifierInOpenTabs(settings);
+  await recordRemoteHealth(settings, null, { source: "permission" });
+  return { ok: true, permissions: await requiredHostPermissionSnapshot() };
+}
+
+async function setLocalAdultBlocking(enabled) {
+  await chrome.storage.local.set({ localAdultBlockingEnabled: Boolean(enabled) });
+  return syncSignedOutSettings({ forceApply: true });
+}
+
+function ensureRemoteSyncAlarm() {
+  if (!chrome.alarms?.create) {
+    return;
+  }
+  chrome.alarms.create(REMOTE_SYNC_ALARM, {
+    periodInMinutes: REMOTE_SYNC_PERIOD_MINUTES
+  });
+}
+
 chrome.runtime.onInstalled.addListener(() => {
-  syncNativeSettings({ forceApply: true });
+  ensureRemoteSyncAlarm();
+  syncQuietGateSettings({ forceApply: true });
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  syncNativeSettings();
+  ensureRemoteSyncAlarm();
+  syncQuietGateSettings();
 });
 
+if (chrome.alarms?.onAlarm) {
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm?.name === REMOTE_SYNC_ALARM) {
+      syncQuietGateSettings();
+    }
+  });
+}
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (
-    (changeInfo.status !== "complete" && !changeInfo.url) ||
-    !/^https:\/\/(?:x\.com|twitter\.com|mobile\.x\.com)\//i.test(tab.url || changeInfo.url || "")
-  ) {
+  const url = tab.url || changeInfo.url || "";
+  if (changeInfo.status !== "complete" && !changeInfo.url) {
     return;
   }
 
-  ensureTunerInSupportedTabs();
+  if (/^https:\/\/(?:www\.youtube\.com|m\.youtube\.com)\//i.test(url)) {
+    redirectBlockedYouTubeRoute(tabId, url);
+  }
+
+  if (/^https:\/\/(?:x\.com|twitter\.com|mobile\.x\.com)\//i.test(url)) {
+    ensureTunerInSupportedTabs();
+  }
 });
+
+function messageError(error) {
+  return {
+    ok: false,
+    error: error?.message || String(error || "QuietGate could not complete this browser request.")
+  };
+}
+
+function respondToMessage(promise, sendResponse) {
+  Promise.resolve(promise)
+    .then((response) => sendResponse(response))
+    .catch((error) => sendResponse(messageError(error)));
+  return true;
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "quietgate.syncNativeSettings") {
-    syncNativeSettings({ forceApply: message.forceApply === true }).then(sendResponse);
-    return true;
+    if (supportsNativeMessaging()) {
+      return respondToMessage(syncNativeSettings({ forceApply: message.forceApply === true }), sendResponse);
+    }
+    return respondToMessage((async () => ({
+      ok: true,
+      skipped: true,
+      settings: await currentStoredSettings()
+    }))(), sendResponse);
+  }
+
+  if (message?.type === "quietgate.syncQuietGateSettings") {
+    return respondToMessage(syncQuietGateSettings({ forceApply: message.forceApply === true }), sendResponse);
+  }
+
+  if (message?.type === "quietgate.extensionStatus") {
+    return respondToMessage(extensionAuthStatus(), sendResponse);
+  }
+
+  if (message?.type === "quietgate.startExtensionConnect") {
+    return respondToMessage(startExtensionConnect(), sendResponse);
+  }
+
+  if (message?.type === "quietgate.linkExtension") {
+    return respondToMessage(completeExtensionLink(message, sender), sendResponse);
+  }
+
+  if (message?.type === "quietgate.syncRemotePolicy") {
+    return respondToMessage(syncRemotePolicy({ forceApply: message.forceApply === true }), sendResponse);
+  }
+
+  if (message?.type === "quietgate.revokeExtensionDevice") {
+    return respondToMessage(revokeExtensionDevice(), sendResponse);
+  }
+
+  if (message?.type === "quietgate.requestAllSitesPermission") {
+    return respondToMessage(requestAllSitesPermission(), sendResponse);
+  }
+
+  if (message?.type === "quietgate.setLocalAdultBlocking") {
+    return respondToMessage(setLocalAdultBlocking(message.enabled), sendResponse);
   }
 
   if (message?.type === "quietgate.platformControls") {
-    savePlatformControlPayload(message.payload).then(sendResponse);
-    return true;
+    return respondToMessage(savePlatformControlPayload(message.payload), sendResponse);
   }
 
   if (message?.type === "quietgate.youtubeUsageChanged") {
-    recordYouTubeUsageChange().then(sendResponse);
-    return true;
+    return respondToMessage(recordYouTubeUsageChange(), sendResponse);
   }
 
   if (message?.type === "quietgate.classifyWebAdultPage") {
-    classifyWebAdultPage(message.payload).then(sendResponse);
-    return true;
+    return respondToMessage(classifyWebAdultPage(message.payload), sendResponse);
   }
 
   if (message?.type === "quietgate.reportMissedAdultSite") {
-    reportMissedAdultSite(message.payload).then(sendResponse);
-    return true;
+    return respondToMessage(reportMissedAdultSite(message.payload), sendResponse);
   }
 
   return false;
 });
+
+if (chrome.runtime.onMessageExternal) {
+  chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+    if (message?.type === "quietgate.linkExtension") {
+      return respondToMessage(completeExtensionLink(message, sender), sendResponse);
+    }
+    return false;
+  });
+}

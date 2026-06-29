@@ -56,6 +56,8 @@ const DEFAULT_SETTINGS = {
   browserProfile: null
 };
 
+const QUIETGATE_WEB_ORIGIN = "https://www.yourtortoise.com";
+
 const featureIds = [
   "youtubeHome",
   "youtubeVideoSidebar",
@@ -265,13 +267,37 @@ function sendRuntimeMessage(message) {
       resolve({ ok: false, error: "Browser runtime is unavailable." });
       return;
     }
+    let settled = false;
+    const resolveOnce = (value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+    };
     try {
-      const result = runtime.sendMessage(message, resolve);
+      if (runtime === globalThis.browser?.runtime && runtime !== globalThis.chrome?.runtime) {
+        runtime
+          .sendMessage(message)
+          .then(resolveOnce)
+          .catch((error) => resolveOnce({ ok: false, error: error?.message || String(error) }));
+        return;
+      }
+      const result = runtime.sendMessage(message, (response) => {
+        const error = runtime.lastError;
+        if (error) {
+          resolveOnce({ ok: false, error: error.message || String(error) });
+          return;
+        }
+        resolveOnce(response);
+      });
       if (result && typeof result.then === "function") {
-        result.then(resolve).catch((error) => resolve({ ok: false, error: error?.message || String(error) }));
+        result
+          .then(resolveOnce)
+          .catch((error) => resolveOnce({ ok: false, error: error?.message || String(error) }));
       }
     } catch (error) {
-      resolve({ ok: false, error: error?.message || String(error) });
+      resolveOnce({ ok: false, error: error?.message || String(error) });
     }
   });
 }
@@ -375,9 +401,102 @@ function profileStatusText(settings) {
   return `Connected in this ${browserName(settings.browserID)} profile`;
 }
 
+function formatDate(value) {
+  if (!value) {
+    return "never";
+  }
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+      month: "short",
+      day: "numeric"
+    }).format(new Date(value));
+  } catch (_error) {
+    return value;
+  }
+}
+
+function setButtonBusy(button, busy, label = null) {
+  if (!button) {
+    return;
+  }
+  if (!button.dataset.defaultLabel) {
+    button.dataset.defaultLabel = button.textContent;
+  }
+  button.disabled = busy;
+  button.textContent = busy && label ? label : button.dataset.defaultLabel;
+}
+
+function updateAccountStatus(status, settings = {}) {
+  const accountStatus = document.querySelector("#accountStatus");
+  const accountDetail = document.querySelector("#accountDetail");
+  const connectButton = document.querySelector("#connectQuietGate");
+  const syncButton = document.querySelector("#syncQuietGate");
+  const dashboardButton = document.querySelector("#openDashboard");
+  const disconnectButton = document.querySelector("#disconnectQuietGate");
+  const requestAllSitesButton = document.querySelector("#requestAllSites");
+  const permissionStatus = document.querySelector("#permissionStatus");
+  const incognitoStatus = document.querySelector("#incognitoStatus");
+  const localAdultBlocking = document.querySelector("#localAdultBlocking");
+  const signedIn = Boolean(status?.signedIn);
+  const permissions = status?.permissions || {};
+  const deviceName = status?.device?.name || "QuietGate for Chrome";
+  const policyVersion = status?.policySettingsVersion || settings.policySettingsVersion || null;
+
+  accountStatus.textContent = signedIn
+    ? `Signed in: ${deviceName}`
+    : "Not signed in";
+  accountStatus.dataset.state = signedIn ? "managed" : "manual";
+  accountDetail.textContent = signedIn
+    ? `Policy ${policyVersion || "pending"} · synced ${formatDate(status?.lastSyncAt || settings.extensionLastSyncAt)}`
+    : "Sign in to sync policy from yourtortoise.com.";
+
+  connectButton.hidden = signedIn;
+  syncButton.hidden = !signedIn;
+  dashboardButton.hidden = false;
+  disconnectButton.hidden = !signedIn;
+  requestAllSitesButton.hidden = Boolean(permissions.optionalAllSites);
+  localAdultBlocking.closest("label").hidden = signedIn;
+  localAdultBlocking.checked = Boolean(status?.localAdultBlockingEnabled);
+
+  permissionStatus.textContent = permissions.optionalAllSites
+    ? "Full web classifier permission is enabled."
+    : "Full web classifier permission is off; packaged adult-domain blocking still works.";
+  incognitoStatus.textContent = permissions.incognitoAllowed
+    ? "Incognito access is enabled."
+    : "Incognito is off. Enable Allow in Incognito on chrome://extensions for private windows.";
+}
+
 function updateSyncStatus(settings) {
   const status = document.querySelector("#syncStatus");
   const ruleStatus = document.querySelector("#ruleStatus");
+  if (settings.source === "smoke" && !settings.nativeSyncError && !settings.extensionSyncError) {
+    const count = settings.blockedRuleCount || 0;
+    status.textContent = "Connected.";
+    ruleStatus.textContent = count === 1
+      ? "Connected. 1 browser rule active."
+      : `Connected. ${count} browser rules active.`;
+    ruleStatus.hidden = false;
+    status.dataset.state = "managed";
+    ruleStatus.dataset.state = "managed";
+    setControlsDisabled(true);
+    return;
+  }
+
+  if (settings.source === "remote" && !settings.extensionSyncError) {
+    const count = settings.blockedRuleCount || 0;
+    status.textContent = "Synced from QuietGate account";
+    ruleStatus.textContent = count === 1
+      ? "1 browser rule active."
+      : `${count} browser rules active.`;
+    ruleStatus.hidden = false;
+    status.dataset.state = "managed";
+    ruleStatus.dataset.state = "managed";
+    setControlsDisabled(true);
+    return;
+  }
+
   if (settings.source === "native" && !settings.nativeSyncError) {
     const count = settings.blockedRuleCount || 0;
     status.textContent = profileStatusText(settings);
@@ -393,8 +512,11 @@ function updateSyncStatus(settings) {
 
   ruleStatus.textContent = "";
   ruleStatus.hidden = true;
-  if (settings.nativeSyncError) {
-    status.textContent = "Open QuietGate to connect helper";
+  if (settings.extensionSyncError || settings.nativeSyncError) {
+    status.textContent = settings.extensionSyncError || "Open QuietGate to connect helper";
+    status.dataset.state = "manual";
+  } else if (settings.source === "local") {
+    status.textContent = "Local signed-out mode";
     status.dataset.state = "manual";
   } else {
     status.textContent = "Waiting for QuietGate";
@@ -404,26 +526,10 @@ function updateSyncStatus(settings) {
 }
 
 async function load() {
-  try {
-    const response = await chrome.runtime.sendMessage({ type: "quietgate.syncNativeSettings" });
-    if (response?.ok && response.settings) {
-      const update = {
-        source: "native",
-        nativeSyncError: null,
-        nativeSyncAt: new Date().toISOString()
-      };
-      if (response.browserID) {
-        update.browserID = response.browserID;
-      }
-      const profile = normalizeProfileMetadata(response.profile);
-      if (profile) {
-        update.browserProfile = profile;
-      }
-      await chrome.storage.local.set(update);
-    }
-  } catch (error) {
-    // Manual popup controls still work before the native bridge is installed.
-  }
+  const statusBeforeSync = await sendRuntimeMessage({ type: "quietgate.extensionStatus" });
+  updateAccountStatus(statusBeforeSync || {});
+  await sendRuntimeMessage({ type: "quietgate.syncQuietGateSettings" });
+  const status = await sendRuntimeMessage({ type: "quietgate.extensionStatus" });
 
   const settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
   const features = {
@@ -442,6 +548,7 @@ async function load() {
   for (const id of featureIds) {
     document.querySelector(`#${id}`).checked = Boolean(features[id]);
   }
+  updateAccountStatus(status || statusBeforeSync || {}, settings);
   updateSyncStatus(settings);
   await refreshCurrentSiteTool();
 }
@@ -517,6 +624,61 @@ document.querySelector("#youtubeDailyLimitMinutes").addEventListener("change", (
 
 document.querySelector("#reportAdultSite").addEventListener("click", () => {
   reportCurrentSite();
+});
+
+document.querySelector("#connectQuietGate").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setButtonBusy(button, true, "Opening...");
+  const response = await sendRuntimeMessage({ type: "quietgate.startExtensionConnect" });
+  if (!response?.ok) {
+    document.querySelector("#accountDetail").textContent = response?.error || "Could not open QuietGate sign-in.";
+    setButtonBusy(button, false);
+    return;
+  }
+  document.querySelector("#accountDetail").textContent = "Finish sign-in on yourtortoise.com.";
+  setButtonBusy(button, false);
+});
+
+document.querySelector("#syncQuietGate").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setButtonBusy(button, true, "Syncing...");
+  await sendRuntimeMessage({ type: "quietgate.syncRemotePolicy", forceApply: true });
+  setButtonBusy(button, false);
+  await load();
+});
+
+document.querySelector("#openDashboard").addEventListener("click", () => {
+  const tabs = tabsAPI();
+  if (tabs?.create) {
+    tabs.create({ url: QUIETGATE_WEB_ORIGIN });
+  }
+});
+
+document.querySelector("#requestAllSites").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setButtonBusy(button, true, "Requesting...");
+  const response = await sendRuntimeMessage({ type: "quietgate.requestAllSitesPermission" });
+  document.querySelector("#permissionStatus").textContent = response?.ok
+    ? "Full web protection is enabled."
+    : response?.error || "Permission was not enabled.";
+  setButtonBusy(button, false);
+  await load();
+});
+
+document.querySelector("#disconnectQuietGate").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setButtonBusy(button, true, "Disconnecting...");
+  await sendRuntimeMessage({ type: "quietgate.revokeExtensionDevice" });
+  setButtonBusy(button, false);
+  await load();
+});
+
+document.querySelector("#localAdultBlocking").addEventListener("change", async (event) => {
+  await sendRuntimeMessage({
+    type: "quietgate.setLocalAdultBlocking",
+    enabled: event.target.checked
+  });
+  await load();
 });
 
 load();

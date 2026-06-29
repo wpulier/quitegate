@@ -4,8 +4,12 @@ import { formatSupabaseError, supabaseErrorCode } from "@/lib/supabase-errors";
 
 export type ApiErrorCode =
   | "unauthorized"
+  | "forbidden"
   | "supabase_not_configured"
+  | "extension_not_configured"
   | "validation_error"
+  | "invalid_link_code"
+  | "invalid_device_token"
   | "policy_version_conflict"
   | "not_found"
   | "supabase_error"

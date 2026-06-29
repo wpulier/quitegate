@@ -4,7 +4,7 @@
   "description": "QuietGate browser helper for site tuning and one-shot browser rule updates.",
   "version": "0.1.12",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvjC874Q39LEu5fYoB0t7+GpMcFd7D46owwm8Nz0GzjJMjECwYVekOhTMoumfGJjktIh/sUvdN9ibbWJvAsGwZfCjczvEc7c+9EGfQ07MSwlX2lcqXOwTjmlUjwS59fXzCzbb6LWarZtP0oDAH67OihTcU0ybbJLDWeWHm9BM/aO2KGLYr8NKwji/4UTAulfUVzR8rNWY3kVSc5+PC/XLszRx/OOcYX0gf5Y2GhZs0uvmiDzU+RV4lutG84qx6WuNlAnyw0keO7sx3kvsehrsPxvwJ77BiX4CBScGu6ncJVJ4h1lCf2QBmEO5EbqYbhehb83kER02OgCop75oiv9K6wIDAQAB",
-  "permissions": ["activeTab", "declarativeNetRequest", "nativeMessaging", "scripting", "storage"],
+  "permissions": ["activeTab", "alarms", "declarativeNetRequest", "nativeMessaging", "scripting", "storage"],
   "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js"

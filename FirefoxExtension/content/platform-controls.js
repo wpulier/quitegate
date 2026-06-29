@@ -178,10 +178,15 @@
     }
     lastPayload = serialized;
     document.documentElement.dataset[CHECKED_MARKER] = "checked";
-    runtime.sendMessage({
-      type: "quietgate.platformControls",
-      payload: snapshot
-    });
+    try {
+      const result = runtime.sendMessage({
+        type: "quietgate.platformControls",
+        payload: snapshot
+      });
+      if (result && typeof result.catch === "function") {
+        result.catch(() => {});
+      }
+    } catch (_error) {}
   }
 
   let queued = false;

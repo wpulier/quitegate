@@ -265,13 +265,37 @@ function sendRuntimeMessage(message) {
       resolve({ ok: false, error: "Browser runtime is unavailable." });
       return;
     }
+    let settled = false;
+    const resolveOnce = (value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+    };
     try {
-      const result = runtime.sendMessage(message, resolve);
+      if (runtime === globalThis.browser?.runtime && runtime !== globalThis.chrome?.runtime) {
+        runtime
+          .sendMessage(message)
+          .then(resolveOnce)
+          .catch((error) => resolveOnce({ ok: false, error: error?.message || String(error) }));
+        return;
+      }
+      const result = runtime.sendMessage(message, (response) => {
+        const error = runtime.lastError;
+        if (error) {
+          resolveOnce({ ok: false, error: error.message || String(error) });
+          return;
+        }
+        resolveOnce(response);
+      });
       if (result && typeof result.then === "function") {
-        result.then(resolve).catch((error) => resolve({ ok: false, error: error?.message || String(error) }));
+        result
+          .then(resolveOnce)
+          .catch((error) => resolveOnce({ ok: false, error: error?.message || String(error) }));
       }
     } catch (error) {
-      resolve({ ok: false, error: error?.message || String(error) });
+      resolveOnce({ ok: false, error: error?.message || String(error) });
     }
   });
 }

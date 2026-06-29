@@ -13,6 +13,24 @@
       <p id="ruleStatus" hidden></p>
       </header>
 
+      <section class="account-panel" aria-label="QuietGate account">
+        <p id="accountStatus">Checking account...</p>
+        <p id="accountDetail"></p>
+        <div class="button-row">
+          <button id="connectQuietGate" type="button">Sign in</button>
+          <button id="syncQuietGate" type="button">Sync</button>
+          <button id="openDashboard" type="button">Dashboard</button>
+        </div>
+        <button id="requestAllSites" type="button">Enable full web protection</button>
+        <button id="disconnectQuietGate" type="button">Disconnect this extension</button>
+        <p id="permissionStatus"></p>
+        <p id="incognitoStatus"></p>
+        <label class="local-adult">
+          <input id="localAdultBlocking" type="checkbox">
+          Local adult-site blocking when signed out
+        </label>
+      </section>
+
       <section class="current-site" aria-label="Current site">
         <p id="currentSiteStatus">Current site tools</p>
         <button id="reportAdultSite" type="button">Block current site</button>

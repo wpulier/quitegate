@@ -64,6 +64,7 @@ host for this extension ID:
 
 After that, opening YouTube, X, Instagram, Reddit, a blocked-domain page, the
 connect page, or the extension popup asks the native host for the latest
-QuietGate mode and stores it in browser extension storage. QuietGate does not
-poll in the background; saved changes apply when the browser opens, a page
-reloads, or the Mac app opens the connect page once.
+QuietGate mode and stores it in browser extension storage. Account-linked store
+builds also use a periodic browser alarm to refresh remote policy. Native Mac
+changes apply when the browser opens, a page reloads, or the Mac app opens the
+connect page once.

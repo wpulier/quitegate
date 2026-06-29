@@ -5,6 +5,7 @@ export const devicePlatformSchema = z.enum([
   "ios",
   "web",
   "chrome",
+  "chrome_extension",
   "firefox",
   "safari",
 ]);

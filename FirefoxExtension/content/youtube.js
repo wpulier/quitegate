@@ -180,6 +180,22 @@ function effectiveFeatures(settings) {
   };
 }
 
+function redirectToYouTubeHomeIfStillOn(blockedPathTest) {
+  const redirect = () => {
+    if (blockedPathTest(location.pathname)) {
+      location.replace("https://www.youtube.com/");
+    }
+  };
+  redirect();
+  window.addEventListener("DOMContentLoaded", redirect, { once: true });
+  window.addEventListener("load", redirect, { once: true });
+  window.addEventListener("pageshow", redirect, { once: true });
+  setTimeout(redirect, 100);
+  setTimeout(redirect, 500);
+  setTimeout(redirect, 1500);
+  setTimeout(redirect, 3000);
+}
+
 function applySettings() {
   const features = effectiveFeatures(currentSettings);
 
@@ -188,15 +204,15 @@ function applySettings() {
   }
 
   if (features.youtubeShorts && location.pathname.startsWith("/shorts")) {
-    location.replace("https://www.youtube.com/");
+    redirectToYouTubeHomeIfStillOn((path) => path.startsWith("/shorts"));
   }
 
   if (features.youtubeExplore && /^\/feed\/(?:explore|trending)/.test(location.pathname)) {
-    location.replace("https://www.youtube.com/");
+    redirectToYouTubeHomeIfStillOn((path) => /^\/feed\/(?:explore|trending)/.test(path));
   }
 
   if (features.youtubeSubscriptions && location.pathname.startsWith("/feed/subscriptions")) {
-    location.replace("https://www.youtube.com/");
+    redirectToYouTubeHomeIfStillOn((path) => path.startsWith("/feed/subscriptions"));
   }
 
   if (features.youtubeAutoplay) {
