@@ -20,6 +20,81 @@ struct PolicyEnvelope: Decodable {
 struct TortoisePolicy: Decodable {
   let mode: String
   let adultBlockingEnabled: Bool
+  let browser: BrowserPolicy?
+  let schedules: SchedulePolicy?
+  let applications: ApplicationsPolicy?
+}
+
+struct BrowserPolicy: Decodable {
+  let features: [String: Bool]
+  let blockedDomains: [String]
+  let blockedCategories: [String]
+  let options: BrowserPolicyOptions?
+}
+
+struct BrowserPolicyOptions: Decodable {
+  let explicitHideStyle: String?
+  let youtubeDailyLimitMinutes: Int?
+}
+
+struct SchedulePolicy: Decodable {
+  let enabled: Bool
+  let dailyFocusWindows: [FocusWindowPolicy]
+}
+
+struct FocusWindowPolicy: Decodable {
+  let id: String
+  let title: String
+  let startMinute: Int
+  let endMinute: Int
+  let mode: String
+  let isEnabled: Bool
+}
+
+struct ApplicationsPolicy: Decodable {
+  let enforcementEnabled: Bool
+  let blocked: [ApplicationPolicyRule]
+  let allowed: [ApplicationPolicyRule]
+}
+
+struct ApplicationPolicyRule: Decodable, Identifiable {
+  let bundleIdentifier: String
+  let displayName: String
+  let isEnabled: Bool
+  let addedAt: String
+
+  var id: String {
+    bundleIdentifier
+  }
+}
+
+extension TortoisePolicy {
+  var normalizedMode: String {
+    mode.capitalized
+  }
+
+  var enabledBrowserFeatureCount: Int {
+    browser?.features.values.filter { $0 }.count ?? 0
+  }
+
+  func featureEnabled(withPrefix prefix: String) -> Bool {
+    let normalizedPrefix = prefix.lowercased()
+    return browser?.features.contains { key, isEnabled in
+      isEnabled && key.lowercased().hasPrefix(normalizedPrefix)
+    } ?? false
+  }
+
+  var activeBlockedAppCount: Int {
+    applications?.blocked.filter(\.isEnabled).count ?? 0
+  }
+
+  var activeAllowedAppCount: Int {
+    applications?.allowed.filter(\.isEnabled).count ?? 0
+  }
+
+  var activeFocusWindowCount: Int {
+    schedules?.dailyFocusWindows.filter(\.isEnabled).count ?? 0
+  }
 }
 
 struct DevicesEnvelope: Decodable {
