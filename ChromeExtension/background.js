@@ -7,13 +7,21 @@ const QUIETGATE_RULE_ID_BASE = 100000;
 const QUIETGATE_MAX_RULES = 30000;
 const X_INITIATOR_DOMAINS = ["x.com", "twitter.com", "mobile.x.com"];
 const REDDIT_INITIATOR_DOMAINS = ["reddit.com", "www.reddit.com", "old.reddit.com", "new.reddit.com"];
-const YOUTUBE_TUNER_VERSION = "2026.06.12.01";
-const X_TUNER_VERSION = "2026.06.11.01";
-const REDDIT_TUNER_VERSION = "2026.06.11.01";
+const YOUTUBE_TUNER_VERSION = "2026.06.29.1200";
+const X_TUNER_VERSION = "2026.06.29.1200";
+const INSTAGRAM_TUNER_VERSION = "2026.06.29.1200";
+const REDDIT_TUNER_VERSION = "2026.06.29.1200";
 const TUNER_VERSIONS = {
   youtube: YOUTUBE_TUNER_VERSION,
   x: X_TUNER_VERSION,
+  instagram: INSTAGRAM_TUNER_VERSION,
   reddit: REDDIT_TUNER_VERSION
+};
+const USAGE_SITE_DEFINITIONS = {
+  youtube: { title: "YouTube", activityLabel: "videos" },
+  x: { title: "X", activityLabel: null },
+  instagram: { title: "Instagram", activityLabel: null },
+  reddit: { title: "Reddit", activityLabel: null }
 };
 const ADULT_STATIC_RULESETS = [
   { id: "adult-static-1", ruleCount: 30000, domainCount: 15000 },
@@ -107,6 +115,9 @@ const DEFAULT_SETTINGS = {
     instagramReels: false,
     instagramExplore: false,
     instagramSuggested: false,
+    instagramProfileSuggestions: false,
+    instagramMessages: false,
+    instagramNotifications: false,
     instagramStories: false,
     redditPopularAll: false,
     redditRecommendations: false,
@@ -123,40 +134,103 @@ const DEFAULT_SETTINGS = {
   settingsVersion: "mode=open|features=|domains=|categories=|options=explicitHideStyle=post,youtubeDailyLimitMinutes=30",
   updatedAt: new Date(0).toISOString(),
   browserID: null,
-  browserProfile: null
+  browserProfile: null,
+  siteUsageSummary: null,
+  youtubeUsageSummary: null
 };
 
 const TUNER_TARGETS = [
   {
+    id: "youtube",
     urls: ["https://www.youtube.com/*", "https://m.youtube.com/*"],
     marker: "quietgateTuner",
     version: YOUTUBE_TUNER_VERSION,
+    hiddenCountDataset: "quietgateYouTubeHiddenCount",
     css: "content/youtube.css",
-    js: "content/youtube.js"
+    js: ["content/site-usage.js", "content/youtube.js"]
   },
   {
     id: "x",
     urls: ["https://x.com/*", "https://twitter.com/*", "https://mobile.x.com/*"],
     marker: "quietgateXTuner",
     version: X_TUNER_VERSION,
+    hiddenCountDataset: "quietgateXHiddenMediaCount",
     pageJs: "content/x-page.js",
     css: "content/x.css",
-    js: "content/x.js"
+    js: ["content/site-usage.js", "content/x.js"]
   },
   {
+    id: "instagram",
     urls: ["https://www.instagram.com/*", "https://instagram.com/*"],
     marker: "quietgateInstagramTuner",
+    version: INSTAGRAM_TUNER_VERSION,
+    hiddenCountDataset: "quietgateInstagramHiddenCount",
     css: "content/instagram.css",
-    js: "content/instagram.js"
+    js: ["content/site-usage.js", "content/instagram.js"]
   },
   {
+    id: "reddit",
     urls: ["https://www.reddit.com/*", "https://old.reddit.com/*", "https://new.reddit.com/*"],
     marker: "quietgateRedditTuner",
     version: REDDIT_TUNER_VERSION,
+    hiddenCountDataset: "quietgateRedditHiddenCount",
     css: "content/reddit.css",
-    js: "content/reddit.js"
+    js: ["content/site-usage.js", "content/reddit.js"]
   }
 ];
+
+const TUNER_FEATURES = {
+  youtube: [
+    "youtubeHome",
+    "youtubeVideoSidebar",
+    "youtubeShorts",
+    "youtubeComments",
+    "youtubeRecommendations",
+    "youtubeSearch",
+    "youtubeEndScreens",
+    "youtubeEndScreenCards",
+    "youtubeLiveChat",
+    "youtubeAutoplay",
+    "youtubePlaylists",
+    "youtubeFundraisers",
+    "youtubeMixes",
+    "youtubeMerch",
+    "youtubeVideoInfo",
+    "youtubeTopHeader",
+    "youtubeNotifications",
+    "youtubeExplore",
+    "youtubeMoreFromYouTube",
+    "youtubeSubscriptions",
+    "youtubeAnnotations",
+    "youtubeUsageTracking",
+    "youtubeDailyLimit"
+  ],
+  x: [
+    "xSensitiveMedia",
+    "xExplicitContent",
+    "xExplicitSearch",
+    "xVideos",
+    "xPhotos",
+    "xMediaCards",
+    "xExploreTrends"
+  ],
+  instagram: [
+    "instagramReels",
+    "instagramExplore",
+    "instagramSuggested",
+    "instagramProfileSuggestions",
+    "instagramMessages",
+    "instagramNotifications",
+    "instagramStories"
+  ],
+  reddit: [
+    "redditPopularAll",
+    "redditRecommendations",
+    "redditNSFW",
+    "redditMedia",
+    "redditSidebars"
+  ]
+};
 
 function modeFeatures(mode) {
   if (mode === "strict") {
@@ -194,6 +268,9 @@ function modeFeatures(mode) {
       instagramReels: true,
       instagramExplore: true,
       instagramSuggested: true,
+      instagramProfileSuggestions: true,
+      instagramMessages: true,
+      instagramNotifications: true,
       instagramStories: true,
       redditPopularAll: true,
       redditRecommendations: true,
@@ -238,6 +315,9 @@ function modeFeatures(mode) {
       instagramReels: true,
       instagramExplore: true,
       instagramSuggested: true,
+      instagramProfileSuggestions: true,
+      instagramMessages: true,
+      instagramNotifications: true,
       instagramStories: false,
       redditPopularAll: true,
       redditRecommendations: true,
@@ -509,6 +589,21 @@ async function quietGateBrowserID() {
   return null;
 }
 
+function quietGateBrowserName(browserID) {
+  switch (browserID) {
+    case "chrome":
+      return "Chrome";
+    case "edge":
+      return "Microsoft Edge";
+    case "brave":
+      return "Brave";
+    case "arc":
+      return "Arc";
+    default:
+      return "Chrome";
+  }
+}
+
 function quietGateRuleIDs(count) {
   return Array.from({ length: count }, (_, index) => QUIETGATE_RULE_ID_BASE + index);
 }
@@ -744,22 +839,23 @@ async function applyDynamicBlockRules(settings) {
   return siteRuleCount + staticAdultDomainCount;
 }
 
-async function tunerState(tabId, marker) {
+async function tunerState(tabId, marker, hiddenCountDataset = null) {
   try {
     const results = await chrome.scripting.executeScript({
       target: { tabId },
-      func: (markerName) => {
+      func: (markerName, hiddenDatasetName) => {
         const dataset = document.documentElement.dataset;
         return {
           loaded: Boolean(dataset[markerName]),
-          version: dataset[`${markerName}Version`] || null
+          version: dataset[`${markerName}Version`] || null,
+          hiddenCount: hiddenDatasetName ? Number(dataset[hiddenDatasetName]) || 0 : 0
         };
       },
-      args: [marker]
+      args: [marker, hiddenCountDataset]
     });
-    return results.find((result) => result.result)?.result || { loaded: false, version: null };
+    return results.find((result) => result.result)?.result || { loaded: false, version: null, hiddenCount: 0 };
   } catch (_error) {
-    return { loaded: true, version: null };
+    return { loaded: true, version: null, hiddenCount: 0 };
   }
 }
 
@@ -768,6 +864,57 @@ function tunerNeedsInjection(target, state) {
     return true;
   }
   return Boolean(target.version && state.version !== target.version);
+}
+
+function activeFeatureKeysForTuner(settings, tunerID) {
+  const features = settings?.features || {};
+  return (TUNER_FEATURES[tunerID] || []).filter((feature) => Boolean(features[feature]));
+}
+
+async function tunerHealthSnapshot(settings = null) {
+  const normalized = settings ? normalizeSettings(settings) : await currentStoredSettings();
+  const checkedAt = new Date().toISOString();
+  const health = {};
+
+  for (const target of TUNER_TARGETS) {
+    const id = target.id;
+    let loadedTabCount = 0;
+    let staleTabCount = 0;
+    let hiddenCount = 0;
+    let lastCheckedURL = null;
+
+    try {
+      const tabs = await chrome.tabs.query({ url: target.urls });
+      for (const tab of tabs) {
+        if (!tab.id) {
+          continue;
+        }
+        lastCheckedURL = tab.url || lastCheckedURL;
+        const state = await tunerState(tab.id, target.marker, target.hiddenCountDataset);
+        if (state.loaded) {
+          loadedTabCount += 1;
+        }
+        if (target.version && (!state.loaded || state.version !== target.version)) {
+          staleTabCount += 1;
+        }
+        hiddenCount += Math.max(Number(state.hiddenCount) || 0, 0);
+      }
+    } catch (_error) {
+      // Tuner health should never block settings application.
+    }
+
+    health[id] = {
+      expectedVersion: target.version || null,
+      loadedTabCount,
+      staleTabCount,
+      activeFeatureKeys: activeFeatureKeysForTuner(normalized, id),
+      hiddenCount,
+      lastCheckedURL,
+      lastCheckedAt: checkedAt
+    };
+  }
+
+  return health;
 }
 
 function xProfileRescueScript(payload) {
@@ -1291,7 +1438,7 @@ async function ensureTunerInSupportedTabs() {
       if (!tab.id) {
         continue;
       }
-      const state = await tunerState(tab.id, target.marker);
+      const state = await tunerState(tab.id, target.marker, target.hiddenCountDataset);
       if (!tunerNeedsInjection(target, state)) {
         if (target.id === "x") {
           try {
@@ -1491,25 +1638,112 @@ function youtubeLimitSeconds(settings) {
   return minutes * 60;
 }
 
-async function youtubeUsageSnapshot(settings = null) {
-  const stored = await chrome.storage.local.get({ youtubeUsage: null });
-  const usage = stored.youtubeUsage;
-  if (!usage || typeof usage !== "object") {
+function normalizedUsageSiteID(value) {
+  const siteID = String(value || "").trim().toLowerCase();
+  if (siteID === "twitter") {
+    return "x";
+  }
+  return Object.prototype.hasOwnProperty.call(USAGE_SITE_DEFINITIONS, siteID) ? siteID : null;
+}
+
+function normalizeSiteUsageValue(siteID, usage, settings = null) {
+  const normalizedSiteID = normalizedUsageSiteID(siteID || usage?.siteID);
+  if (!normalizedSiteID || !usage || typeof usage !== "object") {
     return null;
   }
-  const normalized = settings ? normalizeSettings(settings) : await currentStoredSettings();
-  const limitSeconds = youtubeLimitSeconds(normalized);
   const totalSeconds = Math.max(Math.floor(Number(usage.totalSeconds) || 0), 0);
-  return {
+  const activityCount = Math.max(Math.floor(Number(usage.activityCount ?? usage.videoCount) || 0), 0);
+  const lifetimeActivityCount = Math.max(Math.floor(Number(usage.lifetimeActivityCount ?? usage.lifetimeVideoCount) || 0), 0);
+  const definition = USAGE_SITE_DEFINITIONS[normalizedSiteID];
+  const snapshot = {
+    siteID: normalizedSiteID,
+    title: definition.title,
     date: typeof usage.date === "string" ? usage.date : "",
     totalSeconds,
     lifetimeSeconds: Math.max(Math.floor(Number(usage.lifetimeSeconds) || 0), 0),
-    videoCount: Math.max(Math.floor(Number(usage.videoCount) || 0), 0),
-    lifetimeVideoCount: Math.max(Math.floor(Number(usage.lifetimeVideoCount) || 0), 0),
-    limitSeconds,
-    limitReached: Boolean(limitSeconds && totalSeconds >= limitSeconds),
+    activityCount,
+    lifetimeActivityCount,
+    activityLabel: typeof usage.activityLabel === "string" ? usage.activityLabel : definition.activityLabel,
     lastUpdatedAt: typeof usage.lastUpdatedAt === "string" ? usage.lastUpdatedAt : null
   };
+
+  if (normalizedSiteID === "youtube") {
+    const limitSeconds = settings ? youtubeLimitSeconds(settings) : null;
+    snapshot.videoCount = activityCount;
+    snapshot.lifetimeVideoCount = lifetimeActivityCount;
+    snapshot.limitSeconds = limitSeconds;
+    snapshot.limitReached = Boolean(limitSeconds && totalSeconds >= limitSeconds);
+  }
+
+  return snapshot;
+}
+
+async function youtubeUsageSnapshot(settings = null) {
+  const stored = await chrome.storage.local.get({ youtubeUsage: null });
+  const normalized = settings ? normalizeSettings(settings) : await currentStoredSettings();
+  const usage = normalizeSiteUsageValue("youtube", stored.youtubeUsage, normalized);
+  if (!usage) {
+    return null;
+  }
+  return {
+    date: usage.date,
+    totalSeconds: usage.totalSeconds,
+    lifetimeSeconds: usage.lifetimeSeconds,
+    videoCount: usage.activityCount,
+    lifetimeVideoCount: usage.lifetimeActivityCount,
+    limitSeconds: usage.limitSeconds,
+    limitReached: usage.limitReached,
+    lastUpdatedAt: usage.lastUpdatedAt
+  };
+}
+
+async function siteUsageSnapshot(settings = null) {
+  const stored = await chrome.storage.local.get({
+    siteUsageBySite: {},
+    youtubeUsage: null
+  });
+  const normalized = settings ? normalizeSettings(settings) : await currentStoredSettings();
+  const siteUsageBySite = stored.siteUsageBySite && typeof stored.siteUsageBySite === "object"
+    ? stored.siteUsageBySite
+    : {};
+  const sites = Object.keys(USAGE_SITE_DEFINITIONS)
+    .map((siteID) => {
+      const usage = siteUsageBySite[siteID] || (siteID === "youtube" ? stored.youtubeUsage : null);
+      return normalizeSiteUsageValue(siteID, usage, normalized);
+    })
+    .filter((usage) => usage && usage.date);
+  if (!sites.length) {
+    return null;
+  }
+  return {
+    schemaVersion: 1,
+    sites
+  };
+}
+
+async function saveYouTubeUsageSummary(response) {
+  if (!response || !Object.prototype.hasOwnProperty.call(response, "youtubeUsageSummary")) {
+    return;
+  }
+  const summary = response.youtubeUsageSummary && typeof response.youtubeUsageSummary === "object"
+    ? response.youtubeUsageSummary
+    : null;
+  await chrome.storage.local.set({ youtubeUsageSummary: summary });
+}
+
+async function saveSiteUsageSummary(response) {
+  if (!response || !Object.prototype.hasOwnProperty.call(response, "siteUsageSummary")) {
+    return;
+  }
+  const summary = response.siteUsageSummary && typeof response.siteUsageSummary === "object"
+    ? response.siteUsageSummary
+    : null;
+  await chrome.storage.local.set({ siteUsageSummary: summary });
+}
+
+async function saveUsageSummaries(response) {
+  await saveSiteUsageSummary(response);
+  await saveYouTubeUsageSummary(response);
 }
 
 async function extensionAuthStatus() {
@@ -1581,7 +1815,9 @@ async function syncRemotePolicy(options = {}) {
     if (response?.device) {
       await chrome.storage.local.set({ extensionDevice: response.device });
     }
-    return await saveRemoteSettings(response?.policy, options);
+    const result = await saveRemoteSettings(response?.policy, options);
+    await syncRemoteSiteUsageSummary();
+    return result;
   } catch (error) {
     const message = error?.message || String(error);
     await chrome.storage.local.set({
@@ -1664,6 +1900,7 @@ async function recordRemoteHealth(settings = null, blockedRuleCount = null, meta
       reddit: Boolean(normalized.features?.redditNSFW)
     },
     adultProtection: await adultProtectionHealth(normalized, ruleCount),
+    tunerHealth: await tunerHealthSnapshot(normalized),
     platformMetadata: {
       source: stored.source || metadata.source || null,
       browserID: await quietGateBrowserID(),
@@ -1687,17 +1924,97 @@ async function recordRemoteHealth(settings = null, blockedRuleCount = null, meta
   }
 }
 
+async function syncRemoteSiteUsageSummary() {
+  const stored = await chrome.storage.local.get({ extensionDeviceToken: null });
+  if (!stored.extensionDeviceToken) {
+    return { ok: true, skipped: true };
+  }
+
+  try {
+    const response = await quietGateFetch("/api/extension/usage", {
+      method: "GET",
+      cache: "no-store"
+    }, stored.extensionDeviceToken);
+    if (response?.siteUsageSummary) {
+      await saveSiteUsageSummary(response);
+    }
+    return { ok: true, siteUsageSummary: response?.siteUsageSummary || null };
+  } catch (error) {
+    return { ok: false, error: error?.message || String(error) };
+  }
+}
+
+async function remoteSiteUsageSourcePayload() {
+  const browserID = await quietGateBrowserID();
+  const browserName = quietGateBrowserName(browserID);
+  const installationId = await ensureInstallationId();
+  const stored = await chrome.storage.local.get({
+    browserProfile: null,
+    extensionDevice: null
+  });
+  const profile = normalizeProfileMetadata(stored.browserProfile);
+  const deviceName = typeof stored.extensionDevice?.name === "string"
+    ? stored.extensionDevice.name
+    : "Tortoise for Chrome";
+  const sourceID = `${browserID || "chrome"}:${profile?.id || installationId}`;
+  const profileLabel = profile?.label || profile?.name || profile?.id || null;
+
+  return {
+    sourceID,
+    sourceType: "browser",
+    label: profileLabel ? `${browserName} - ${profileLabel}` : browserName,
+    browserID: browserID || "chrome",
+    browserName,
+    profileID: profile?.id || installationId,
+    profileName: profile?.name || profileLabel,
+    deviceName,
+    platformMetadata: {
+      extensionId: chrome.runtime.id,
+      installationId,
+      manifestVersion: chrome.runtime.getManifest().manifest_version
+    }
+  };
+}
+
+async function recordRemoteSiteUsage(siteUsage) {
+  const stored = await chrome.storage.local.get({ extensionDeviceToken: null });
+  if (!stored.extensionDeviceToken || !siteUsage?.sites?.length) {
+    return { ok: true, skipped: true };
+  }
+
+  try {
+    const response = await quietGateFetch("/api/extension/usage", {
+      method: "POST",
+      body: JSON.stringify({
+        schemaVersion: 1,
+        sites: siteUsage.sites,
+        source: await remoteSiteUsageSourcePayload()
+      })
+    }, stored.extensionDeviceToken);
+    if (response?.siteUsageSummary) {
+      await saveSiteUsageSummary(response);
+    }
+    return { ok: true, siteUsageSummary: response?.siteUsageSummary || null };
+  } catch (error) {
+    return { ok: false, error: error?.message || String(error) };
+  }
+}
+
 async function recordAppliedSettings(settingsVersion, blockedRuleCount, lastError = null, settings = null) {
   const browserID = await quietGateBrowserID();
   const stored = await chrome.storage.local.get({ platformControls: {} });
   const usage = await youtubeUsageSnapshot(settings);
+  const siteUsage = await siteUsageSnapshot(settings);
+  const tunerHealth = await tunerHealthSnapshot(settings);
   const message = {
     type: "recordAppliedSettings",
     settingsVersion,
     extensionVersion: chrome.runtime.getManifest().version,
     scriptVersions: TUNER_VERSIONS,
+    tunerHealth,
     adultProtection: await adultProtectionHealth(settings, blockedRuleCount),
     platformControls: stored.platformControls || {},
+    siteUsage,
     youtubeUsage: usage,
     blockedRuleCount,
     lastError
@@ -1707,9 +2024,16 @@ async function recordAppliedSettings(settingsVersion, blockedRuleCount, lastErro
   }
   if (!supportsNativeMessaging()) {
     const remoteResponse = await recordRemoteHealth(settings, blockedRuleCount, { source: "extension" });
-    return remoteResponse?.ok ? { ok: true } : remoteResponse;
+    const remoteUsageResponse = await recordRemoteSiteUsage(siteUsage);
+    if (!remoteResponse?.ok) {
+      return remoteResponse;
+    }
+    return remoteUsageResponse?.ok ? { ok: true } : remoteUsageResponse;
   }
-  return sendNativeMessage(message);
+  const response = await sendNativeMessage(message);
+  await saveUsageSummaries(response);
+  await recordRemoteSiteUsage(siteUsage);
+  return response;
 }
 
 async function syncNativeSettings(options = {}) {
@@ -1755,6 +2079,7 @@ async function syncNativeSettingsOnce(options = {}) {
     });
     return { ok: false, error: message };
   }
+  await saveUsageSummaries(response);
 
   const settings = normalizeSettings(response.settings);
   try {
@@ -1772,6 +2097,8 @@ async function syncNativeSettingsOnce(options = {}) {
       browserID: effectiveBrowserID,
       profile: browserProfile
     });
+    await ensureTunerInSupportedTabs();
+    await ensureWebClassifierInOpenTabs(savedSettings);
     const recordResponse = await recordAppliedSettings(
       savedSettings.settingsVersion,
       blockedRuleCount,
@@ -1790,8 +2117,6 @@ async function syncNativeSettingsOnce(options = {}) {
       lastAppliedSettingsVersion: savedSettings.settingsVersion,
       lastAppliedAt: new Date().toISOString()
     });
-    await ensureTunerInSupportedTabs();
-    await ensureWebClassifierInOpenTabs(savedSettings);
     return {
       ok: true,
       settings: savedSettings,
@@ -1810,7 +2135,7 @@ async function syncNativeSettingsOnce(options = {}) {
   }
 }
 
-async function recordYouTubeUsageChange() {
+async function recordSiteUsageChange() {
   const settings = await currentStoredSettings();
   const stored = await chrome.storage.local.get({
     settingsVersion: settings.settingsVersion || DEFAULT_SETTINGS.settingsVersion,
@@ -1824,8 +2149,12 @@ async function recordYouTubeUsageChange() {
   );
   return response?.ok ? { ok: true } : {
     ok: false,
-    error: response?.error || "QuietGate could not record YouTube usage."
+    error: response?.error || "Tortoise could not record site usage."
   };
+}
+
+async function recordYouTubeUsageChange() {
+  return recordSiteUsageChange();
 }
 
 async function startExtensionConnect() {
@@ -2038,6 +2367,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message?.type === "quietgate.youtubeUsageChanged") {
     return respondToMessage(recordYouTubeUsageChange(), sendResponse);
+  }
+
+  if (message?.type === "quietgate.siteUsageChanged") {
+    return respondToMessage(recordSiteUsageChange(), sendResponse);
   }
 
   if (message?.type === "quietgate.classifyWebAdultPage") {

@@ -225,7 +225,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(
       store.primaryBrowserConnector.state,
       .connectedPending(
-        "Chrome is connected in Default. New QuietGate settings are saved and ready to apply."
+        "Chrome is connected in Default. QuietGate is updating it with the latest settings."
       )
     )
     XCTAssertEqual(store.primaryBrowserConnector.nextAction, .applyBrowserChanges(.chrome))
@@ -257,7 +257,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(
       store.primaryBrowserConnector.state,
       .connectedPending(
-        "Chrome has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh X."
+        "Chrome has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh the affected site."
       )
     )
     XCTAssertEqual(store.primaryBrowserConnector.nextAction, .openBrowserExtensionsPage(.chrome))
@@ -295,7 +295,7 @@ final class ProtectionStoreTests: XCTestCase {
 
     XCTAssertEqual(bridge.writtenSettings.last?.mode, .strict)
     XCTAssertEqual(store.primaryBrowserConnector.state, .connectedPending(
-      "Chrome is connected in Default. New QuietGate settings are saved and ready to apply."
+      "Chrome is connected in Default. QuietGate is updating it with the latest settings."
     ))
     XCTAssertEqual(store.primaryBrowserConnector.nextAction, .applyBrowserChanges(.chrome))
     XCTAssertTrue(store.browserSettingsApplyNeeded)
@@ -1798,6 +1798,43 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(bridge.writtenSettings.last?.features["youtubeComments"], true)
   }
 
+  func testBatchTuningFeatureUpdatesPersistAndSyncOnce() {
+    let defaults = isolatedDefaults()
+    let bridge = FakeBrowserExtensionBridge()
+    let store = ProtectionStore(
+      defaults: defaults,
+      keychain: MemorySecretStore(),
+      makeClient: { _ in FakeLegacyProviderService(parentalControl: ParentalControl()) },
+      resolverService: FakeResolverStatusService(),
+      extensionBridge: bridge
+    )
+    let initialWriteCount = bridge.writtenSettings.count
+
+    store.setTuningFeatures(
+      [.instagramReels, .instagramMessages, .instagramNotifications],
+      enabled: true
+    )
+
+    XCTAssertEqual(bridge.writtenSettings.count, initialWriteCount + 1)
+    XCTAssertEqual(store.tuningOverrides["instagramReels"], true)
+    XCTAssertEqual(store.tuningOverrides["instagramMessages"], true)
+    XCTAssertEqual(store.tuningOverrides["instagramNotifications"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramReels"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramMessages"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramNotifications"], true)
+
+    store.setTuningFeatures(
+      [.instagramReels, .instagramMessages, .instagramNotifications],
+      enabled: false
+    )
+
+    XCTAssertEqual(bridge.writtenSettings.count, initialWriteCount + 2)
+    XCTAssertNil(defaults.dictionary(forKey: "quietgate.tuningOverrides"))
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramReels"], false)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramMessages"], false)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramNotifications"], false)
+  }
+
   func testCustomTuningPresentationShowsLoadedChromeTuner() {
     let bridge = FakeBrowserExtensionBridge()
     bridge.extensionLoaded = true
@@ -2238,7 +2275,8 @@ final class ProtectionStoreTests: XCTestCase {
       [
         .youtubeHome, .youtubeShorts, .youtubeUsageTracking,
         .xSensitiveMedia, .xVideos,
-        .instagramReels, .instagramExplore, .instagramSuggested,
+        .instagramReels, .instagramExplore, .instagramSuggested, .instagramProfileSuggestions,
+        .instagramMessages, .instagramNotifications,
         .redditPopularAll, .redditRecommendations,
       ]
     )
@@ -2250,6 +2288,10 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(bridge.writtenSettings.last?.features["xSensitiveMedia"], true)
     XCTAssertEqual(bridge.writtenSettings.last?.features["xVideos"], true)
     XCTAssertEqual(bridge.writtenSettings.last?.features["instagramReels"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramProfileSuggestions"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramMessages"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramNotifications"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramStories"], false)
     XCTAssertEqual(bridge.writtenSettings.last?.features["redditPopularAll"], true)
   }
 
@@ -2274,7 +2316,8 @@ final class ProtectionStoreTests: XCTestCase {
       [
         .youtubeHome, .youtubeShorts, .youtubeUsageTracking,
         .xSensitiveMedia, .xVideos,
-        .instagramReels, .instagramExplore, .instagramSuggested,
+        .instagramReels, .instagramExplore, .instagramSuggested, .instagramProfileSuggestions,
+        .instagramMessages, .instagramNotifications,
         .redditPopularAll, .redditRecommendations,
       ]
     )
@@ -2286,6 +2329,10 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(bridge.writtenSettings.last?.features["xSensitiveMedia"], true)
     XCTAssertEqual(bridge.writtenSettings.last?.features["xVideos"], true)
     XCTAssertEqual(bridge.writtenSettings.last?.features["instagramReels"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramProfileSuggestions"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramMessages"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramNotifications"], true)
+    XCTAssertEqual(bridge.writtenSettings.last?.features["instagramStories"], false)
     XCTAssertEqual(bridge.writtenSettings.last?.features["redditPopularAll"], true)
   }
 

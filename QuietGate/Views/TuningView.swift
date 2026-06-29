@@ -16,13 +16,11 @@ struct TuningView: View {
       sitePicker
 
       if tuningReady {
-        if selectedSite == .youtube {
-          YouTubeUsagePanel(
-            usageTrackingEnabled: featureBinding(.youtubeUsageTracking),
-            dailyLimitEnabled: featureBinding(.youtubeDailyLimit),
-            dailyLimitMinutes: youtubeDailyLimitMinutesBinding
-          )
-        }
+        SiteUsagePanel(
+          usageTrackingEnabled: featureBinding(.youtubeUsageTracking),
+          dailyLimitEnabled: featureBinding(.youtubeDailyLimit),
+          dailyLimitMinutes: youtubeDailyLimitMinutesBinding
+        )
         tuningRulesSection(for: selectedSite)
       } else {
         TuningNeedsBrowserPanel(site: selectedSite)
@@ -92,6 +90,13 @@ struct TuningView: View {
         ProductDivider()
 
         VStack(spacing: 0) {
+          TuningSiteAllRow(
+            site: site,
+            enabled: allFeaturesBinding(for: site),
+            isAvailable: tuningReady
+          )
+          .disabled(store.timedSessionLockedActive)
+
           ForEach(visibleTuningFeatures(for: site)) { feature in
             TuningFeatureRow(
               feature: feature,
@@ -117,6 +122,15 @@ struct TuningView: View {
       store.tuningFeatureEnabled(feature)
     } set: { enabled in
       store.setTuningFeature(feature, enabled: enabled)
+    }
+  }
+
+  private func allFeaturesBinding(for site: BrowserTuningSite) -> Binding<Bool> {
+    Binding {
+      let features = visibleTuningFeatures(for: site)
+      return !features.isEmpty && features.allSatisfy { store.tuningFeatureEnabled($0) }
+    } set: { enabled in
+      store.setTuningFeatures(visibleTuningFeatures(for: site), enabled: enabled)
     }
   }
 
@@ -157,42 +171,32 @@ struct TuningView: View {
   }
 }
 
-private struct YouTubeUsagePanel: View {
+private struct SiteUsagePanel: View {
   @EnvironmentObject private var store: ProtectionStore
   @Binding var usageTrackingEnabled: Bool
   @Binding var dailyLimitEnabled: Bool
   @Binding var dailyLimitMinutes: Int
+  @State private var selectedTab = TortoiseUsageTab.all
 
   var body: some View {
     ProductPanel(
-      title: "YouTube guardrails",
-      subtitle: "Track active YouTube time, count watched videos, and stop playback after a daily cap."
+      title: "Tortoise usage",
+      subtitle: "Today across connected browser profiles, with iOS ready when device sync reports data."
     ) {
       VStack(alignment: .leading, spacing: 16) {
+        Picker("Usage app", selection: $selectedTab) {
+          ForEach(TortoiseUsageTab.allCases) { tab in
+            Text(tab.title).tag(tab)
+          }
+        }
+        .pickerStyle(.segmented)
+
         statsGrid
+        devicesList
 
-        ProductDivider()
-
-        VStack(alignment: .leading, spacing: 12) {
-          Toggle(isOn: $usageTrackingEnabled) {
-            Label("Track time and videos", systemImage: "clock")
-          }
-          .toggleStyle(.switch)
-          .disabled(store.timedSessionLockedActive)
-
-          Toggle(isOn: $dailyLimitEnabled) {
-            Label("Daily time limit", systemImage: "timer")
-          }
-          .toggleStyle(.switch)
-          .disabled(store.timedSessionLockedActive)
-
-          Stepper(
-            "Limit: \(dailyLimitMinutes) minutes",
-            value: $dailyLimitMinutes,
-            in: BrowserTuningOptions.youtubeDailyLimitRange,
-            step: 5
-          )
-          .disabled(store.timedSessionLockedActive || !dailyLimitEnabled)
+        if selectedTab == .youtube {
+          ProductDivider()
+          youtubeControls
         }
       }
     }
@@ -206,35 +210,121 @@ private struct YouTubeUsagePanel: View {
     ) {
       YouTubeUsageStatTile(
         title: "Today",
-        value: durationText(usage?.totalSeconds ?? 0),
+        value: durationText(selectedUsage.totalSeconds),
         systemImage: "clock"
       )
       YouTubeUsageStatTile(
-        title: "Videos",
-        value: "\(usage?.videoCount ?? 0)",
-        systemImage: "play.rectangle"
+        title: selectedUsage.activityTitle,
+        value: selectedUsage.activityValue,
+        systemImage: selectedTab == .youtube ? "play.rectangle" : "person.2"
       )
       YouTubeUsageStatTile(
         title: "All time",
-        value: durationText(usage?.lifetimeSeconds ?? 0),
+        value: durationText(selectedUsage.lifetimeSeconds),
         systemImage: "chart.bar"
       )
       YouTubeUsageStatTile(
         title: "Status",
         value: statusText,
-        systemImage: usage?.limitReached == true ? "lock.fill" : "checkmark.circle"
+        systemImage: selectedUsage.limitReached ? "lock.fill" : "checkmark.circle"
       )
     }
   }
 
-  private var usage: YouTubeUsageSnapshot? {
-    let connected = store.connectedBrowserConnectors.compactMap {
-      store.browserHelperSnapshots[$0.id]?.youtubeUsage
+  private var devicesList: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text("Devices")
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+
+      VStack(spacing: 8) {
+        ForEach(deviceRows) { row in
+          HStack(spacing: 10) {
+            Text(row.icon)
+              .font(.caption.weight(.bold))
+              .foregroundStyle(row.connected ? .primary : .secondary)
+              .frame(width: 34, height: 34)
+              .background(
+                Color.secondary.opacity(row.connected ? 0.14 : 0.08),
+                in: RoundedRectangle(cornerRadius: row.id == "ios" ? 10 : 17)
+              )
+
+            VStack(alignment: .leading, spacing: 2) {
+              Text(row.title)
+                .font(.callout.weight(.semibold))
+              Text(row.subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Text(row.connected ? durationText(row.totalSeconds) : "No data")
+              .font(.callout.weight(.semibold))
+              .foregroundStyle(row.connected ? .primary : .secondary)
+          }
+          .padding(10)
+          .background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
+          .opacity(row.connected ? 1 : 0.58)
+        }
+      }
     }
-    let candidates = connected.isEmpty
-      ? [store.browserHelperSnapshots[store.primaryBrowserConnector.id]?.youtubeUsage]
-      : connected.map(Optional.some)
-    return candidates
+  }
+
+  private var youtubeControls: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Toggle(isOn: $usageTrackingEnabled) {
+        Label("Track time and videos", systemImage: "clock")
+      }
+      .toggleStyle(.switch)
+      .disabled(store.timedSessionLockedActive)
+
+      Toggle(isOn: $dailyLimitEnabled) {
+        Label("Daily time limit", systemImage: "timer")
+      }
+      .toggleStyle(.switch)
+      .disabled(store.timedSessionLockedActive)
+
+      Stepper(
+        "Limit: \(dailyLimitMinutes) minutes",
+        value: $dailyLimitMinutes,
+        in: BrowserTuningOptions.youtubeDailyLimitRange,
+        step: 5
+      )
+      .disabled(store.timedSessionLockedActive || !dailyLimitEnabled)
+    }
+  }
+
+  private var helperSnapshots: [ChromeHelperSnapshot] {
+    let connectedSnapshots = store.connectedBrowserConnectors.compactMap {
+      store.browserHelperSnapshots[$0.id]
+    }
+    return connectedSnapshots.isEmpty
+      ? [store.browserHelperSnapshots[store.primaryBrowserConnector.id]].compactMap { $0 }
+      : connectedSnapshots
+  }
+
+  private var latestSiteSummary: SiteUsageSummarySnapshot? {
+    helperSnapshots
+      .compactMap(\.siteUsageSummary)
+      .sorted(by: { lhs, rhs in
+        (lhs.lastUpdatedAt ?? .distantPast) > (rhs.lastUpdatedAt ?? .distantPast)
+      })
+      .first
+  }
+
+  private var latestYouTubeSummary: YouTubeUsageSummarySnapshot? {
+    helperSnapshots
+      .compactMap(\.youtubeUsageSummary)
+      .sorted(by: { lhs, rhs in
+        (lhs.lastUpdatedAt ?? .distantPast) > (rhs.lastUpdatedAt ?? .distantPast)
+      })
+      .first
+  }
+
+  private var latestYouTubeUsage: YouTubeUsageSnapshot? {
+    helperSnapshots
+      .map(\.youtubeUsage)
       .compactMap { $0 }
       .sorted { lhs, rhs in
         (lhs.lastUpdatedAt ?? .distantPast) > (rhs.lastUpdatedAt ?? .distantPast)
@@ -242,17 +332,75 @@ private struct YouTubeUsagePanel: View {
       .first
   }
 
+  private var selectedUsage: TortoiseUsageDisplay {
+    if let summary = latestSiteSummary {
+      switch selectedTab {
+      case .all:
+        return TortoiseUsageDisplay(
+          id: "all",
+          title: "All",
+          totalSeconds: summary.totalSeconds,
+          lifetimeSeconds: summary.lifetimeSeconds,
+          activityCount: summary.activityCount ?? 0,
+          activityLabel: nil,
+          limitSeconds: nil,
+          limitReached: false,
+          sources: (summary.entries ?? summary.sites.flatMap(\.entries)).map(TortoiseUsageSource.init)
+        )
+      case .youtube, .x, .instagram, .reddit:
+        if let site = summary.sites.first(where: { $0.siteID == selectedTab.rawValue }) {
+          return TortoiseUsageDisplay(site: site)
+        }
+      }
+    }
+
+    if selectedTab == .all || selectedTab == .youtube {
+      if let summary = latestYouTubeSummary {
+        return TortoiseUsageDisplay(youtube: summary)
+      }
+      if let usage = latestYouTubeUsage {
+        return TortoiseUsageDisplay(youtube: usage)
+      }
+    }
+
+    return .empty(tab: selectedTab)
+  }
+
+  private var deviceRows: [TortoiseUsageDeviceRow] {
+    let iosSources = selectedUsage.sources.filter(\.isIOS)
+    let webSources = selectedUsage.sources.filter { !$0.isIOS }
+    let browserNames = Set(webSources.map(\.browserName).filter { !$0.isEmpty }).sorted()
+    return [
+      TortoiseUsageDeviceRow(
+        id: "web",
+        title: "Web browser",
+        subtitle: webSources.isEmpty ? "No browser data yet" : (browserNames.isEmpty ? "Connected profiles" : browserNames.joined(separator: ", ")),
+        icon: "WEB",
+        connected: !webSources.isEmpty,
+        totalSeconds: webSources.reduce(0) { $0 + $1.totalSeconds }
+      ),
+      TortoiseUsageDeviceRow(
+        id: "ios",
+        title: "iOS",
+        subtitle: iosSources.isEmpty ? "Not connected" : "Connected",
+        icon: "iOS",
+        connected: !iosSources.isEmpty,
+        totalSeconds: iosSources.reduce(0) { $0 + $1.totalSeconds }
+      )
+    ]
+  }
+
   private var statusText: String {
-    guard let usage else {
+    guard selectedUsage.hasData else {
       return "Waiting"
     }
-    if usage.limitReached {
+    if selectedUsage.limitReached {
       return "Limit hit"
     }
-    guard let limitSeconds = usage.limitSeconds, limitSeconds > 0 else {
+    guard let limitSeconds = selectedUsage.limitSeconds, limitSeconds > 0 else {
       return "Tracking"
     }
-    let remaining = max(limitSeconds - usage.totalSeconds, 0)
+    let remaining = max(limitSeconds - selectedUsage.totalSeconds, 0)
     return "\(durationText(remaining)) left"
   }
 
@@ -265,6 +413,190 @@ private struct YouTubeUsagePanel: View {
     }
     return "\(minutes)m"
   }
+}
+
+private enum TortoiseUsageTab: String, CaseIterable, Identifiable {
+  case all
+  case youtube
+  case x
+  case instagram
+  case reddit
+
+  var id: String { rawValue }
+
+  var title: String {
+    switch self {
+    case .all: return "All"
+    case .youtube: return "YouTube"
+    case .x: return "X"
+    case .instagram: return "Instagram"
+    case .reddit: return "Reddit"
+    }
+  }
+}
+
+private struct TortoiseUsageDisplay {
+  let id: String
+  let title: String
+  let totalSeconds: Int
+  let lifetimeSeconds: Int
+  let activityCount: Int
+  let activityLabel: String?
+  let limitSeconds: Int?
+  let limitReached: Bool
+  let sources: [TortoiseUsageSource]
+
+  var hasData: Bool {
+    totalSeconds > 0 || !sources.isEmpty
+  }
+
+  var activityTitle: String {
+    if activityLabel == "videos" {
+      return "Videos"
+    }
+    return "Accounts"
+  }
+
+  var activityValue: String {
+    if activityLabel == "videos" {
+      return "\(activityCount)"
+    }
+    return "\(Set(sources.map(\.accountKey)).count)"
+  }
+
+  static func empty(tab: TortoiseUsageTab) -> TortoiseUsageDisplay {
+    TortoiseUsageDisplay(
+      id: tab.rawValue,
+      title: tab.title,
+      totalSeconds: 0,
+      lifetimeSeconds: 0,
+      activityCount: 0,
+      activityLabel: tab == .youtube ? "videos" : nil,
+      limitSeconds: nil,
+      limitReached: false,
+      sources: []
+    )
+  }
+
+  init(
+    id: String,
+    title: String,
+    totalSeconds: Int,
+    lifetimeSeconds: Int,
+    activityCount: Int,
+    activityLabel: String?,
+    limitSeconds: Int?,
+    limitReached: Bool,
+    sources: [TortoiseUsageSource]
+  ) {
+    self.id = id
+    self.title = title
+    self.totalSeconds = totalSeconds
+    self.lifetimeSeconds = lifetimeSeconds
+    self.activityCount = activityCount
+    self.activityLabel = activityLabel
+    self.limitSeconds = limitSeconds
+    self.limitReached = limitReached
+    self.sources = sources
+  }
+
+  init(site: SiteUsageSnapshot) {
+    self.init(
+      id: site.siteID,
+      title: site.displayTitle,
+      totalSeconds: site.totalSeconds,
+      lifetimeSeconds: site.lifetimeSeconds,
+      activityCount: site.activityCount ?? site.videoCount ?? 0,
+      activityLabel: site.activityLabel,
+      limitSeconds: site.limitSeconds,
+      limitReached: site.limitReached ?? false,
+      sources: site.entries.map(TortoiseUsageSource.init)
+    )
+  }
+
+  init(youtube summary: YouTubeUsageSummarySnapshot) {
+    self.init(
+      id: "youtube",
+      title: "YouTube",
+      totalSeconds: summary.totalSeconds,
+      lifetimeSeconds: summary.lifetimeSeconds,
+      activityCount: summary.videoCount,
+      activityLabel: "videos",
+      limitSeconds: summary.limitSeconds,
+      limitReached: summary.limitReached,
+      sources: summary.entries.map(TortoiseUsageSource.init)
+    )
+  }
+
+  init(youtube usage: YouTubeUsageSnapshot) {
+    self.init(
+      id: "youtube",
+      title: "YouTube",
+      totalSeconds: usage.totalSeconds,
+      lifetimeSeconds: usage.lifetimeSeconds,
+      activityCount: usage.videoCount,
+      activityLabel: "videos",
+      limitSeconds: usage.limitSeconds,
+      limitReached: usage.limitReached,
+      sources: []
+    )
+  }
+}
+
+private struct TortoiseUsageSource {
+  let id: String
+  let sourceType: String
+  let browserName: String
+  let profileID: String
+  let profileName: String
+  let label: String
+  let totalSeconds: Int
+
+  var accountKey: String {
+    email(in: label) ?? email(in: profileName) ?? "\(browserName):\(profileID)"
+  }
+
+  var isIOS: Bool {
+    [sourceType, browserName, profileID, profileName, label, id]
+      .joined(separator: " ")
+      .range(of: #"ios|iphone|ipad"#, options: [.regularExpression, .caseInsensitive]) != nil
+  }
+
+  init(_ source: SiteUsageSourceSnapshot) {
+    id = source.id
+    sourceType = source.sourceType ?? "browser"
+    browserName = source.browserName ?? source.deviceName ?? ""
+    profileID = source.profileID ?? ""
+    profileName = source.profileName ?? ""
+    label = source.label ?? ""
+    totalSeconds = source.totalSeconds ?? source.siteUsage?.totalSeconds ?? 0
+  }
+
+  init(_ source: YouTubeUsageSourceSnapshot) {
+    id = source.id
+    sourceType = "browser"
+    browserName = source.browserName ?? ""
+    profileID = source.profileID ?? ""
+    profileName = source.profileName ?? ""
+    label = source.label ?? ""
+    totalSeconds = source.youtubeUsage.totalSeconds
+  }
+
+  private func email(in value: String) -> String? {
+    let pattern = #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#
+    return value.range(of: pattern, options: [.regularExpression, .caseInsensitive]).map {
+      String(value[$0]).lowercased()
+    }
+  }
+}
+
+private struct TortoiseUsageDeviceRow: Identifiable {
+  let id: String
+  let title: String
+  let subtitle: String
+  let icon: String
+  let connected: Bool
+  let totalSeconds: Int
 }
 
 private struct YouTubeUsageStatTile: View {
@@ -401,17 +733,6 @@ private struct TuningProfileRow: View {
       .disabled(store.isWorking)
       .help("Open the browser profile you want to add, then click Add Profile.")
 
-      if store.browserSettingsApplyNeeded {
-        Button {
-          store.applyPrimaryBrowserChanges()
-        } label: {
-          Label(store.browserSettingsApplyTitle, systemImage: "arrow.up.forward.app")
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.small)
-        .disabled(store.isWorking)
-      }
-
       if hasOverrides {
         Button {
           resetOverrides()
@@ -491,9 +812,16 @@ private struct TuningServiceButton: View {
             .font(.caption.weight(.medium))
             .foregroundStyle(.secondary)
 
-          Text("\(activeFeatureCount) of \(featureCount) active")
+          Text("\(configuredFeatureCount) of \(featureCount) configured")
             .font(.caption)
             .foregroundStyle(.secondary)
+
+          if let tunerHealthText {
+            Text(tunerHealthText)
+              .font(.caption2)
+              .foregroundStyle(tunerHealthColor)
+              .lineLimit(1)
+          }
         }
 
         Spacer(minLength: 6)
@@ -529,8 +857,61 @@ private struct TuningServiceButton: View {
     BrowserTuningFeature.features(for: site).count
   }
 
-  private var activeFeatureCount: Int {
+  private var configuredFeatureCount: Int {
     BrowserTuningFeature.features(for: site).filter { store.tuningFeatureEnabled($0) }.count
+  }
+
+  private var tunerHealth: BrowserTunerHealthSnapshot? {
+    let connected = store.connectedBrowserConnectors.compactMap { connector in
+      store.browserHelperSnapshots[connector.id]?.tunerHealth?[site.rawValue]
+    }
+    let candidates = connected.isEmpty
+      ? [store.browserHelperSnapshots[store.primaryBrowserConnector.id]?.tunerHealth?[site.rawValue]].compactMap { $0 }
+      : connected
+    return candidates
+      .sorted { lhs, rhs in
+        (lhs.lastCheckedAt ?? .distantPast) > (rhs.lastCheckedAt ?? .distantPast)
+      }
+      .first
+  }
+
+  private var tunerHealthText: String? {
+    guard store.browserBlockingConnected else {
+      return nil
+    }
+    guard let tunerHealth else {
+      return "Waiting for browser check"
+    }
+    if tunerHealth.staleTabCount > 0 {
+      return "Browser tuner needs refresh"
+    }
+    if tunerHealth.loadedTabCount == 0 {
+      return "No open \(site.title) tabs checked"
+    }
+    if tunerHealth.hiddenCount > 0 {
+      let noun = tunerHealth.hiddenCount == 1 ? "surface" : "surfaces"
+      return "\(tunerHealth.hiddenCount) \(noun) hidden in open tabs"
+    }
+    if site == .instagram, !tunerHealth.activeFeatureKeys.isEmpty {
+      return "No matching Instagram surfaces hidden"
+    }
+    return "Fresh tuner checked in open tabs"
+  }
+
+  private var tunerHealthColor: Color {
+    guard let tunerHealth else {
+      return .secondary
+    }
+    if tunerHealth.staleTabCount > 0 {
+      return .orange
+    }
+    if site == .instagram,
+       tunerHealth.loadedTabCount > 0,
+       tunerHealth.hiddenCount == 0,
+       !tunerHealth.activeFeatureKeys.isEmpty {
+      return .secondary
+    }
+    return .secondary
   }
 }
 
@@ -602,7 +983,7 @@ private struct TuningNeedsBrowserPanel: View {
     case .needsChromeOpen, .needsSync, .stale:
       return "Open \(browser.displayName) once so QuietGate can confirm \(site.title) tuning will run."
     case .extensionNeedsReload:
-      return "Reload the QuietGate extension in \(browser.displayName), then refresh X so \(site.title) tuning uses the latest code."
+      return "Reload the QuietGate extension in \(browser.displayName), then refresh \(site.title) so tuning uses the latest code."
     case .error(let message):
       return "\(browser.displayName) needs attention: \(message)"
     case .notInstalled:
@@ -734,5 +1115,61 @@ private struct TuningFeatureRow: View {
       return "Connect a browser before changing \(feature.site.title) tuning."
     }
     return enabled ? "\(feature.title) is on." : "\(feature.title) is off."
+  }
+}
+
+private struct TuningSiteAllRow: View {
+  let site: BrowserTuningSite
+  @Binding var enabled: Bool
+  let isAvailable: Bool
+
+  var body: some View {
+    HStack(alignment: .top, spacing: 12) {
+      Image(systemName: iconName)
+        .foregroundStyle(iconColor)
+        .frame(width: 18)
+        .help(helpText)
+
+      VStack(alignment: .leading, spacing: 3) {
+        Text("All")
+          .font(.callout.weight(.semibold))
+        Text("Turns every \(site.title) cleanup option on or off.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      Spacer(minLength: 12)
+
+      Toggle("All \(site.title) cleanup options", isOn: $enabled)
+        .labelsHidden()
+        .toggleStyle(.switch)
+        .help(helpText)
+    }
+    .padding(.vertical, 9)
+    .overlay(alignment: .bottom) {
+      ProductDivider()
+    }
+  }
+
+  private var iconName: String {
+    if !isAvailable {
+      return "lock"
+    }
+    return enabled ? "checkmark.circle.fill" : "circle"
+  }
+
+  private var iconColor: Color {
+    if !isAvailable {
+      return .secondary
+    }
+    return enabled ? .green : .secondary
+  }
+
+  private var helpText: String {
+    if !isAvailable {
+      return "Connect a browser before changing \(site.title) tuning."
+    }
+    return enabled ? "All \(site.title) cleanup options are on." : "Some \(site.title) cleanup options are off."
   }
 }

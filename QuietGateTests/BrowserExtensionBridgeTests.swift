@@ -45,6 +45,9 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertEqual(decoded.features["xExploreTrends"], true)
     XCTAssertEqual(decoded.features["instagramReels"], true)
     XCTAssertEqual(decoded.features["instagramSuggested"], true)
+    XCTAssertEqual(decoded.features["instagramProfileSuggestions"], true)
+    XCTAssertEqual(decoded.features["instagramMessages"], true)
+    XCTAssertEqual(decoded.features["instagramNotifications"], true)
     XCTAssertEqual(decoded.features["redditPopularAll"], true)
     XCTAssertEqual(decoded.features["redditNSFW"], true)
     XCTAssertEqual(decoded.features["redditSidebars"], true)
@@ -94,6 +97,238 @@ final class BrowserExtensionBridgeTests: XCTestCase {
 
     XCTAssertEqual(decoded.options, .defaultValue)
     XCTAssertEqual(decoded.blockedCategories, [])
+  }
+
+  func testChromeHelperSnapshotDecodesTunerHealth() throws {
+    let data = """
+      {
+        "schemaVersion": 1,
+        "extensionID": "fedpnejbgmllajjlfkahlnjbgfmjjmmf",
+        "lastSeenAt": "1970-01-01T00:00:05Z",
+        "lastAppliedSettingsVersion": "settings",
+        "extensionVersion": "0.1.12",
+        "scriptVersions": {
+          "instagram": "2026.06.29.01"
+        },
+        "tunerHealth": {
+          "instagram": {
+            "expectedVersion": "2026.06.29.01",
+            "loadedTabCount": 1,
+            "staleTabCount": 0,
+            "activeFeatureKeys": ["instagramReels", "instagramExplore", "instagramSuggested", "instagramProfileSuggestions", "instagramMessages", "instagramNotifications", "instagramStories"],
+            "hiddenCount": 3,
+            "lastCheckedURL": "https://www.instagram.com/",
+            "lastCheckedAt": "1970-01-01T00:00:06Z"
+          }
+        },
+        "blockedRuleCount": 1
+      }
+      """.data(using: .utf8)!
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+
+    let decoded = try decoder.decode(ChromeHelperSnapshot.self, from: data)
+    let instagram = try XCTUnwrap(decoded.tunerHealth?["instagram"])
+
+    XCTAssertEqual(instagram.expectedVersion, "2026.06.29.01")
+    XCTAssertEqual(instagram.loadedTabCount, 1)
+    XCTAssertEqual(instagram.staleTabCount, 0)
+    XCTAssertEqual(
+      instagram.activeFeatureKeys,
+      [
+        "instagramReels", "instagramExplore", "instagramSuggested", "instagramProfileSuggestions",
+        "instagramMessages", "instagramNotifications", "instagramStories",
+      ]
+    )
+    XCTAssertEqual(instagram.hiddenCount, 3)
+    XCTAssertEqual(instagram.lastCheckedURL, "https://www.instagram.com/")
+    XCTAssertEqual(instagram.lastCheckedAt, Date(timeIntervalSince1970: 6))
+  }
+
+  func testChromeHelperSnapshotDecodesYouTubeUsageSummary() throws {
+    let data = """
+      {
+        "schemaVersion": 1,
+        "extensionID": "fedpnejbgmllajjlfkahlnjbgfmjjmmf",
+        "lastSeenAt": "1970-01-01T00:00:05Z",
+        "lastAppliedSettingsVersion": "settings",
+        "extensionVersion": "0.1.12",
+        "youtubeUsage": {
+          "date": "2026-06-29",
+          "totalSeconds": 300,
+          "lifetimeSeconds": 600,
+          "videoCount": 2,
+          "lifetimeVideoCount": 4,
+          "limitSeconds": 1800,
+          "limitReached": false,
+          "lastUpdatedAt": "2026-06-29T13:00:00Z"
+        },
+        "youtubeUsageSummary": {
+          "schemaVersion": 1,
+          "date": "2026-06-29",
+          "totalSeconds": 1140,
+          "lifetimeSeconds": 4200,
+          "videoCount": 6,
+          "lifetimeVideoCount": 18,
+          "limitSeconds": 1800,
+          "limitReached": false,
+          "lastUpdatedAt": "2026-06-29T13:05:00Z",
+          "entries": [
+            {
+              "id": "chrome:Default",
+              "browserID": "chrome",
+              "browserName": "Chrome",
+              "profileID": "Default",
+              "profileName": "Will",
+              "label": "Chrome - Will, willpulier1999@gmail.com (Default)",
+              "lastSeenAt": "2026-06-29T13:05:00Z",
+              "youtubeUsage": {
+                "date": "2026-06-29",
+                "totalSeconds": 300,
+                "lifetimeSeconds": 600,
+                "videoCount": 2,
+                "lifetimeVideoCount": 4,
+                "limitSeconds": 1800,
+                "limitReached": false,
+                "lastUpdatedAt": "2026-06-29T13:00:00Z"
+              }
+            },
+            {
+              "id": "chrome:Profile 1",
+              "browserID": "chrome",
+              "browserName": "Chrome",
+              "profileID": "Profile 1",
+              "profileName": "Work",
+              "label": "Chrome - Work, will@wildstudio.ai (Profile 1)",
+              "lastSeenAt": "2026-06-29T13:04:00Z",
+              "youtubeUsage": {
+                "date": "2026-06-29",
+                "totalSeconds": 840,
+                "lifetimeSeconds": 3600,
+                "videoCount": 4,
+                "lifetimeVideoCount": 14,
+                "limitSeconds": 1800,
+                "limitReached": false,
+                "lastUpdatedAt": "2026-06-29T13:04:00Z"
+              }
+            }
+          ]
+        },
+        "blockedRuleCount": 1
+      }
+      """.data(using: .utf8)!
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+
+    let decoded = try decoder.decode(ChromeHelperSnapshot.self, from: data)
+    let summary = try XCTUnwrap(decoded.youtubeUsageSummary)
+
+    XCTAssertEqual(summary.totalSeconds, 1_140)
+    XCTAssertEqual(summary.videoCount, 6)
+    XCTAssertEqual(summary.entries.map(\.id), ["chrome:Default", "chrome:Profile 1"])
+    XCTAssertEqual(summary.entries[1].youtubeUsage.totalSeconds, 840)
+    XCTAssertEqual(summary.totalUsage.totalSeconds, 1_140)
+  }
+
+  func testChromeHelperSnapshotDecodesSiteUsageSummary() throws {
+    let data = """
+      {
+        "schemaVersion": 1,
+        "extensionID": "fedpnejbgmllajjlfkahlnjbgfmjjmmf",
+        "lastSeenAt": "1970-01-01T00:00:05Z",
+        "lastAppliedSettingsVersion": "settings",
+        "extensionVersion": "0.1.12",
+        "siteUsageSummary": {
+          "schemaVersion": 1,
+          "date": "2026-06-29",
+          "totalSeconds": 7200,
+          "lifetimeSeconds": 14400,
+          "activityCount": 12,
+          "lifetimeActivityCount": 30,
+          "lastUpdatedAt": "2026-06-29T14:00:00Z",
+          "sites": [
+            {
+              "siteID": "youtube",
+              "title": "YouTube",
+              "date": "2026-06-29",
+              "totalSeconds": 3600,
+              "lifetimeSeconds": 9000,
+              "activityCount": 12,
+              "lifetimeActivityCount": 30,
+              "activityLabel": "videos",
+              "videoCount": 12,
+              "lifetimeVideoCount": 30,
+              "limitReached": false,
+              "entries": [
+                {
+                  "id": "youtube:chrome:Default",
+                  "siteID": "youtube",
+                  "sourceType": "browser",
+                  "browserID": "chrome",
+                  "browserName": "Chrome",
+                  "profileID": "Default",
+                  "profileName": "Will",
+                  "label": "Chrome - Will, willpulier1999@gmail.com (Default)",
+                  "totalSeconds": 1800,
+                  "activityCount": 6,
+                  "siteUsage": {
+                    "siteID": "youtube",
+                    "date": "2026-06-29",
+                    "totalSeconds": 1800,
+                    "lifetimeSeconds": 3600,
+                    "activityCount": 6,
+                    "activityLabel": "videos",
+                    "lastUpdatedAt": "2026-06-29T13:55:00Z"
+                  }
+                },
+                {
+                  "id": "youtube:ios:iphone",
+                  "siteID": "youtube",
+                  "sourceType": "ios",
+                  "deviceName": "iPhone",
+                  "label": "iPhone",
+                  "totalSeconds": 1800,
+                  "activityCount": 6,
+                  "siteUsage": {
+                    "siteID": "youtube",
+                    "date": "2026-06-29",
+                    "totalSeconds": 1800,
+                    "lifetimeSeconds": 5400,
+                    "activityCount": 6,
+                    "activityLabel": "videos",
+                    "lastUpdatedAt": "2026-06-29T14:00:00Z"
+                  }
+                }
+              ]
+            },
+            {
+              "siteID": "x",
+              "title": "X",
+              "date": "2026-06-29",
+              "totalSeconds": 3600,
+              "lifetimeSeconds": 5400,
+              "activityCount": 0,
+              "lifetimeActivityCount": 0,
+              "entries": []
+            }
+          ],
+          "entries": []
+        },
+        "blockedRuleCount": 1
+      }
+      """.data(using: .utf8)!
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+
+    let decoded = try decoder.decode(ChromeHelperSnapshot.self, from: data)
+    let summary = try XCTUnwrap(decoded.siteUsageSummary)
+    let youtube = try XCTUnwrap(summary.sites.first { $0.siteID == "youtube" })
+
+    XCTAssertEqual(summary.totalSeconds, 7_200)
+    XCTAssertEqual(summary.sites.map(\.siteID), ["youtube", "x"])
+    XCTAssertEqual(youtube.activityCount, 12)
+    XCTAssertEqual(youtube.entries[1].sourceType, "ios")
+    XCTAssertEqual(summary.youtubeUsage?.videoCount, 12)
   }
 
   func testChromeHelperStateRequiresChromeOriginHeartbeat() throws {
@@ -300,6 +535,44 @@ final class BrowserExtensionBridgeTests: XCTestCase {
       seenAt: Date(timeIntervalSince1970: 5),
       extensionVersion: "0.1.5",
       scriptVersions: ["x": "2026.06.02.7"]
+    )
+
+    XCTAssertEqual(
+      bridge.chromeHelperState(currentSettingsVersion: version, now: Date(timeIntervalSince1970: 10)),
+      .extensionNeedsReload
+    )
+  }
+
+  func testChromeHelperStateTreatsOlderInstagramTunerVersionAsReloadRequired() throws {
+    let root = try temporaryDirectory()
+    let applicationSupportURL = root.appendingPathComponent("Application Support")
+    let nativeHostsURL = root.appendingPathComponent("NativeMessagingHosts")
+    let hostURL = root.appendingPathComponent("quietgate-native-host")
+    let extensionURL = root.appendingPathComponent("ChromeExtension", isDirectory: true)
+    let contentURL = extensionURL.appendingPathComponent("content", isDirectory: true)
+    try "#!/usr/bin/env node\n".write(to: hostURL, atomically: true, encoding: .utf8)
+    try FileManager.default.createDirectory(at: contentURL, withIntermediateDirectories: true)
+    try #"{"manifest_version":3,"version":"0.1.5"}"#
+      .write(to: extensionURL.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+    try #"const TUNER_VERSION = "2026.06.29.01";"#
+      .write(to: contentURL.appendingPathComponent("instagram.js"), atomically: true, encoding: .utf8)
+
+    let bridge = BrowserExtensionBridge(
+      applicationSupportDirectory: applicationSupportURL,
+      nativeHostScriptURL: hostURL,
+      nativeMessagingHostsDirectory: nativeHostsURL,
+      chromeExtensionDirectoryURL: extensionURL,
+      runningChromeCommandsProvider: { [] }
+    )
+    try bridge.installNativeMessagingHost()
+
+    let version = "mode=focus|features=|domains=x.com"
+    try writeChromeStatus(
+      to: bridge.chromeStatusURL,
+      settingsVersion: version,
+      seenAt: Date(timeIntervalSince1970: 5),
+      extensionVersion: "0.1.5",
+      scriptVersions: ["instagram": "2026.06.28.01"]
     )
 
     XCTAssertEqual(
@@ -535,8 +808,10 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertTrue(background.contains("pageJs: \"content/x-page.js\""))
     XCTAssertTrue(background.contains("world: \"MAIN\""))
     XCTAssertTrue(background.contains("X_TUNER_VERSION"))
+    XCTAssertTrue(background.contains("INSTAGRAM_TUNER_VERSION"))
     XCTAssertTrue(background.contains("REDDIT_TUNER_VERSION"))
     XCTAssertTrue(background.contains("YOUTUBE_TUNER_VERSION"))
+    XCTAssertTrue(background.contains("tunerHealthSnapshot"))
     XCTAssertTrue(background.contains("tunerNeedsInjection"))
     XCTAssertTrue(background.contains("chrome.alarms"))
     XCTAssertTrue(manifest.contains("\"alarms\""))
@@ -546,11 +821,12 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertTrue(manifest.contains("\"js\": [\"content/x-page.js\"]"))
     XCTAssertTrue(manifest.contains("\"world\": \"MAIN\""))
     XCTAssertTrue(manifest.contains("\"css\": [\"content/x.css\"]"))
+    XCTAssertTrue(manifest.contains("\"content/site-usage.js\""))
     XCTAssertTrue(manifest.contains("\"content/x.js\""))
     XCTAssertTrue(manifest.contains("\"content/platform-controls.js\""))
     XCTAssertTrue(manifest.contains("\"https://www.instagram.com/*\""))
     XCTAssertTrue(manifest.contains("\"css\": [\"content/instagram.css\"]"))
-    XCTAssertTrue(manifest.contains("\"js\": [\"content/instagram.js\"]"))
+    XCTAssertTrue(manifest.contains("\"content/instagram.js\""))
     XCTAssertTrue(manifest.contains("\"https://www.reddit.com/*\""))
     XCTAssertTrue(manifest.contains("\"css\": [\"content/reddit.css\"]"))
     XCTAssertTrue(manifest.contains("\"content/reddit.js\""))
@@ -568,6 +844,8 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertTrue(xPageDetector.contains("window.postMessage"))
     XCTAssertFalse(xPageDetector.contains("classList.add"))
     XCTAssertFalse(instagramTuner.contains("setInterval"))
+    XCTAssertTrue(instagramTuner.contains("quietgateInstagramTunerVersion"))
+    XCTAssertTrue(instagramTuner.contains("__quietgateInstagramTunerController"))
     XCTAssertFalse(redditTuner.contains("setInterval"))
     XCTAssertTrue(xTuner.contains("quietgate.syncNativeSettings"))
     XCTAssertTrue(xTuner.contains("storage.onChanged"))
@@ -703,10 +981,13 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertTrue(firefoxBackground.contains("socialAdultPreviewRequestShouldBlock"))
     XCTAssertTrue(firefoxBackground.contains("X_INITIATOR_DOMAINS"))
     XCTAssertTrue(firefoxBackground.contains("REDDIT_INITIATOR_DOMAINS"))
+    XCTAssertTrue(firefoxBackground.contains("INSTAGRAM_TUNER_VERSION"))
+    XCTAssertTrue(firefoxBackground.contains("tunerHealthSnapshot"))
     XCTAssertFalse(firefoxBackground.contains("setInterval"))
     XCTAssertFalse(firefoxManifest.contains("content/blocker.js"))
     XCTAssertTrue(firefoxManifest.contains("\"https://x.com/*\""))
     XCTAssertTrue(firefoxManifest.contains("\"https://twitter.com/*\""))
+    XCTAssertTrue(firefoxManifest.contains("\"content/site-usage.js\""))
     XCTAssertTrue(firefoxManifest.contains("\"content/x.js\""))
     XCTAssertTrue(firefoxManifest.contains("\"content/platform-controls.js\""))
     XCTAssertTrue(firefoxManifest.contains("\"https://www.instagram.com/*\""))
@@ -717,6 +998,8 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertTrue(firefoxYouTube.contains("youtubeDailyLimit"))
     XCTAssertFalse(firefoxX.contains("setInterval"))
     XCTAssertFalse(firefoxInstagram.contains("setInterval"))
+    XCTAssertTrue(firefoxInstagram.contains("quietgateInstagramTunerVersion"))
+    XCTAssertTrue(firefoxInstagram.contains("__quietgateInstagramTunerController"))
     XCTAssertFalse(firefoxReddit.contains("setInterval"))
     XCTAssertEqual(chromeX, firefoxX)
     XCTAssertEqual(chromeXPageDetector, firefoxXPageDetector)
@@ -1283,9 +1566,10 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     extensionID: String = "fedpnejbgmllajjlfkahlnjbgfmjjmmf",
     extensionVersion: String = "0.1.12",
     scriptVersions: [String: String]? = [
-      "youtube": "2026.06.12.01",
-      "x": "2026.06.11.01",
-      "reddit": "2026.06.11.01",
+      "youtube": "2026.06.29.1200",
+      "x": "2026.06.29.1200",
+      "instagram": "2026.06.29.1200",
+      "reddit": "2026.06.29.1200",
     ],
     profileID: String? = nil,
     profileName: String? = nil

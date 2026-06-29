@@ -6,7 +6,18 @@ html.qg-instagram-explore a[href="/explore/"],
 html.qg-instagram-explore a[href^="/explore/"],
 html.qg-instagram-explore [aria-label="Explore"],
 html.qg-instagram-explore [aria-label*="Explore"],
+html.qg-instagram-messages a[href^="/direct/"],
+html.qg-instagram-messages [aria-label*="Direct"],
+html.qg-instagram-messages [aria-label*="Messenger"],
+html.qg-instagram-messages [aria-label*="Messages"],
+html.qg-instagram-notifications [aria-label*="Notifications"],
+html.qg-instagram-notifications [aria-label*="Activity"],
+html .qg-instagram-reels-item,
+html .qg-instagram-explore-item,
 html .qg-instagram-suggested-item,
+html .qg-instagram-profile-suggestions-item,
+html .qg-instagram-messages-item,
+html .qg-instagram-notifications-item,
 html .qg-instagram-stories-item {
   display: none !important;
 }

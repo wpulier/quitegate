@@ -55,6 +55,9 @@ const FEATURE_DEFAULTS = {
   instagramReels: false,
   instagramExplore: false,
   instagramSuggested: false,
+  instagramProfileSuggestions: false,
+  instagramMessages: false,
+  instagramNotifications: false,
   instagramStories: false,
   redditPopularAll: false,
   redditRecommendations: false,
@@ -196,8 +199,8 @@ function verifyExtensionXPageDetectorSurface() {
   if (!chromeBackground.includes('pageJs: "content/x-page.js"') || !chromeBackground.includes('world: "MAIN"')) {
     throw new Error("Chrome dynamic injection must install content/x-page.js in the MAIN world.");
   }
-  if (!chromeBackground.includes("X_TUNER_VERSION") || !chromeBackground.includes("tunerNeedsInjection")) {
-    throw new Error("Chrome dynamic injection must reinject stale X tabs by tuner version.");
+  if (!chromeBackground.includes("X_TUNER_VERSION") || !chromeBackground.includes("INSTAGRAM_TUNER_VERSION") || !chromeBackground.includes("tunerNeedsInjection")) {
+    throw new Error("Chrome dynamic injection must reinject stale supported-site tabs by tuner version.");
   }
 
   const chromeX = fs.readFileSync(chromeXPath, "utf8");
@@ -206,6 +209,10 @@ function verifyExtensionXPageDetectorSurface() {
   }
   const chromeYouTube = fs.readFileSync(chromeYouTubePath, "utf8");
   const chromeYouTubeCSS = fs.readFileSync(chromeYouTubeCSSPath, "utf8");
+  if (!chromeYouTube.includes("quietGateYouTubeTunerVersion") ||
+      !chromeYouTube.includes("__quietgateYouTubeTunerController")) {
+    throw new Error("YouTube tuner must be versioned and idempotent for dynamic reinjection.");
+  }
   for (const featureKey of [
     "youtubeVideoSidebar",
     "youtubeEndScreenCards",
@@ -218,16 +225,50 @@ function verifyExtensionXPageDetectorSurface() {
       throw new Error(`YouTube tuner is missing expanded feature key: ${featureKey}.`);
     }
   }
+  const chromeInstagram = fs.readFileSync(path.join(EXTENSION_DIR, "content", "instagram.js"), "utf8");
+  const chromeReddit = fs.readFileSync(chromeRedditPath, "utf8");
+  if (!chromeInstagram.includes("quietgateInstagramTunerVersion") ||
+      !chromeBackground.includes("instagram: INSTAGRAM_TUNER_VERSION") ||
+      !chromeBackground.includes("hiddenCountDataset: \"quietgateInstagramHiddenCount\"")) {
+    throw new Error("Instagram tuner must be versioned and included in dynamic tuner health.");
+  }
+  if (!chromeYouTube.includes("quietgateYouTubeHiddenCount") ||
+      !chromeBackground.includes("hiddenCountDataset: \"quietgateYouTubeHiddenCount\"")) {
+    throw new Error("YouTube tuner must report page-level hidden counts in dynamic tuner health.");
+  }
+  if (!chromeReddit.includes("quietgateRedditTunerVersion") ||
+      !chromeReddit.includes("__quietgateRedditTunerController")) {
+    throw new Error("Reddit tuner must be versioned and idempotent for dynamic reinjection.");
+  }
+  if (!chromeReddit.includes("quietgateRedditHiddenCount") ||
+      !chromeBackground.includes("hiddenCountDataset: \"quietgateRedditHiddenCount\"")) {
+    throw new Error("Reddit tuner must report page-level hidden counts in dynamic tuner health.");
+  }
+  for (const featureKey of [
+    "instagramProfileSuggestions",
+    "instagramMessages",
+    "instagramNotifications"
+  ]) {
+    if (!chromeInstagram.includes(featureKey) || !chromeBackground.includes(featureKey)) {
+      throw new Error(`Instagram tuner is missing expanded feature key: ${featureKey}.`);
+    }
+  }
   for (const className of [
     "qg-youtube-video-sidebar",
     "qg-youtube-end-screen-cards",
     "qg-youtube-subscriptions",
     "quietgate-youtube-usage",
-    "quietgate-youtube-limit"
+    "quietgate-youtube-limit",
+    "qg-youtube-usage-detail"
   ]) {
     if (!chromeYouTubeCSS.includes(className)) {
       throw new Error(`YouTube style is missing expanded selector class: ${className}.`);
     }
+  }
+  if (!chromeYouTube.includes("youtubeUsageSummary") ||
+      !chromeYouTube.includes("mergeCurrentUsageIntoSummary") ||
+      !chromeBackground.includes("saveYouTubeUsageSummary")) {
+    throw new Error("YouTube usage tracking must aggregate native summaries across browser profiles.");
   }
 
   for (const [left, right, label] of [
@@ -316,6 +357,10 @@ function modeFeatureSettings(mode, overrides = {}) {
       instagramReels: true,
       instagramExplore: true,
       instagramSuggested: true,
+      instagramProfileSuggestions: true,
+      instagramMessages: true,
+      instagramNotifications: true,
+      instagramStories: true,
       redditPopularAll: true,
       redditRecommendations: true,
       redditNSFW: false,
@@ -1044,6 +1089,8 @@ function instagramFixtureHTML() {
       <a id="ig-home-link" href="/">Home</a>
       <a id="ig-reels-link" href="/reels/" aria-label="Reels">Reels</a>
       <a id="ig-explore-link" href="/explore/" aria-label="Explore">Explore</a>
+      <a id="ig-messages-link" href="/direct/inbox/" aria-label="Messages">Messages</a>
+      <button id="ig-notifications-button" aria-label="Notifications">Notifications</button>
     </nav>
     <main>
       <section id="ig-stories" aria-label="Stories">
@@ -1057,7 +1104,36 @@ function instagramFixtureHTML() {
         <p>Suggested for you</p>
         <p>Recommended account post.</p>
       </article>
+      <section id="ig-suggested-module">
+        <h2>Suggested posts</h2>
+        <article>
+          <p>Recommended for you</p>
+          <button>Follow</button>
+        </article>
+      </section>
+      <article id="ig-ad-post">
+        <header>
+          <span>celestronuniverse</span>
+          <span>Ad</span>
+        </header>
+        <p>Telescope sale.</p>
+      </article>
     </main>
+    <aside id="ig-suggested-rail">
+      <h2>Suggested for you</h2>
+      <div>
+        <span>Stephen Grynberg</span>
+        <span>Followed by dbeen</span>
+        <button>Follow</button>
+      </div>
+    </aside>
+    <section id="ig-profile-suggestions">
+      <h2>People you may know</h2>
+      <div>
+        <span>QuietGate Friend</span>
+        <button>Follow</button>
+      </div>
+    </section>
   </body>
 </html>`;
 }
@@ -1214,6 +1290,7 @@ async function readTuningState(page) {
     path: location.pathname,
     classes: [...document.documentElement.classList].sort(),
     marker: document.documentElement.dataset.quietgateTuner || null,
+    hiddenCount: document.documentElement.dataset.quietgateYouTubeHiddenCount || null,
     homeDisplay: document.querySelector("#home-grid") ? getComputedStyle(document.querySelector("#home-grid")).display : null,
     shortsDisplay: document.querySelector("#shorts-link") ? getComputedStyle(document.querySelector("#shorts-link")).display : null,
     commentsDisplay: document.querySelector("#comments") ? getComputedStyle(document.querySelector("#comments")).display : null,
@@ -1312,8 +1389,14 @@ async function readInstagramState(page) {
       hiddenCount: document.documentElement.dataset.quietgateInstagramHiddenCount || null,
       reelsDisplay: display("#ig-reels-link"),
       exploreDisplay: display("#ig-explore-link"),
+      messagesDisplay: display("#ig-messages-link"),
+      notificationsDisplay: display("#ig-notifications-button"),
       storiesDisplay: display("#ig-stories"),
       suggestedDisplay: display("#ig-suggested-post"),
+      suggestedModuleDisplay: display("#ig-suggested-module"),
+      suggestedRailDisplay: display("#ig-suggested-rail"),
+      profileSuggestionsDisplay: display("#ig-profile-suggestions"),
+      adPostDisplay: display("#ig-ad-post"),
       normalPostDisplay: display("#ig-normal-post")
     };
   });
@@ -1899,6 +1982,7 @@ async function main() {
         document.documentElement.classList.contains("qg-youtube-annotations") &&
         document.documentElement.classList.contains("qg-youtube-usage-tracking") &&
         document.documentElement.classList.contains("qg-youtube-daily-limit") &&
+        Number(document.documentElement.dataset.quietgateYouTubeHiddenCount || 0) >= 10 &&
         getComputedStyle(document.querySelector("#home-grid")).display === "none" &&
         getComputedStyle(document.querySelector("#shorts-link")).display === "none" &&
         getComputedStyle(document.querySelector("#comments")).display === "none" &&
@@ -1943,6 +2027,7 @@ async function main() {
         document.documentElement.classList.contains("qg-youtube-annotations") &&
         document.documentElement.classList.contains("qg-youtube-usage-tracking") &&
         document.documentElement.classList.contains("qg-youtube-daily-limit") &&
+        Number(document.documentElement.dataset.quietgateYouTubeHiddenCount || 0) >= 12 &&
         getComputedStyle(document.querySelector("#main-video")).display !== "none" &&
         getComputedStyle(document.querySelector("#comments")).display === "none" &&
         getComputedStyle(document.querySelector("#ytd-comments")).display === "none" &&
@@ -2047,6 +2132,7 @@ async function main() {
         document.documentElement.dataset.quietgateTuner === "loaded" &&
         document.documentElement.classList.contains("qg-youtube-comments") &&
         !document.documentElement.classList.contains("qg-youtube-recommendations") &&
+        Number(document.documentElement.dataset.quietgateYouTubeHiddenCount || 0) >= 1 &&
         getComputedStyle(document.querySelector("#main-video")).display !== "none" &&
         getComputedStyle(document.querySelector("#comments")).display === "none" &&
         getComputedStyle(document.querySelector("#related")).display !== "none"
@@ -2381,11 +2467,21 @@ async function main() {
         document.documentElement.classList.contains("qg-instagram-reels") &&
         document.documentElement.classList.contains("qg-instagram-explore") &&
         document.documentElement.classList.contains("qg-instagram-suggested") &&
-        !document.documentElement.classList.contains("qg-instagram-stories") &&
+        document.documentElement.classList.contains("qg-instagram-profile-suggestions") &&
+        document.documentElement.classList.contains("qg-instagram-messages") &&
+        document.documentElement.classList.contains("qg-instagram-notifications") &&
+        document.documentElement.classList.contains("qg-instagram-stories") &&
+        Number(document.documentElement.dataset.quietgateInstagramHiddenCount || 0) >= 9 &&
         getComputedStyle(document.querySelector("#ig-reels-link")).display === "none" &&
         getComputedStyle(document.querySelector("#ig-explore-link")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-messages-link")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-notifications-button")).display === "none" &&
         getComputedStyle(document.querySelector("#ig-suggested-post")).display === "none" &&
-        getComputedStyle(document.querySelector("#ig-stories")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-module")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-rail")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-profile-suggestions")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-ad-post")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-stories")).display === "none" &&
         getComputedStyle(document.querySelector("#ig-normal-post")).display !== "none"
       ), null, { timeout: 25000 });
 
@@ -2401,6 +2497,12 @@ async function main() {
         !location.pathname.startsWith("/explore")
       ), null, { timeout: 25000 });
 
+      await page.goto("https://www.instagram.com/direct/inbox/", { waitUntil: "domcontentloaded" });
+      await page.waitForFunction(() => (
+        document.documentElement.dataset.quietgateInstagramTuner === "loaded" &&
+        !location.pathname.startsWith("/direct")
+      ), null, { timeout: 25000 });
+
       await applyCurrentSmokeSettings(worker, settingsPath, tuningSettings("strict", {}));
       await page.goto("https://www.instagram.com/", { waitUntil: "domcontentloaded" });
       await page.waitForFunction(() => (
@@ -2408,10 +2510,20 @@ async function main() {
         document.documentElement.classList.contains("qg-instagram-reels") &&
         document.documentElement.classList.contains("qg-instagram-explore") &&
         document.documentElement.classList.contains("qg-instagram-suggested") &&
+        document.documentElement.classList.contains("qg-instagram-profile-suggestions") &&
+        document.documentElement.classList.contains("qg-instagram-messages") &&
+        document.documentElement.classList.contains("qg-instagram-notifications") &&
         document.documentElement.classList.contains("qg-instagram-stories") &&
+        Number(document.documentElement.dataset.quietgateInstagramHiddenCount || 0) >= 9 &&
         getComputedStyle(document.querySelector("#ig-reels-link")).display === "none" &&
         getComputedStyle(document.querySelector("#ig-explore-link")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-messages-link")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-notifications-button")).display === "none" &&
         getComputedStyle(document.querySelector("#ig-suggested-post")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-module")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-rail")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-profile-suggestions")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-ad-post")).display === "none" &&
         getComputedStyle(document.querySelector("#ig-stories")).display === "none" &&
         getComputedStyle(document.querySelector("#ig-normal-post")).display !== "none"
       ), null, { timeout: 25000 });
@@ -2423,9 +2535,34 @@ async function main() {
         document.documentElement.dataset.quietgateInstagramHiddenCount === "0" &&
         getComputedStyle(document.querySelector("#ig-reels-link")).display !== "none" &&
         getComputedStyle(document.querySelector("#ig-explore-link")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-messages-link")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-notifications-button")).display !== "none" &&
         getComputedStyle(document.querySelector("#ig-suggested-post")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-module")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-rail")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-profile-suggestions")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-ad-post")).display !== "none" &&
         getComputedStyle(document.querySelector("#ig-stories")).display !== "none"
       ), null, { timeout: 25000 });
+
+      await applyCurrentSmokeSettings(worker, settingsPath, tuningSettings("open", { instagramSuggested: true }));
+      await page.waitForFunction(() => (
+        document.documentElement.dataset.quietgateInstagramTuner === "loaded" &&
+        document.documentElement.classList.contains("qg-instagram-suggested") &&
+        !document.documentElement.classList.contains("qg-instagram-profile-suggestions") &&
+        !document.documentElement.classList.contains("qg-instagram-messages") &&
+        !document.documentElement.classList.contains("qg-instagram-notifications") &&
+        getComputedStyle(document.querySelector("#ig-suggested-post")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-module")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-ad-post")).display === "none" &&
+        getComputedStyle(document.querySelector("#ig-suggested-rail")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-profile-suggestions")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-messages-link")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-notifications-button")).display !== "none" &&
+        getComputedStyle(document.querySelector("#ig-stories")).display !== "none"
+      ), null, { timeout: 25000 });
+
+      await applyCurrentSmokeSettings(worker, settingsPath, tuningSettings("open", {}));
 
       await applyCurrentSmokeSettings(worker, settingsPath, tuningSettings("focus", {}));
       await page.goto("https://www.reddit.com/", { waitUntil: "domcontentloaded" });
@@ -2570,6 +2707,7 @@ async function main() {
         document.documentElement.classList.contains("qg-reddit-nsfw") &&
         document.documentElement.classList.contains("qg-reddit-media") &&
         document.documentElement.classList.contains("qg-reddit-sidebars") &&
+        Number(document.documentElement.dataset.quietgateRedditHiddenCount || 0) >= 5 &&
         getComputedStyle(document.querySelector("#reddit-popular-link")).display === "none" &&
         getComputedStyle(document.querySelector("#reddit-all-link")).display === "none" &&
         getComputedStyle(document.querySelector("#reddit-recommended-post")).display === "none" &&
@@ -2741,6 +2879,7 @@ async function main() {
       await page.waitForFunction(() => (
         document.documentElement.dataset.quietgateTuner === "loaded" &&
         ![...document.documentElement.classList].some((className) => className.startsWith("qg-youtube-")) &&
+        document.documentElement.dataset.quietgateYouTubeHiddenCount === "0" &&
         getComputedStyle(document.querySelector("#home-grid")).display !== "none" &&
         getComputedStyle(document.querySelector("#shorts-link")).display !== "none" &&
         getComputedStyle(document.querySelector("#comments")).display !== "none" &&

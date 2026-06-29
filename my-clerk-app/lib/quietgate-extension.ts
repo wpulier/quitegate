@@ -7,8 +7,13 @@ import {
   type ExtensionLinkRequest,
 } from "@/lib/extension-contract";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import { ensureQuietGateAccount } from "@/lib/quietgate-supabase";
+import {
+  ensureQuietGateAccount,
+  getQuietGateSiteUsageSummaryForUser,
+  recordQuietGateSiteUsageForDeviceContext,
+} from "@/lib/quietgate-supabase";
 import { parsePolicy, type PolicyEnvelope } from "@/lib/policy-contract";
+import type { SiteUsageReportRequest } from "@/lib/site-usage-contract";
 
 const LINK_CODE_TTL_MS = 5 * 60 * 1000;
 const DEVICE_TOKEN_PREFIX = "qgdt_";
@@ -347,6 +352,38 @@ export async function recordExtensionHealth(
   return {
     device,
     health,
+  };
+}
+
+export async function getExtensionSiteUsage(authorization: string | null) {
+  const context = await authenticateExtensionDevice(authorization);
+  return {
+    device: context.device,
+    siteUsageSummary: await getQuietGateSiteUsageSummaryForUser(
+      context.supabase,
+      context.token.user_id,
+    ),
+  };
+}
+
+export async function recordExtensionSiteUsage(
+  authorization: string | null,
+  input: SiteUsageReportRequest,
+) {
+  const context = await authenticateExtensionDevice(authorization);
+  await recordQuietGateSiteUsageForDeviceContext(
+    context.supabase,
+    context.token.user_id,
+    context.device,
+    input,
+  );
+
+  return {
+    device: context.device,
+    siteUsageSummary: await getQuietGateSiteUsageSummaryForUser(
+      context.supabase,
+      context.token.user_id,
+    ),
   };
 }
 

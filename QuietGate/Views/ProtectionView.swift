@@ -795,7 +795,7 @@ private func setupActionTitle(for action: ReadinessAction) -> String {
   case .installChromeSync:
     return "Update Chrome"
   case .applyBrowserChanges:
-    return "Apply Changes"
+    return "Refresh Browser"
   case .openBrowserExtensionsPage:
     return "Open Extensions"
   case .launchBrowserTunerSession(let browser):

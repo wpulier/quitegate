@@ -527,6 +527,7 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
     let tunerFiles = [
       "youtube": "youtube.js",
       "x": "x.js",
+      "instagram": "instagram.js",
       "reddit": "reddit.js",
     ]
 

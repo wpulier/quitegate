@@ -286,6 +286,7 @@ final class ProtectionStore: ObservableObject {
   private var timedSessionTimer: Timer?
   private var focusWindowTimer: Timer?
   private var browserProfilePollTask: Task<Void, Never>?
+  private var browserSettingsAutoApplyTask: Task<Void, Never>?
   private var builtInProtectionsRefreshTask: Task<BuiltInProtectionsSnapshot, Never>?
   private var browserProfileWatchSession: BrowserProfileWatchSession?
   private var launchedBrowserSessionProfiles: [BrowserConnectorID: String] = [:]
@@ -494,6 +495,7 @@ final class ProtectionStore: ObservableObject {
 
   deinit {
     browserProfilePollTask?.cancel()
+    browserSettingsAutoApplyTask?.cancel()
     Task { @MainActor [browserStatusMonitor] in
       browserStatusMonitor.stop()
     }
@@ -1064,15 +1066,15 @@ final class ProtectionStore: ObservableObject {
   }
 
   var browserSettingsApplyTitle: String {
-    browserRunningChecker(primaryBrowserConnector.id) ? "Apply Changes" : "Apply Now"
+    browserRunningChecker(primaryBrowserConnector.id) ? "Refresh Browser" : "Apply Now"
   }
 
   var browserSettingsApplyDetail: String {
     let browser = primaryBrowserConnector
     if browserRunningChecker(browser.id) {
-      return "QuietGate saved new settings. Apply them once to update \(browser.displayName) now."
+      return "QuietGate is trying to update \(browser.displayName). Use this if the browser has not refreshed yet."
     }
-    return "QuietGate saved new settings. They will apply next time \(browser.displayName) opens, or you can apply them now."
+    return "QuietGate saved new settings. They will apply next time \(browser.displayName) opens."
   }
 
   var appUpdateAvailable: Bool {
@@ -1750,24 +1752,24 @@ final class ProtectionStore: ObservableObject {
     case .needsSync:
       if let selectedProfile = status.selectedProfileLabel {
         return .connectedPending(
-          "\(id.displayName) is connected in \(selectedProfile). New QuietGate settings are saved and ready to apply."
+          "\(id.displayName) is connected in \(selectedProfile). QuietGate is updating it with the latest settings."
         )
       }
       return .connectedPending(
-        "\(id.displayName) is connected. New QuietGate settings are saved and ready to apply."
+        "\(id.displayName) is connected. QuietGate is updating it with the latest settings."
       )
     case .stale:
       if let selectedProfile = status.selectedProfileLabel {
         return .connectedPending(
-          "\(id.displayName) is connected in \(selectedProfile). Apply once to refresh the connection."
+          "\(id.displayName) is connected in \(selectedProfile). Refresh the browser connection if pages have not updated."
         )
       }
       return .connectedPending(
-        "\(id.displayName) is connected. Apply once to refresh the connection."
+        "\(id.displayName) is connected. Refresh the browser connection if pages have not updated."
       )
     case .extensionNeedsReload:
       return .connectedPending(
-        "\(id.displayName) has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh X."
+        "\(id.displayName) has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh the affected site."
       )
     case .error(let message):
       return .error("\(id.displayName) reported: \(message)")
@@ -3135,6 +3137,33 @@ final class ProtectionStore: ObservableObject {
     syncBrowserExtensionSettings()
   }
 
+  func setTuningFeatures(_ features: [BrowserTuningFeature], enabled: Bool) {
+    guard !timedSessionLockedActive else {
+      refuseLockedTimedSessionChange()
+      return
+    }
+
+    var changed = false
+    for feature in features {
+      let presetEnabled = accessMode.tuningFeatures.contains(feature)
+      if enabled == presetEnabled {
+        if tuningOverrides.removeValue(forKey: feature.rawValue) != nil {
+          changed = true
+        }
+      } else if tuningOverrides[feature.rawValue] != enabled {
+        tuningOverrides[feature.rawValue] = enabled
+        changed = true
+      }
+    }
+
+    guard changed else {
+      return
+    }
+
+    persistTuningOverrides()
+    syncBrowserExtensionSettings()
+  }
+
   func setExplicitHideStyle(_ style: ExplicitHideStyle) {
     guard !timedSessionLockedActive else {
       refuseLockedTimedSessionChange()
@@ -3457,16 +3486,16 @@ final class ProtectionStore: ObservableObject {
 
   func applyBrowserChanges(_ browser: BrowserConnectorID) {
     Task {
-      await applyBrowserChangesAsync(browser)
+      await applyBrowserChangesAsync(browser, automatic: false)
     }
   }
 
-  private func applyBrowserChangesAsync(_ browser: BrowserConnectorID) async {
+  private func applyBrowserChangesAsync(_ browser: BrowserConnectorID, automatic: Bool) async {
     isWorking = true
     defer { isWorking = false }
 
     do {
-      syncBrowserExtensionSettings(refreshStatus: true, announce: false)
+      syncBrowserExtensionSettings(refreshStatus: true, announce: false, autoApply: false)
       guard extensionBridge.nativeMessagingHostInstalled(for: browser) else {
         extensionBridgeMessage =
           "Update the \(browser.displayName) connection file before applying browser changes."
@@ -3475,7 +3504,7 @@ final class ProtectionStore: ObservableObject {
 
       try await openBrowserHelperPage(browser)
       startBrowserProfileRegistrationWatch(for: browser)
-      extensionBridgeMessage = "Applying changes to \(browser.displayName)..."
+      extensionBridgeMessage = "Applying latest settings to \(browser.displayName)..."
       errorMessage = nil
 
       try? await Task.sleep(nanoseconds: 1_000_000_000)
@@ -3484,7 +3513,9 @@ final class ProtectionStore: ObservableObject {
         extensionBridgeMessage = "Applied to \(browser.displayName)."
       } else {
         extensionBridgeMessage =
-          "Saved. Changes will apply next time \(browser.displayName) opens or reloads QuietGate."
+          automatic
+            ? "Saved. Refresh \(browser.displayName) if the page has not updated yet."
+            : "Saved. Changes will apply next time \(browser.displayName) opens or reloads QuietGate."
       }
     } catch {
       refreshChromeExtensionStatus()
@@ -4598,9 +4629,18 @@ final class ProtectionStore: ObservableObject {
     }
   }
 
-  private func syncBrowserExtensionSettings(refreshStatus: Bool = true, announce: Bool = true) {
+  private func syncBrowserExtensionSettings(
+    refreshStatus: Bool = true,
+    announce: Bool = true,
+    autoApply: Bool = true
+  ) {
     let settings = currentBrowserTuningSettings
-    syncBrowserExtensionSettings(settings, refreshStatus: refreshStatus, announce: announce)
+    syncBrowserExtensionSettings(
+      settings,
+      refreshStatus: refreshStatus,
+      announce: announce,
+      autoApply: autoApply
+    )
   }
 
   private func syncBrowserExtensionSettingsIfNeeded(
@@ -4619,7 +4659,8 @@ final class ProtectionStore: ObservableObject {
   private func syncBrowserExtensionSettings(
     _ settings: BrowserTuningSettings,
     refreshStatus: Bool,
-    announce: Bool
+    announce: Bool,
+    autoApply: Bool
   ) {
     do {
       try extensionBridge.writeSettings(settings)
@@ -4630,16 +4671,61 @@ final class ProtectionStore: ObservableObject {
       if announce {
         if browserSettingsApplyNeeded {
           let browser = primaryBrowserConnector
-          extensionBridgeMessage = browserRunningChecker(browser.id)
-            ? "Settings saved. Apply changes to update \(browser.displayName) now."
-            : "Settings saved. Changes will apply next time \(browser.displayName) opens."
+          if canAutoApplyBrowserChanges(browser.id) {
+            extensionBridgeMessage = "Applying latest settings to \(browser.displayName)..."
+          } else if browserRunningChecker(browser.id) {
+            extensionBridgeMessage =
+              "Settings saved. Refresh \(browser.displayName) if the page has not updated."
+          } else {
+            extensionBridgeMessage =
+              "Settings saved. Changes will apply next time \(browser.displayName) opens."
+          }
         } else {
           extensionBridgeMessage = "Extension settings saved."
         }
       }
+      if autoApply {
+        scheduleBrowserSettingsAutoApplyIfNeeded()
+      }
     } catch {
       extensionBridgeMessage = nil
       present(error)
+    }
+  }
+
+  private func scheduleBrowserSettingsAutoApplyIfNeeded() {
+    guard !legacyProviderConnectorEnabled,
+          browserSettingsAutoApplyTask == nil,
+          browserSettingsApplyNeeded else {
+      return
+    }
+
+    let browser = primaryBrowserConnector.id
+    guard canAutoApplyBrowserChanges(browser) else {
+      return
+    }
+
+    browserSettingsAutoApplyTask = Task { @MainActor [weak self] in
+      guard let self else {
+        return
+      }
+      await self.applyBrowserChangesAsync(browser, automatic: true)
+      self.browserSettingsAutoApplyTask = nil
+    }
+  }
+
+  private func canAutoApplyBrowserChanges(_ browser: BrowserConnectorID) -> Bool {
+    guard browser != .firefox,
+          browserRunningChecker(browser),
+          extensionBridge.nativeMessagingHostInstalled(for: browser) else {
+      return false
+    }
+
+    switch browserHelperState(for: browser) {
+    case .needsChromeOpen, .needsSync, .stale:
+      return true
+    case .notInstalled, .nativeHostMissing, .current, .extensionNeedsReload, .error:
+      return false
     }
   }
 
@@ -5065,13 +5151,13 @@ final class ProtectionStore: ObservableObject {
       detail = "Saved settings will apply next time \(browser.displayName) opens."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .needsSync:
-      detail = "QuietGate settings changed. Apply them once to update \(browser.displayName)."
+      detail = "QuietGate is updating \(browser.displayName) with the latest settings."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .stale:
-      detail = "\(browser.displayName) has not checked in recently. Apply once to refresh the connection."
+      detail = "\(browser.displayName) has not checked in recently. Refresh the connection if pages have not updated."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .extensionNeedsReload:
-      detail = "\(browser.displayName) has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh X."
+      detail = "\(browser.displayName) has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh the affected site."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .error(let message):
       detail = "\(browser.displayName) reported: \(message)"

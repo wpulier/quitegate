@@ -42,7 +42,7 @@ enum BrowserTuningSite: String, CaseIterable, Identifiable {
     case .x:
       return "Keep X usable while hiding sensitive media and noisy discovery surfaces."
     case .instagram:
-      return "Keep Instagram usable while hiding Reels, Explore, stories, and suggested content."
+      return "Keep Instagram usable while hiding Reels, Explore, stories, messages, and recommendations."
     case .reddit:
       return "Keep Reddit usable while hiding popular feeds, recommendations, media, and sidebars."
     }
@@ -123,6 +123,9 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
   case instagramReels
   case instagramExplore
   case instagramSuggested
+  case instagramProfileSuggestions
+  case instagramMessages
+  case instagramNotifications
   case instagramStories
   case redditPopularAll
   case redditRecommendations
@@ -148,7 +151,8 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
     case .xSensitiveMedia, .xExplicitContent, .xExplicitSearch, .xVideos, .xPhotos, .xMediaCards,
       .xExploreTrends:
       return .x
-    case .instagramReels, .instagramExplore, .instagramSuggested, .instagramStories:
+    case .instagramReels, .instagramExplore, .instagramSuggested, .instagramProfileSuggestions,
+      .instagramMessages, .instagramNotifications, .instagramStories:
       return .instagram
     case .redditPopularAll, .redditRecommendations, .redditNSFW, .redditMedia,
       .redditSidebars:
@@ -191,6 +195,9 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
     case .instagramReels: return "Hide Reels"
     case .instagramExplore: return "Hide Explore"
     case .instagramSuggested: return "Hide Suggested Posts"
+    case .instagramProfileSuggestions: return "Hide Profile Suggestions"
+    case .instagramMessages: return "Hide DMs"
+    case .instagramNotifications: return "Hide Notifications"
     case .instagramStories: return "Hide Stories"
     case .redditPopularAll: return "Hide Popular and All"
     case .redditRecommendations: return "Hide Recommendations"
@@ -267,7 +274,13 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
     case .instagramExplore:
       return "Removes Explore entry points and redirects direct Explore pages back home."
     case .instagramSuggested:
-      return "Removes suggested posts, suggested accounts, and recommendation modules."
+      return "Removes suggested posts, recommendation modules, and clearly labeled promoted posts."
+    case .instagramProfileSuggestions:
+      return "Removes suggested account cards and right-rail profile recommendation modules."
+    case .instagramMessages:
+      return "Removes DM entry points and redirects direct-message pages back home."
+    case .instagramNotifications:
+      return "Removes notification entry points that pull you back into browsing."
     case .instagramStories:
       return "Removes the stories tray while keeping the main feed available."
     case .redditPopularAll:
@@ -318,6 +331,9 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
     case .instagramReels: return "rectangle.portrait.slash"
     case .instagramExplore: return "magnifyingglass"
     case .instagramSuggested: return "person.crop.circle.badge.questionmark"
+    case .instagramProfileSuggestions: return "person.2.slash"
+    case .instagramMessages: return "paperplane"
+    case .instagramNotifications: return "bell.slash"
     case .instagramStories: return "circle.dashed"
     case .redditPopularAll: return "flame"
     case .redditRecommendations: return "sparkles"

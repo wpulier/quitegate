@@ -5,16 +5,17 @@ Unpacked Firefox extension for tuned access:
 - Focus mode blocks adult-domain pages and high-confidence explicit web pages,
   hides YouTube Home and Shorts, tracks YouTube time and watched videos,
   hides sensitive media and video/GIF players on X, Instagram
-  Reels/Explore/suggested posts, and Reddit Popular/All plus recommendations.
+  Reels/Explore/suggested posts/stories, and Reddit Popular/All plus
+  recommendations.
 - Strict mode also hides comments, recommendations, distracting search modules,
   end screens, live chat, autoplay, playlist panels, tweet photos, rich media
-  cards, X Explore/Trend surfaces, Instagram stories, and Reddit media/sidebars,
+  cards, X Explore/Trend surfaces, and Reddit media/sidebars,
   and enforces the configured daily YouTube time limit.
 - Open mode keeps the hard blocker off, and can still use any custom site
   tuning rules selected in the Mac app.
-- Connected browsers keep the last applied browser rules without polling. Open
-  the popup/connect page or click Apply Changes in the Mac app to send new
-  settings once.
+- Connected browsers keep the last applied browser rules without polling. The
+  Mac app tries to refresh connected Chromium browsers when settings change; use
+  Refresh Browser only if a page has not updated.
 
 The content scripts reapply tuning across YouTube, X, Instagram, and Reddit single-page navigation,
 redirect direct Shorts URLs back to YouTube Home when Shorts are disabled, turn

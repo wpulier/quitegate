@@ -58,7 +58,7 @@ struct ProductHeader: View {
         .help(store.appUpdateDetail)
         .padding(.top, 5)
       } else {
-        ProductStatusPill(text: "Newest version", tint: .secondary)
+        ProductStatusPill(text: "App up to date", tint: .secondary)
           .help(store.appUpdateDetail)
           .padding(.top, 8)
       }

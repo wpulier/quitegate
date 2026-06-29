@@ -57,6 +57,11 @@ struct ContentView: View {
           Label("Home", systemImage: "house")
         }
 
+      UsageTab(model: model, refresh: refresh)
+        .tabItem {
+          Label("Usage", systemImage: "chart.bar.xaxis")
+        }
+
       TuningTab(model: model, refresh: refresh)
         .tabItem {
           Label("Tuning", systemImage: "slider.horizontal.3")
@@ -213,6 +218,102 @@ private struct HomeTab: View {
 
   private var policy: TortoisePolicy? {
     model.snapshot.policy?.policy
+  }
+}
+
+private struct UsageTab: View {
+  @ObservedObject var model: AccountHubModel
+  let refresh: () async -> Void
+  @State private var selectedTab = TortoiseUsageTab.all
+
+  var body: some View {
+    TabScreen(title: "Usage", subtitle: "Tortoise totals across connected surfaces.", model: model, refresh: refresh) {
+      StatusCard(title: "Tortoise", status: display == nil ? "No data" : "Live") {
+        Picker("Usage", selection: $selectedTab) {
+          ForEach(TortoiseUsageTab.allCases) { tab in
+            Text(tab.title).tag(tab)
+          }
+        }
+        .pickerStyle(.segmented)
+
+        if let display {
+          VStack(alignment: .leading, spacing: 6) {
+            Text(Self.duration(display.totalSeconds))
+              .font(.system(size: 42, weight: .semibold, design: .rounded))
+              .minimumScaleFactor(0.75)
+            Text(display.metaText)
+              .foregroundStyle(.secondary)
+          }
+          .padding(.top, 4)
+        } else {
+          Text("Connect a browser or iOS usage source to start filling this in.")
+            .foregroundStyle(.secondary)
+        }
+      }
+
+      StatusCard(title: "Devices", status: "\(deviceRows.filter(\.isConnected).count) connected") {
+        ForEach(deviceRows) { row in
+          UsageDeviceRow(row: row)
+        }
+      }
+
+      StatusCard(title: "Accounts", status: entries.isEmpty ? "No data" : "\(entries.count)") {
+        if entries.isEmpty {
+          Text("No account or source breakdown yet.")
+            .foregroundStyle(.secondary)
+        } else {
+          ForEach(entries) { entry in
+            UsageEntryRow(entry: entry)
+          }
+        }
+      }
+    }
+  }
+
+  private var display: UsageDisplay? {
+    UsageDisplay(summary: model.snapshot.siteUsageSummary, tab: selectedTab)
+  }
+
+  private var entries: [SiteUsageSourceSnapshot] {
+    display?.entries ?? []
+  }
+
+  private var deviceRows: [UsageDevice] {
+    let webEntries = entries.filter { !Self.isIOSEntry($0) }
+    let iosEntries = entries.filter(Self.isIOSEntry)
+    return [
+      UsageDevice(
+        id: "web",
+        title: "Web browser",
+        subtitle: webEntries.isEmpty ? "No browser data" : "\(webEntries.count) source\(webEntries.count == 1 ? "" : "s")",
+        totalSeconds: webEntries.reduce(0) { $0 + ($1.totalSeconds ?? 0) },
+        activityCount: webEntries.reduce(0) { $0 + ($1.activityCount ?? $1.videoCount ?? 0) },
+        isConnected: !webEntries.isEmpty
+      ),
+      UsageDevice(
+        id: "ios",
+        title: "iOS",
+        subtitle: iosEntries.isEmpty ? "No iOS usage yet" : "\(iosEntries.count) iOS source\(iosEntries.count == 1 ? "" : "s")",
+        totalSeconds: iosEntries.reduce(0) { $0 + ($1.totalSeconds ?? 0) },
+        activityCount: iosEntries.reduce(0) { $0 + ($1.activityCount ?? $1.videoCount ?? 0) },
+        isConnected: !iosEntries.isEmpty
+      )
+    ]
+  }
+
+  private static func isIOSEntry(_ entry: SiteUsageSourceSnapshot) -> Bool {
+    let sourceType = entry.sourceType?.lowercased()
+    return sourceType == "ios" || entry.browserID?.lowercased() == "ios"
+  }
+
+  private static func duration(_ seconds: Int) -> String {
+    let totalMinutes = max(seconds, 0) / 60
+    let hours = totalMinutes / 60
+    let minutes = totalMinutes % 60
+    if hours > 0 {
+      return "\(hours)h \(minutes)m"
+    }
+    return "\(minutes)m"
   }
 }
 
@@ -418,6 +519,160 @@ private struct TuningRow: View {
       policy: isOn ? "On" : "Off",
       device: isOn ? "\(deviceStatus) only" : "No action"
     )
+  }
+}
+
+private enum TortoiseUsageTab: String, CaseIterable, Identifiable {
+  case all
+  case youtube
+  case x
+  case instagram
+  case reddit
+
+  var id: String { rawValue }
+
+  var title: String {
+    switch self {
+    case .all:
+      return "All"
+    case .youtube:
+      return "YouTube"
+    case .x:
+      return "X"
+    case .instagram:
+      return "Instagram"
+    case .reddit:
+      return "Reddit"
+    }
+  }
+}
+
+private struct UsageDisplay {
+  let totalSeconds: Int
+  let activityCount: Int?
+  let activityLabel: String?
+  let entries: [SiteUsageSourceSnapshot]
+
+  init?(summary: SiteUsageSummarySnapshot?, tab: TortoiseUsageTab) {
+    guard let summary else {
+      return nil
+    }
+
+    if tab == .all {
+      totalSeconds = summary.totalSeconds
+      activityCount = summary.activityCount
+      activityLabel = "events"
+      entries = summary.entries ?? summary.sites.flatMap(\.entries)
+      return
+    }
+
+    guard let site = summary.sites.first(where: { $0.siteID == tab.rawValue }) else {
+      return nil
+    }
+    totalSeconds = site.totalSeconds
+    activityCount = site.activityCount ?? site.videoCount
+    activityLabel = site.activityLabel
+    entries = site.entries
+  }
+
+  var metaText: String {
+    if let activityCount, activityCount > 0, let activityLabel {
+      return "Today · \(activityCount) \(activityLabel)"
+    }
+    return "Today"
+  }
+}
+
+private struct UsageDevice: Identifiable {
+  let id: String
+  let title: String
+  let subtitle: String
+  let totalSeconds: Int
+  let activityCount: Int
+  let isConnected: Bool
+}
+
+private struct UsageDeviceRow: View {
+  let row: UsageDevice
+
+  var body: some View {
+    HStack(spacing: 12) {
+      Image(systemName: row.id == "ios" ? "iphone" : "desktopcomputer")
+        .font(.headline)
+        .foregroundStyle(row.isConnected ? .primary : .secondary)
+        .frame(width: 34, height: 34)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+
+      VStack(alignment: .leading, spacing: 2) {
+        Text(row.title)
+          .fontWeight(.medium)
+        Text(row.subtitle)
+          .foregroundStyle(.secondary)
+      }
+      Spacer()
+      Text(row.isConnected ? UsageFormatter.duration(row.totalSeconds) : "No data")
+        .fontWeight(.semibold)
+        .foregroundStyle(row.isConnected ? .primary : .secondary)
+    }
+    .opacity(row.isConnected ? 1 : 0.58)
+  }
+}
+
+private struct UsageEntryRow: View {
+  let entry: SiteUsageSourceSnapshot
+
+  var body: some View {
+    HStack(alignment: .center, spacing: 12) {
+      Circle()
+        .fill(Color(.secondarySystemGroupedBackground))
+        .frame(width: 34, height: 34)
+        .overlay {
+          Text(initials)
+            .font(.caption)
+            .fontWeight(.semibold)
+        }
+
+      VStack(alignment: .leading, spacing: 2) {
+        Text(entry.label ?? entry.deviceName ?? "Tortoise source")
+          .fontWeight(.medium)
+          .lineLimit(1)
+        Text(subtitle)
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
+      }
+      Spacer()
+      Text(UsageFormatter.duration(entry.totalSeconds ?? 0))
+        .fontWeight(.semibold)
+    }
+  }
+
+  private var initials: String {
+    let text = entry.label ?? entry.deviceName ?? entry.sourceType ?? "T"
+    let parts = text
+      .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+      .prefix(2)
+    let value = parts.compactMap(\.first).map(String.init).joined().uppercased()
+    return value.isEmpty ? "T" : value
+  }
+
+  private var subtitle: String {
+    let source = entry.sourceType == "ios" ? "iOS" : entry.browserName ?? "Web browser"
+    if let siteTitle = entry.siteTitle {
+      return "\(siteTitle) · \(source)"
+    }
+    return source
+  }
+}
+
+private enum UsageFormatter {
+  static func duration(_ seconds: Int) -> String {
+    let totalMinutes = max(seconds, 0) / 60
+    let hours = totalMinutes / 60
+    let minutes = totalMinutes % 60
+    if hours > 0 {
+      return "\(hours)h \(minutes)m"
+    }
+    return "\(minutes)m"
   }
 }
 

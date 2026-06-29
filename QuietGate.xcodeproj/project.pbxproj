@@ -11,24 +11,30 @@
 		01E09F52B17A5C73BB6D6A9D /* AccessModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C9E1289903D976640AFF9D /* AccessModeTests.swift */; };
 		029A084EC6564B7EE8B8E6A7 /* QuietGateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */; };
 		03E45E39540A546303834DFB /* AppUpdateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67481EEAFE4705285370B181 /* AppUpdateServiceTests.swift */; };
+		069DD65F934AA7A22AD97145 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = 79402AF2122CB30C0AA7587B /* ClerkKit */; };
 		071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10484E7F6F5747D99616D28 /* ProtectionStoreTestDoubles.swift */; };
 		13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */; };
+		1A1CF74086AB973AB7DEE327 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = DC02935866BE041AD3A8E737 /* ClerkKitUI */; };
 		1F2B54B7CB29F001397F5511 /* AppUpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A4E779C54400A7FC44E8947 /* AppUpdateService.swift */; };
 		20EA3EE19D2CBDF46A7A672F /* FocusWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4756C58C93EAC31A54A7D43 /* FocusWindow.swift */; };
 		227DB1AC963E20209757F7EF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087265EBD487F081769A0206 /* SettingsView.swift */; };
 		25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E83559A72E96D37ED558E9 /* ProtectionStore.swift */; };
 		2A7C2EE45B5490848D49E39F /* FirefoxExtension in Resources */ = {isa = PBXBuildFile; fileRef = 49108B605636DFE560B901A1 /* FirefoxExtension */; };
+		2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */; };
 		32372EB3B2FE64B8AF0A91B5 /* quietgate-native-host in Resources */ = {isa = PBXBuildFile; fileRef = F110EF06D260E09967CD6F85 /* quietgate-native-host */; };
 		32AEA6C71C4467C6940FA138 /* ProtectionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */; };
+		339528CD0C5C0D639462B725 /* SiteUsageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */; };
 		34A519910B35F34F15DB12D4 /* BlockRulesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB264978DFD0DC526DD449C0 /* BlockRulesSection.swift */; };
 		376815F7B8655861DA1ED147 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFA12DDF78911C0F4BAC8B0 /* ConnectionState.swift */; };
 		416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037C5FB406B8F0B9446463B /* ProtectionView.swift */; };
 		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
+		4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */; };
 		522F946F5B674055032FC0B0 /* AdultContentPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6581F448432CC167402E64 /* AdultContentPreset.swift */; };
 		543D3D77B8DCB58049FA2F27 /* AccessMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C718927D45622BE95F8A6 /* AccessMode.swift */; };
 		5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A31DDDECCBC62D89589294 /* AppBlocking.swift */; };
 		5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899CA3F2232649843D526BBF /* PlatformControlsTests.swift */; };
 		60DF86842AE89751B08E4B23 /* PlatformControlsChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */; };
+		62380A554A1A14A8137CD046 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFC86964CB1E05B942884D6C /* Assets.xcassets */; };
 		63ABC33553530C34E6141185 /* LocalMacBlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC92C0665BEF24E2BD9493B /* LocalMacBlockingProvider.swift */; };
 		657F2FFA32B7C076D8B89CEA /* ReadinessCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */; };
 		67A953314D5B55EA2D0ACED0 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */; };
@@ -37,6 +43,8 @@
 		7CFBEE12AFF4CA9BA9FA00E4 /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */; };
 		7E447253F97180178BDCEB74 /* AccessModeControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5E54ACCB18B6E5BDCFA66D /* AccessModeControl.swift */; };
 		806D5C06664E093FDAB14C17 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4022A534497D10734ECFB8 /* ContentView.swift */; };
+		81D28CC8A95576F962D704A7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A298AFE1684A25A4DDD00FD /* ContentView.swift */; };
+		81E1909BBF8897470F85EE1E /* AccountHubModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2880C0251EB92FD791228DF /* AccountHubModel.swift */; };
 		83E70B835C2060EE16A968CD /* BrowserExtensionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */; };
 		84189CCEA3CDA4C8CE270671 /* ControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904A4A01A1D931693B9E434E /* ControlView.swift */; };
 		8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */; };
@@ -46,7 +54,9 @@
 		981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */; };
 		9D5CAE4FB45940791F38CBF5 /* ProductComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */; };
 		9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875814D47F22199A45571212 /* LegacyProviderClientTests.swift */; };
+		A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */; };
 		A1E86D97B6260061856CF6BA /* LegacyProviderModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */; };
+		A23960B33703BC7432135741 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120140E7CBD7F2EECD2D2084 /* AppConfig.swift */; };
 		AA5A23A16B0FE2E3FE9FB253 /* LegacyProviderMacServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */; };
 		AD444AE42F87DCA8F0927C2C /* PlatformControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60AE1C57CC050901354EC9E0 /* PlatformControls.swift */; };
 		AE98A73A80696CF332722521 /* ChromeExtension in Resources */ = {isa = PBXBuildFile; fileRef = 1241FE0B2B9FABFC3754F3CA /* ChromeExtension */; };
@@ -63,23 +73,15 @@
 		D0736EBD1524D2B62BC90181 /* AppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48D70E7CB61ED25567925555 /* AppsView.swift */; };
 		D38AB5164ED59F3E12C79C50 /* FocusWindowScheduleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */; };
 		D5E88C806BE5EB2FD956F4C2 /* LegacyProviderClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5C3C0E169106BD429B796E /* LegacyProviderClient.swift */; };
+		D63FC3D276A14BA56B25250B /* TortoiseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428CCAE23F622CC0E04DC22D /* TortoiseModels.swift */; };
 		D679E0BE8D81DE105F93851B /* BrowserExtensionBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9D0D6C462B904E4484093F /* BrowserExtensionBridgeTests.swift */; };
 		DA7B10BA71531BADB859B61B /* DomainNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */; };
 		E2706FF887583F7B49F586A1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CB16BD2B65FAC73392D34C8 /* Security.framework */; };
 		E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */; };
 		E9BF6A2093772B01DBE19349 /* BlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D288C7A057311BB070BB9CA /* BlockingProvider.swift */; };
 		EEA63F96F74571180223BDC4 /* BrowserBlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */; };
+		F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD16A82D2B5139D57A101409 /* TortoiseApp.swift */; };
 		FC5772371753CFBB84446085 /* ChromeExtensionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */; };
-		A00000000000000000000020 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000010 /* AppConfig.swift */; };
-		A00000000000000000000021 /* InstallationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000011 /* InstallationStore.swift */; };
-		A00000000000000000000022 /* TortoiseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* TortoiseModels.swift */; };
-		A00000000000000000000023 /* TortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* TortoiseAPIClient.swift */; };
-		A00000000000000000000024 /* AccountHubModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000014 /* AccountHubModel.swift */; };
-		A00000000000000000000025 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000015 /* ContentView.swift */; };
-		A00000000000000000000026 /* TortoiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000016 /* TortoiseApp.swift */; };
-		A00000000000000000000027 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A63BF32250707E748199B397 /* Assets.xcassets */; };
-		A00000000000000000000033 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000031 /* ClerkKit */; };
-		A00000000000000000000034 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000032 /* ClerkKitUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,18 +100,22 @@
 		05A31DDDECCBC62D89589294 /* AppBlocking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocking.swift; sourceTree = "<group>"; };
 		06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserExtensionBridge.swift; sourceTree = "<group>"; };
 		087265EBD487F081769A0206 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0A298AFE1684A25A4DDD00FD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		0C83EBBC9802A1BFFC76350D /* QuietGate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuietGate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductComponents.swift; sourceTree = "<group>"; };
 		0D9ED4A798405092F95055D8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0DE2CBCB3FB5414A38AC61AF /* BrowserTuningSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTuningSettings.swift; sourceTree = "<group>"; };
+		120140E7CBD7F2EECD2D2084 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		1241FE0B2B9FABFC3754F3CA /* ChromeExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ChromeExtension; sourceTree = SOURCE_ROOT; };
 		18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimedSessionControl.swift; sourceTree = "<group>"; };
 		1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusWindowScheduleControl.swift; sourceTree = "<group>"; };
 		22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockingStoreTests.swift; sourceTree = "<group>"; };
 		2CB16BD2B65FAC73392D34C8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProtectionStore+LegacyProviderState.swift"; sourceTree = "<group>"; };
+		390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseAPIClient.swift; sourceTree = "<group>"; };
 		3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuietGateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderModels.swift; sourceTree = "<group>"; };
+		428CCAE23F622CC0E04DC22D /* TortoiseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseModels.swift; sourceTree = "<group>"; };
 		48D70E7CB61ED25567925555 /* AppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppsView.swift; sourceTree = "<group>"; };
 		49108B605636DFE560B901A1 /* FirefoxExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FirefoxExtension; sourceTree = SOURCE_ROOT; };
 		57935D992DB807B116F700E1 /* TuningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningView.swift; sourceTree = "<group>"; };
@@ -139,36 +145,35 @@
 		97E83559A72E96D37ED558E9 /* ProtectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStore.swift; sourceTree = "<group>"; };
 		9A4E779C54400A7FC44E8947 /* AppUpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateService.swift; sourceTree = "<group>"; };
 		9F2C718927D45622BE95F8A6 /* AccessMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessMode.swift; sourceTree = "<group>"; };
+		9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteUsageModels.swift; sourceTree = "<group>"; };
 		A10484E7F6F5747D99616D28 /* ProtectionStoreTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTestDoubles.swift; sourceTree = "<group>"; };
+		A2619C3C4958102769F03DBC /* Tortoise.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tortoise.entitlements; sourceTree = "<group>"; };
 		A4756C58C93EAC31A54A7D43 /* FocusWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusWindow.swift; sourceTree = "<group>"; };
 		A63BF32250707E748199B397 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallationStore.swift; sourceTree = "<group>"; };
 		B1C9E1289903D976640AFF9D /* AccessModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessModeTests.swift; sourceTree = "<group>"; };
 		B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionMode.swift; sourceTree = "<group>"; };
 		B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderContracts.swift; sourceTree = "<group>"; };
 		BE5E54ACCB18B6E5BDCFA66D /* AccessModeControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessModeControl.swift; sourceTree = "<group>"; };
 		C037C5FB406B8F0B9446463B /* ProtectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionView.swift; sourceTree = "<group>"; };
+		C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSiteUsageReporter.swift; sourceTree = "<group>"; };
 		CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
 		CB264978DFD0DC526DD449C0 /* BlockRulesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockRulesSection.swift; sourceTree = "<group>"; };
+		CD16A82D2B5139D57A101409 /* TortoiseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseApp.swift; sourceTree = "<group>"; };
+		D2925CB34BA20C2BB1777802 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeExtensionStatus.swift; sourceTree = "<group>"; };
 		DC52F9B0A5882A50FB5BA117 /* LegacyProviderReadbackError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderReadbackError.swift; sourceTree = "<group>"; };
 		DCD4CB5D18C983E5D2C8EB2D /* BrowserTuningFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTuningFeature.swift; sourceTree = "<group>"; };
 		DDC92C0665BEF24E2BD9493B /* LocalMacBlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMacBlockingProvider.swift; sourceTree = "<group>"; };
 		DF5C3C0E169106BD429B796E /* LegacyProviderClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderClient.swift; sourceTree = "<group>"; };
+		DFC86964CB1E05B942884D6C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E10882E6DFEB8F566BA4D8E2 /* Tortoise.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Tortoise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1472E89F3657BB69577F593 /* DisabledLegacyProviderServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisabledLegacyProviderServices.swift; sourceTree = "<group>"; };
 		E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuietGateApp.swift; sourceTree = "<group>"; };
 		F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderMacServices.swift; sourceTree = "<group>"; };
 		F110EF06D260E09967CD6F85 /* quietgate-native-host */ = {isa = PBXFileReference; path = "quietgate-native-host"; sourceTree = "<group>"; };
+		F2880C0251EB92FD791228DF /* AccountHubModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountHubModel.swift; sourceTree = "<group>"; };
 		F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsChecker.swift; sourceTree = "<group>"; };
-		A00000000000000000000001 /* Tortoise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tortoise.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A00000000000000000000010 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
-		A00000000000000000000011 /* InstallationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallationStore.swift; sourceTree = "<group>"; };
-		A00000000000000000000012 /* TortoiseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseModels.swift; sourceTree = "<group>"; };
-		A00000000000000000000013 /* TortoiseAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseAPIClient.swift; sourceTree = "<group>"; };
-		A00000000000000000000014 /* AccountHubModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountHubModel.swift; sourceTree = "<group>"; };
-		A00000000000000000000015 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		A00000000000000000000016 /* TortoiseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseApp.swift; sourceTree = "<group>"; };
-		A00000000000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		A00000000000000000000018 /* Tortoise.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tortoise.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -180,12 +185,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A00000000000000000000006 /* Frameworks */ = {
+		D3573715305225CB0A30D3CA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A00000000000000000000033 /* ClerkKit in Frameworks */,
-				A00000000000000000000034 /* ClerkKitUI in Frameworks */,
+				069DD65F934AA7A22AD97145 /* ClerkKit in Frameworks */,
+				1A1CF74086AB973AB7DEE327 /* ClerkKitUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -317,8 +322,8 @@
 				49108B605636DFE560B901A1 /* FirefoxExtension */,
 				449116EFB17D1692714BD7F9 /* build */,
 				073ED66446800B330D1E1ABF /* QuietGate */,
-				A00000000000000000000002 /* Tortoise */,
 				AB1FD2770B604EF23DF7E703 /* QuietGateTests */,
+				B172E14680A07B4EA9696475 /* Tortoise */,
 				1920BC17A12A463C24897D5C /* Frameworks */,
 				AE6AE2ACAE9921CD861AEBD2 /* Products */,
 			);
@@ -382,31 +387,34 @@
 			children = (
 				0C83EBBC9802A1BFFC76350D /* QuietGate.app */,
 				3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */,
-				A00000000000000000000001 /* Tortoise.app */,
+				E10882E6DFEB8F566BA4D8E2 /* Tortoise.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A00000000000000000000002 /* Tortoise */ = {
+		B172E14680A07B4EA9696475 /* Tortoise */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000014 /* AccountHubModel.swift */,
-				A00000000000000000000010 /* AppConfig.swift */,
-				A00000000000000000000015 /* ContentView.swift */,
-				A00000000000000000000011 /* InstallationStore.swift */,
-				A00000000000000000000013 /* TortoiseAPIClient.swift */,
-				A00000000000000000000016 /* TortoiseApp.swift */,
-				A00000000000000000000012 /* TortoiseModels.swift */,
-				A00000000000000000000003 /* Resources */,
+				F2880C0251EB92FD791228DF /* AccountHubModel.swift */,
+				120140E7CBD7F2EECD2D2084 /* AppConfig.swift */,
+				0A298AFE1684A25A4DDD00FD /* ContentView.swift */,
+				B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */,
+				C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */,
+				9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */,
+				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
+				CD16A82D2B5139D57A101409 /* TortoiseApp.swift */,
+				428CCAE23F622CC0E04DC22D /* TortoiseModels.swift */,
+				C5BEA2B5897D1D97326C1686 /* Resources */,
 			);
 			path = Tortoise;
 			sourceTree = "<group>";
 		};
-		A00000000000000000000003 /* Resources */ = {
+		C5BEA2B5897D1D97326C1686 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000017 /* Info.plist */,
-				A00000000000000000000018 /* Tortoise.entitlements */,
+				DFC86964CB1E05B942884D6C /* Assets.xcassets */,
+				D2925CB34BA20C2BB1777802 /* Info.plist */,
+				A2619C3C4958102769F03DBC /* Tortoise.entitlements */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -434,6 +442,27 @@
 			productReference = 0C83EBBC9802A1BFFC76350D /* QuietGate.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B556D480FA402030EE600C06 /* Tortoise */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3A059D8887B3E20C557875CA /* Build configuration list for PBXNativeTarget "Tortoise" */;
+			buildPhases = (
+				845B4F3932C0800177BCADAA /* Sources */,
+				9A9B6565CA5BB88DAD5DF420 /* Resources */,
+				D3573715305225CB0A30D3CA /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tortoise;
+			packageProductDependencies = (
+				79402AF2122CB30C0AA7587B /* ClerkKit */,
+				DC02935866BE041AD3A8E737 /* ClerkKitUI */,
+			);
+			productName = Tortoise;
+			productReference = E10882E6DFEB8F566BA4D8E2 /* Tortoise.app */;
+			productType = "com.apple.product-type.application";
+		};
 		D8B23943A4C465B5EBF87BDF /* QuietGateTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 18EC80B09EFF6EC5B6BF269C /* Build configuration list for PBXNativeTarget "QuietGateTests" */;
@@ -452,27 +481,6 @@
 			productReference = 3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		A00000000000000000000007 /* Tortoise */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = A00000000000000000000036 /* Build configuration list for PBXNativeTarget "Tortoise" */;
-			buildPhases = (
-				A00000000000000000000004 /* Sources */,
-				A00000000000000000000006 /* Frameworks */,
-				A00000000000000000000005 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = Tortoise;
-			packageProductDependencies = (
-				A00000000000000000000031 /* ClerkKit */,
-				A00000000000000000000032 /* ClerkKitUI */,
-			);
-			productName = Tortoise;
-			productReference = A00000000000000000000001 /* Tortoise.app */;
-			productType = "com.apple.product-type.application";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -486,13 +494,13 @@
 						DevelopmentTeam = V558WV68AM;
 						ProvisioningStyle = Manual;
 					};
+					B556D480FA402030EE600C06 = {
+						DevelopmentTeam = SY7TABCD5M;
+						ProvisioningStyle = Automatic;
+					};
 					D8B23943A4C465B5EBF87BDF = {
 						DevelopmentTeam = V558WV68AM;
 						ProvisioningStyle = Manual;
-					};
-					A00000000000000000000007 = {
-						CreatedOnToolsVersion = 16.0;
-						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -506,7 +514,7 @@
 			mainGroup = 6058B20950AD839C7073E5CE;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				7E21BEA6C7B4FE8C168EC920 /* XCRemoteSwiftPackageReference "clerk-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AE6AE2ACAE9921CD861AEBD2 /* Products */;
@@ -515,7 +523,7 @@
 			targets = (
 				017E4BD045B6A71A7806E69D /* QuietGate */,
 				D8B23943A4C465B5EBF87BDF /* QuietGateTests */,
-				A00000000000000000000007 /* Tortoise */,
+				B556D480FA402030EE600C06 /* Tortoise */,
 			);
 		};
 /* End PBXProject section */
@@ -532,11 +540,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A00000000000000000000005 /* Resources */ = {
+		9A9B6565CA5BB88DAD5DF420 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A00000000000000000000027 /* Assets.xcassets in Resources */,
+				62380A554A1A14A8137CD046 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -583,6 +591,22 @@
 				5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */,
 				071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */,
 				13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		845B4F3932C0800177BCADAA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				81E1909BBF8897470F85EE1E /* AccountHubModel.swift in Sources */,
+				A23960B33703BC7432135741 /* AppConfig.swift in Sources */,
+				81D28CC8A95576F962D704A7 /* ContentView.swift in Sources */,
+				4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */,
+				A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */,
+				339528CD0C5C0D639462B725 /* SiteUsageModels.swift in Sources */,
+				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
+				F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */,
+				D63FC3D276A14BA56B25250B /* TortoiseModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -639,20 +663,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A00000000000000000000004 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A00000000000000000000024 /* AccountHubModel.swift in Sources */,
-				A00000000000000000000020 /* AppConfig.swift in Sources */,
-				A00000000000000000000025 /* ContentView.swift in Sources */,
-				A00000000000000000000021 /* InstallationStore.swift in Sources */,
-				A00000000000000000000023 /* TortoiseAPIClient.swift in Sources */,
-				A00000000000000000000026 /* TortoiseApp.swift in Sources */,
-				A00000000000000000000022 /* TortoiseModels.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -664,6 +674,29 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		0E91807B72D20879385C177B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CLERK_PUBLISHABLE_KEY = "";
+				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise;
+				PRODUCT_NAME = Tortoise;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TORTOISE_API_BASE_URL = "https://www.yourtortoise.com";
+			};
+			name = Debug;
+		};
 		0FC32AA0ABB49EC78236D046 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -719,13 +752,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -798,15 +831,38 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9BFBC418EE3DD8F5CBA6ADE6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CLERK_PUBLISHABLE_KEY = "";
+				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise;
+				PRODUCT_NAME = Tortoise;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TORTOISE_API_BASE_URL = "https://www.yourtortoise.com";
 			};
 			name = Release;
 		};
@@ -863,68 +919,6 @@
 			};
 			name = Release;
 		};
-		A00000000000000000000008 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsueW91cnRvcnRvaXNlLmNvbSQ";
-				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = SY7TABCD5M;
-				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise;
-				PRODUCT_NAME = Tortoise;
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TORTOISE_API_BASE_URL = "https://www.yourtortoise.com";
-			};
-			name = Debug;
-		};
-		A00000000000000000000009 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsueW91cnRvcnRvaXNlLmNvbSQ";
-				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = SY7TABCD5M;
-				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise;
-				PRODUCT_NAME = Tortoise;
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TORTOISE_API_BASE_URL = "https://www.yourtortoise.com";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -933,6 +927,15 @@
 			buildConfigurations = (
 				11BEF2DBA0EA1BDC2402B5D9 /* Debug */,
 				B336307B0E3EAA39BDE901B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3A059D8887B3E20C557875CA /* Build configuration list for PBXNativeTarget "Tortoise" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0E91807B72D20879385C177B /* Debug */,
+				9BFBC418EE3DD8F5CBA6ADE6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -955,37 +958,28 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		A00000000000000000000036 /* Build configuration list for PBXNativeTarget "Tortoise" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A00000000000000000000008 /* Debug */,
-				A00000000000000000000009 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+		7E21BEA6C7B4FE8C168EC920 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/clerk/clerk-ios";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.2.6;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A00000000000000000000031 /* ClerkKit */ = {
+		79402AF2122CB30C0AA7587B /* ClerkKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			package = 7E21BEA6C7B4FE8C168EC920 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkKit;
 		};
-		A00000000000000000000032 /* ClerkKitUI */ = {
+		DC02935866BE041AD3A8E737 /* ClerkKitUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A00000000000000000000030 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			package = 7E21BEA6C7B4FE8C168EC920 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkKitUI;
 		};
 /* End XCSwiftPackageProductDependency section */

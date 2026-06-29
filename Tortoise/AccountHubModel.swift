@@ -43,6 +43,16 @@ final class AccountHubModel: ObservableObject {
         registration: registration
       ).device
       let devices = try await apiClient.fetchDevices(token: token).devices
+      let siteUsageSummary: SiteUsageSummarySnapshot?
+      if let usageReport = IOSSiteUsageReporter.pendingReport(deviceName: UIDevice.current.name) {
+        siteUsageSummary = try await apiClient.postSiteUsage(
+          token: token,
+          deviceId: registeredDevice.id,
+          usage: usageReport
+        ).siteUsageSummary
+      } else {
+        siteUsageSummary = try? await apiClient.fetchSiteUsage(token: token).siteUsageSummary
+      }
 
       try? await apiClient.postHealth(
         token: token,
@@ -56,10 +66,12 @@ final class AccountHubModel: ObservableObject {
           ],
           canaryStatus: [
             "accountHub": .string("live"),
-            "policySync": .string("live")
+            "policySync": .string("live"),
+            "siteUsageSummary": .string(siteUsageSummary == nil ? "no_data" : "live")
           ],
           adultProtection: [
             "iosEnforcement": .string("not_supported_v1"),
+            "siteUsage": .string("shared_summary_live"),
             "sourceOfTruth": .string("supabase_policy")
           ]
         )
@@ -69,9 +81,10 @@ final class AccountHubModel: ObservableObject {
         policy: policy,
         device: registeredDevice,
         devices: devices,
+        siteUsageSummary: siteUsageSummary,
         lastSyncedAt: Date()
       )
-      syncMessage = "This iPhone is registered and policy is current. iOS enforcement is not available in v1."
+      syncMessage = "This iPhone is registered. Policy and usage summaries are current."
     } catch {
       syncMessage = "Policy sync unavailable. Try again after account services are reachable."
     }
@@ -81,6 +94,9 @@ final class AccountHubModel: ObservableObject {
     "accountHub": .string("supported"),
     "policySync": .string("supported"),
     "deviceHealth": .string("supported"),
+    "siteUsageDisplay": .string("supported"),
+    "siteUsageUpload": .string("supported"),
+    "iosUsageCollector": .string("ready_for_collector"),
     "adultWebBlocking": .string("planned"),
     "xTuning": .string("not_supported_v1"),
     "redditTuning": .string("not_supported_v1"),

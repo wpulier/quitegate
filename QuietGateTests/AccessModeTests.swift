@@ -9,7 +9,8 @@ final class AccessModeTests: XCTestCase {
       [
         .youtubeHome, .youtubeShorts, .youtubeUsageTracking,
         .xSensitiveMedia, .xVideos,
-        .instagramReels, .instagramExplore, .instagramSuggested,
+        .instagramReels, .instagramExplore, .instagramSuggested, .instagramProfileSuggestions,
+        .instagramMessages, .instagramNotifications,
         .redditPopularAll, .redditRecommendations,
       ]
     )
@@ -46,7 +47,10 @@ final class AccessModeTests: XCTestCase {
     )
     XCTAssertEqual(
       BrowserTuningFeature.features(for: .instagram),
-      [.instagramReels, .instagramExplore, .instagramSuggested, .instagramStories]
+      [
+        .instagramReels, .instagramExplore, .instagramSuggested, .instagramProfileSuggestions,
+        .instagramMessages, .instagramNotifications, .instagramStories,
+      ]
     )
     XCTAssertEqual(
       BrowserTuningFeature.features(for: .reddit),

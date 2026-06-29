@@ -59,7 +59,8 @@ enum AccessMode: String, CaseIterable, Codable, Identifiable {
       return [
         .youtubeHome, .youtubeShorts, .youtubeUsageTracking,
         .xSensitiveMedia, .xVideos,
-        .instagramReels, .instagramExplore, .instagramSuggested,
+        .instagramReels, .instagramExplore, .instagramSuggested, .instagramProfileSuggestions,
+        .instagramMessages, .instagramNotifications,
         .redditPopularAll, .redditRecommendations,
       ]
     case .strict:

@@ -6,7 +6,7 @@ html.qg-youtube-home ytd-browse[page-subtype="home"] ytd-rich-section-renderer {
 }
 
 html.qg-youtube-home ytd-browse[page-subtype="home"]::before {
-  content: "QuietGate tuned this page.";
+  content: "Tortoise tuned this page.";
   display: block;
   margin: 72px auto 0;
   max-width: 420px;
@@ -185,15 +185,272 @@ html.qg-youtube-annotations #annotation {
   right: 16px !important;
   bottom: 16px !important;
   z-index: 2147483646 !important;
-  padding: 8px 11px !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  border-radius: 8px !important;
-  background: rgba(15, 17, 21, 0.88) !important;
+  display: grid !important;
+  gap: 9px !important;
+  width: max-content !important;
+  max-width: min(410px, calc(100vw - 32px)) !important;
+  padding: 9px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 19px !important;
+  background: linear-gradient(180deg, rgba(31, 34, 39, 0.96), rgba(12, 14, 18, 0.95)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+  backdrop-filter: blur(18px) saturate(1.15) !important;
   color: #fff !important;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.26) !important;
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   font: 600 12px/1.35 Roboto, Arial, sans-serif !important;
   letter-spacing: 0 !important;
-  pointer-events: none !important;
+  pointer-events: auto !important;
+  cursor: default !important;
+  outline: none !important;
+}
+
+#quietgate-youtube-usage:focus-visible {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  box-shadow: 0 0 0 2px rgba(46, 134, 255, 0.7), 0 20px 52px rgba(0, 0, 0, 0.34) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-summary {
+  padding: 0 5px !important;
+  white-space: nowrap !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-detail {
+  display: none !important;
+  min-width: min(344px, calc(100vw - 50px)) !important;
+  max-height: min(620px, calc(100vh - 116px)) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding-right: 1px !important;
+  gap: 10px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-tabs {
+  display: flex !important;
+  gap: 5px !important;
+  overflow-x: auto !important;
+  padding: 1px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-tab {
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 6px 9px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  font: 800 11px/1 Roboto, Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-tab[aria-selected="true"] {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #fff !important;
+}
+
+#quietgate-youtube-usage:hover .qg-youtube-usage-detail,
+#quietgate-youtube-usage:focus-within .qg-youtube-usage-detail,
+#quietgate-youtube-usage.qg-youtube-usage-expanded .qg-youtube-usage-detail {
+  display: grid !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  gap: 12px !important;
+  padding: 13px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-hero-rail {
+  display: grid !important;
+  justify-items: end !important;
+  gap: 8px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-source {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  padding: 5px 8px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-youtube-icon {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 18px !important;
+  height: 12px !important;
+  border-radius: 4px !important;
+  background: #ff0033 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-youtube-icon::before {
+  content: "" !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin-left: 1px !important;
+  border-top: 3px solid transparent !important;
+  border-bottom: 3px solid transparent !important;
+  border-left: 5px solid #fff !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-site-dot {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.68) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-hero-copy {
+  display: grid !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-kicker {
+  color: rgba(255, 255, 255, 0.58) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-total {
+  color: #fff !important;
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-day-window {
+  color: rgba(255, 255, 255, 0.58) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-total-meta {
+  color: rgba(255, 255, 255, 0.68) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-account-count {
+  align-self: start !important;
+  white-space: nowrap !important;
+  padding: 5px 8px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-section-title {
+  padding: 0 5px !important;
+  color: rgba(255, 255, 255, 0.48) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-list {
+  display: grid !important;
+  gap: 7px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-height: 44px !important;
+  padding: 6px 7px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-avatar {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-icon {
+  font-size: 10px !important;
+  letter-spacing: 0 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-icon-ios {
+  border-radius: 10px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-row-muted {
+  opacity: 0.52 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-row-muted .qg-youtube-usage-row-value {
+  color: rgba(255, 255, 255, 0.48) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-copy {
+  display: grid !important;
+  min-width: 0 !important;
+  gap: 1px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-title,
+#quietgate-youtube-usage .qg-youtube-usage-row-subtitle {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-title {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-subtitle {
+  color: rgba(255, 255, 255, 0.52) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-value {
+  white-space: nowrap !important;
+  color: rgba(255, 255, 255, 0.76) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
 }
 
 html.qg-youtube-limit-reached ytd-app,

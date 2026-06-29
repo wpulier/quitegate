@@ -5,6 +5,8 @@ let allowedChromiumExtensionID = "fedpnejbgmllajjlfkahlnjbgfmjjmmf"
 let allowedFirefoxExtensionID = "quietgate@willpulier.com"
 let allowedOrigin = "chrome-extension://\(allowedChromiumExtensionID)/"
 let allowedBrowserIDs: Set<String> = ["chrome", "edge", "brave", "arc", "firefox"]
+let supportedSiteIDs: [String] = ["youtube", "x", "instagram", "reddit"]
+let supportedSiteIDSet = Set(supportedSiteIDs)
 
 let defaultSettings: [String: Any] = [
   "mode": "open",
@@ -78,6 +80,575 @@ func statusURL(browserID: String?) -> URL {
   let normalized = normalizedBrowserID(browserID) ?? "chrome"
   let filename = normalized == "chrome" ? "chrome-status.json" : "\(normalized)-status.json"
   return applicationSupportDirectory().appendingPathComponent(filename)
+}
+
+func youtubeUsageLedgerURL() -> URL {
+  applicationSupportDirectory().appendingPathComponent("youtube-usage-summary.json")
+}
+
+func siteUsageLedgerURL() -> URL {
+  applicationSupportDirectory().appendingPathComponent("site-usage-summary.json")
+}
+
+func localDateKey(_ date: Date = Date()) -> String {
+  let formatter = DateFormatter()
+  formatter.calendar = Calendar(identifier: .gregorian)
+  formatter.locale = Locale(identifier: "en_US_POSIX")
+  formatter.dateFormat = "yyyy-MM-dd"
+  return formatter.string(from: date)
+}
+
+func browserDisplayName(_ browserID: String) -> String {
+  switch browserID {
+  case "chrome":
+    return "Chrome"
+  case "edge":
+    return "Edge"
+  case "brave":
+    return "Brave"
+  case "arc":
+    return "Arc"
+  case "firefox":
+    return "Firefox"
+  default:
+    return "Browser"
+  }
+}
+
+func trimmedString(_ value: Any?) -> String? {
+  guard let string = value as? String else {
+    return nil
+  }
+  let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+  return trimmed.isEmpty ? nil : trimmed
+}
+
+func intValue(_ value: Any?) -> Int {
+  if let int = value as? Int {
+    return max(int, 0)
+  }
+  if let number = value as? NSNumber {
+    return max(Int(number.doubleValue.rounded(.down)), 0)
+  }
+  if let string = value as? String,
+     let double = Double(string.trimmingCharacters(in: .whitespacesAndNewlines)) {
+    return max(Int(double.rounded(.down)), 0)
+  }
+  return 0
+}
+
+func positiveIntValue(_ value: Any?) -> Int? {
+  let value = intValue(value)
+  return value > 0 ? value : nil
+}
+
+func boolValue(_ value: Any?) -> Bool {
+  if let bool = value as? Bool {
+    return bool
+  }
+  if let number = value as? NSNumber {
+    return number.boolValue
+  }
+  if let string = value as? String {
+    return ["1", "true", "yes"].contains(string.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+  }
+  return false
+}
+
+func normalizedYouTubeUsage(_ value: Any?) -> [String: Any]? {
+  guard let usage = value as? [String: Any],
+        let date = trimmedString(usage["date"]) else {
+    return nil
+  }
+  let totalSeconds = intValue(usage["totalSeconds"])
+  let limitSeconds = positiveIntValue(usage["limitSeconds"])
+  var normalized: [String: Any] = [
+    "date": date,
+    "totalSeconds": totalSeconds,
+    "lifetimeSeconds": intValue(usage["lifetimeSeconds"]),
+    "videoCount": intValue(usage["videoCount"]),
+    "lifetimeVideoCount": intValue(usage["lifetimeVideoCount"]),
+    "limitReached": boolValue(usage["limitReached"]) || (limitSeconds.map { totalSeconds >= $0 } ?? false)
+  ]
+  normalized["limitSeconds"] = limitSeconds ?? NSNull()
+  normalized["lastUpdatedAt"] = trimmedString(usage["lastUpdatedAt"]) ?? NSNull()
+  return normalized
+}
+
+func normalizedSiteID(_ value: Any?) -> String? {
+  guard var siteID = trimmedString(value)?.lowercased() else {
+    return nil
+  }
+  if siteID == "twitter" {
+    siteID = "x"
+  }
+  return supportedSiteIDSet.contains(siteID) ? siteID : nil
+}
+
+func siteTitle(_ siteID: String) -> String {
+  switch siteID {
+  case "youtube":
+    return "YouTube"
+  case "x":
+    return "X"
+  case "instagram":
+    return "Instagram"
+  case "reddit":
+    return "Reddit"
+  default:
+    return siteID
+  }
+}
+
+func defaultActivityLabel(siteID: String) -> String? {
+  siteID == "youtube" ? "videos" : nil
+}
+
+func normalizedSiteUsage(_ value: Any?, fallbackSiteID: String? = nil) -> [String: Any]? {
+  guard let usage = value as? [String: Any] else {
+    return nil
+  }
+  guard let siteID = normalizedSiteID(usage["siteID"]) ?? fallbackSiteID else {
+    return nil
+  }
+  guard let date = trimmedString(usage["date"]) else {
+    return nil
+  }
+
+  let totalSeconds = intValue(usage["totalSeconds"])
+  let lifetimeSeconds = intValue(usage["lifetimeSeconds"])
+  let activityCount = intValue(usage["activityCount"] ?? usage["videoCount"])
+  let lifetimeActivityCount = intValue(usage["lifetimeActivityCount"] ?? usage["lifetimeVideoCount"])
+  let limitSeconds = positiveIntValue(usage["limitSeconds"])
+  let activityLabel = trimmedString(usage["activityLabel"])
+    ?? (activityCount > 0 || lifetimeActivityCount > 0 ? defaultActivityLabel(siteID: siteID) : nil)
+
+  var normalized: [String: Any] = [
+    "siteID": siteID,
+    "title": siteTitle(siteID),
+    "date": date,
+    "totalSeconds": totalSeconds,
+    "lifetimeSeconds": lifetimeSeconds,
+    "activityCount": activityCount,
+    "lifetimeActivityCount": lifetimeActivityCount,
+    "limitReached": boolValue(usage["limitReached"]) || (limitSeconds.map { totalSeconds >= $0 } ?? false)
+  ]
+  normalized["activityLabel"] = activityLabel ?? NSNull()
+  normalized["limitSeconds"] = limitSeconds ?? NSNull()
+  normalized["lastUpdatedAt"] = trimmedString(usage["lastUpdatedAt"]) ?? NSNull()
+
+  if siteID == "youtube" {
+    normalized["videoCount"] = activityCount
+    normalized["lifetimeVideoCount"] = lifetimeActivityCount
+  }
+
+  return normalized
+}
+
+func siteUsageFromYouTubeUsage(_ value: Any?) -> [String: Any]? {
+  guard let usage = normalizedYouTubeUsage(value) else {
+    return nil
+  }
+  var siteUsage: [String: Any] = [
+    "siteID": "youtube",
+    "title": "YouTube",
+    "date": trimmedString(usage["date"]) ?? localDateKey(),
+    "totalSeconds": intValue(usage["totalSeconds"]),
+    "lifetimeSeconds": intValue(usage["lifetimeSeconds"]),
+    "activityCount": intValue(usage["videoCount"]),
+    "lifetimeActivityCount": intValue(usage["lifetimeVideoCount"]),
+    "activityLabel": "videos",
+    "videoCount": intValue(usage["videoCount"]),
+    "lifetimeVideoCount": intValue(usage["lifetimeVideoCount"]),
+    "limitReached": boolValue(usage["limitReached"])
+  ]
+  siteUsage["limitSeconds"] = positiveIntValue(usage["limitSeconds"]) ?? NSNull()
+  siteUsage["lastUpdatedAt"] = trimmedString(usage["lastUpdatedAt"]) ?? NSNull()
+  return siteUsage
+}
+
+func normalizedSiteUsagePayload(_ value: Any?) -> [[String: Any]] {
+  if let entries = value as? [[String: Any]] {
+    return entries.compactMap { normalizedSiteUsage($0) }
+  }
+  guard let object = value as? [String: Any] else {
+    return []
+  }
+  if let entries = object["sites"] as? [[String: Any]] {
+    return entries.compactMap { normalizedSiteUsage($0) }
+  }
+  if let entries = object["entries"] as? [[String: Any]] {
+    return entries.compactMap { normalizedSiteUsage($0) }
+  }
+  if let siteID = normalizedSiteID(object["siteID"]) {
+    return normalizedSiteUsage(object, fallbackSiteID: siteID).map { [$0] } ?? []
+  }
+  return supportedSiteIDs.compactMap { siteID in
+    normalizedSiteUsage(object[siteID], fallbackSiteID: siteID)
+  }
+}
+
+func readYouTubeUsageRecords() -> [[String: Any]] {
+  guard let data = try? Data(contentsOf: youtubeUsageLedgerURL()),
+        let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        let records = object["records"] as? [[String: Any]] else {
+    return []
+  }
+  return records
+}
+
+func readSiteUsageRecords() -> [[String: Any]] {
+  guard let data = try? Data(contentsOf: siteUsageLedgerURL()),
+        let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        let records = object["records"] as? [[String: Any]] else {
+    return []
+  }
+  return records
+}
+
+func profileLabel(browserID: String, profile: [String: Any]?) -> String {
+  let browser = browserDisplayName(browserID)
+  guard let profile else {
+    return browser
+  }
+  let label = trimmedString(profile["label"])
+    ?? trimmedString(profile["name"])
+    ?? trimmedString(profile["id"])
+  guard let label else {
+    return browser
+  }
+  return "\(browser) - \(label)"
+}
+
+func youtubeUsageRecord(from message: [String: Any], browserID: String, profile: [String: Any]?, seenAt: String) -> [String: Any]? {
+  guard let usage = normalizedYouTubeUsage(message["youtubeUsage"]) else {
+    return nil
+  }
+  let profileID = trimmedString(profile?["id"]) ?? "default"
+  var record: [String: Any] = [
+    "id": "\(browserID):\(profileID)",
+    "browserID": browserID,
+    "browserName": browserDisplayName(browserID),
+    "profileID": profileID,
+    "label": profileLabel(browserID: browserID, profile: profile),
+    "youtubeUsage": usage,
+    "lastSeenAt": seenAt
+  ]
+  record["profileName"] = trimmedString(profile?["name"]) ?? NSNull()
+  return record
+}
+
+func sourceType(browserID: String, value: Any? = nil) -> String {
+  if let explicit = trimmedString(value)?.lowercased(), ["browser", "web", "ios", "iphone", "ipad"].contains(explicit) {
+    return explicit == "iphone" || explicit == "ipad" ? "ios" : explicit
+  }
+  return browserID == "ios" ? "ios" : "browser"
+}
+
+func siteUsageRecord(
+  usage: [String: Any],
+  message: [String: Any],
+  browserID: String,
+  profile: [String: Any]?,
+  seenAt: String
+) -> [String: Any]? {
+  guard let siteID = normalizedSiteID(usage["siteID"]) else {
+    return nil
+  }
+  let profileID = trimmedString(profile?["id"]) ?? "default"
+  let source = sourceType(browserID: browserID, value: usage["sourceType"] ?? message["sourceType"])
+  let sourceID = trimmedString(usage["sourceID"]) ?? "\(browserID):\(profileID)"
+  var record: [String: Any] = [
+    "id": "\(siteID):\(sourceID)",
+    "siteID": siteID,
+    "siteTitle": siteTitle(siteID),
+    "sourceID": sourceID,
+    "sourceType": source,
+    "browserID": browserID,
+    "browserName": browserDisplayName(browserID),
+    "profileID": profileID,
+    "label": trimmedString(usage["label"]) ?? profileLabel(browserID: browserID, profile: profile),
+    "siteUsage": usage,
+    "lastSeenAt": seenAt
+  ]
+  record["profileName"] = trimmedString(profile?["name"]) ?? NSNull()
+  record["deviceName"] = trimmedString(usage["deviceName"]) ?? (source == "ios" ? "iOS" : browserDisplayName(browserID))
+  return record
+}
+
+func siteUsageRecords(from message: [String: Any], browserID: String, profile: [String: Any]?, seenAt: String) -> [[String: Any]] {
+  var usageValues = normalizedSiteUsagePayload(message["siteUsage"])
+  let hasGenericYouTube = usageValues.contains { normalizedSiteID($0["siteID"]) == "youtube" }
+  if !hasGenericYouTube, let youtubeUsage = siteUsageFromYouTubeUsage(message["youtubeUsage"]) {
+    usageValues.append(youtubeUsage)
+  }
+  return usageValues.compactMap { usage in
+    siteUsageRecord(
+      usage: usage,
+      message: message,
+      browserID: browserID,
+      profile: profile,
+      seenAt: seenAt
+    )
+  }
+}
+
+func writeYouTubeUsageRecord(_ record: [String: Any], updatedAt: String) throws {
+  guard let recordID = trimmedString(record["id"]) else {
+    return
+  }
+  var records = readYouTubeUsageRecords().filter { trimmedString($0["id"]) != recordID }
+  records.append(record)
+  records.sort {
+    let lhs = trimmedString($0["label"]) ?? trimmedString($0["id"]) ?? ""
+    let rhs = trimmedString($1["label"]) ?? trimmedString($1["id"]) ?? ""
+    return lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+  }
+
+  let data = try JSONSerialization.data(
+    withJSONObject: [
+      "schemaVersion": 1,
+      "updatedAt": updatedAt,
+      "records": records
+    ],
+    options: [.prettyPrinted, .sortedKeys]
+  )
+  try data.write(to: youtubeUsageLedgerURL(), options: .atomic)
+}
+
+func writeSiteUsageRecord(_ record: [String: Any], updatedAt: String) throws {
+  guard let recordID = trimmedString(record["id"]) else {
+    return
+  }
+  var records = readSiteUsageRecords().filter { trimmedString($0["id"]) != recordID }
+  records.append(record)
+  records.sort {
+    let lhsSite = supportedSiteIDs.firstIndex(of: trimmedString($0["siteID"]) ?? "") ?? Int.max
+    let rhsSite = supportedSiteIDs.firstIndex(of: trimmedString($1["siteID"]) ?? "") ?? Int.max
+    if lhsSite != rhsSite {
+      return lhsSite < rhsSite
+    }
+    let lhs = trimmedString($0["label"]) ?? trimmedString($0["id"]) ?? ""
+    let rhs = trimmedString($1["label"]) ?? trimmedString($1["id"]) ?? ""
+    return lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+  }
+
+  let data = try JSONSerialization.data(
+    withJSONObject: [
+      "schemaVersion": 1,
+      "updatedAt": updatedAt,
+      "records": records
+    ],
+    options: [.prettyPrinted, .sortedKeys]
+  )
+  try data.write(to: siteUsageLedgerURL(), options: .atomic)
+}
+
+func legacyYouTubeSiteUsageRecords() -> [[String: Any]] {
+  readYouTubeUsageRecords().compactMap { record -> [String: Any]? in
+    guard let usage = siteUsageFromYouTubeUsage(record["youtubeUsage"]) else {
+      return nil
+    }
+    let browserID = trimmedString(record["browserID"]) ?? "chrome"
+    let profileID = trimmedString(record["profileID"]) ?? "default"
+    let sourceID = "\(browserID):\(profileID)"
+    var mapped: [String: Any] = [
+      "id": "youtube:\(sourceID)",
+      "siteID": "youtube",
+      "siteTitle": "YouTube",
+      "sourceID": sourceID,
+      "sourceType": "browser",
+      "browserID": browserID,
+      "browserName": trimmedString(record["browserName"]) ?? browserDisplayName(browserID),
+      "profileID": profileID,
+      "label": trimmedString(record["label"]) ?? "\(browserDisplayName(browserID)) - \(profileID)",
+      "siteUsage": usage,
+      "lastSeenAt": trimmedString(record["lastSeenAt"]) ?? NSNull()
+    ]
+    mapped["profileName"] = trimmedString(record["profileName"]) ?? NSNull()
+    mapped["deviceName"] = trimmedString(record["deviceName"]) ?? browserDisplayName(browserID)
+    return mapped
+  }
+}
+
+func mergedSiteUsageRecords() -> [[String: Any]] {
+  var recordsByID: [String: [String: Any]] = [:]
+  for record in legacyYouTubeSiteUsageRecords() {
+    if let id = trimmedString(record["id"]) {
+      recordsByID[id] = record
+    }
+  }
+  for record in readSiteUsageRecords() {
+    if let id = trimmedString(record["id"]) {
+      recordsByID[id] = record
+    }
+  }
+  return Array(recordsByID.values)
+}
+
+func siteUsageEntry(from record: [String: Any]) -> [String: Any]? {
+  guard let siteID = normalizedSiteID(record["siteID"]),
+        let usage = normalizedSiteUsage(record["siteUsage"], fallbackSiteID: siteID) else {
+    return nil
+  }
+  var entry: [String: Any] = [
+    "id": trimmedString(record["id"]) ?? "",
+    "siteID": siteID,
+    "siteTitle": siteTitle(siteID),
+    "sourceID": trimmedString(record["sourceID"]) ?? "",
+    "sourceType": trimmedString(record["sourceType"]) ?? "browser",
+    "browserID": trimmedString(record["browserID"]) ?? "",
+    "browserName": trimmedString(record["browserName"]) ?? "",
+    "profileID": trimmedString(record["profileID"]) ?? "",
+    "label": trimmedString(record["label"]) ?? "",
+    "date": trimmedString(usage["date"]) ?? "",
+    "totalSeconds": intValue(usage["totalSeconds"]),
+    "lifetimeSeconds": intValue(usage["lifetimeSeconds"]),
+    "activityCount": intValue(usage["activityCount"]),
+    "lifetimeActivityCount": intValue(usage["lifetimeActivityCount"]),
+    "siteUsage": usage,
+    "lastSeenAt": trimmedString(record["lastSeenAt"]) ?? NSNull()
+  ]
+  entry["profileName"] = trimmedString(record["profileName"]) ?? NSNull()
+  entry["deviceName"] = trimmedString(record["deviceName"]) ?? NSNull()
+  entry["activityLabel"] = trimmedString(usage["activityLabel"]) ?? NSNull()
+  entry["limitSeconds"] = positiveIntValue(usage["limitSeconds"]) ?? NSNull()
+  entry["limitReached"] = boolValue(usage["limitReached"])
+  entry["lastUpdatedAt"] = trimmedString(usage["lastUpdatedAt"]) ?? trimmedString(record["lastSeenAt"]) ?? NSNull()
+  if siteID == "youtube" {
+    entry["videoCount"] = intValue(usage["videoCount"] ?? usage["activityCount"])
+    entry["lifetimeVideoCount"] = intValue(usage["lifetimeVideoCount"] ?? usage["lifetimeActivityCount"])
+  }
+  return entry
+}
+
+func siteUsageSummary(for date: String = localDateKey()) -> [String: Any]? {
+  let currentDayEntries = mergedSiteUsageRecords()
+    .compactMap(siteUsageEntry)
+    .filter { trimmedString($0["date"]) == date }
+  guard !currentDayEntries.isEmpty else {
+    return nil
+  }
+
+  let allEntries = mergedSiteUsageRecords().compactMap(siteUsageEntry)
+  let sites = supportedSiteIDs.compactMap { siteID -> [String: Any]? in
+    let entries = currentDayEntries
+      .filter { normalizedSiteID($0["siteID"]) == siteID }
+      .sorted { intValue($0["totalSeconds"]) > intValue($1["totalSeconds"]) }
+    guard !entries.isEmpty else {
+      return nil
+    }
+    let lifetimeEntries = allEntries.filter { normalizedSiteID($0["siteID"]) == siteID }
+    let totalSeconds = entries.reduce(0) { $0 + intValue($1["totalSeconds"]) }
+    let activityCount = entries.reduce(0) { $0 + intValue($1["activityCount"]) }
+    let limitSeconds = entries.compactMap { positiveIntValue($0["limitSeconds"]) }.min()
+    let lastUpdatedAt = entries
+      .compactMap { trimmedString($0["lastUpdatedAt"]) ?? trimmedString($0["lastSeenAt"]) }
+      .max()
+    var site: [String: Any] = [
+      "siteID": siteID,
+      "title": siteTitle(siteID),
+      "date": date,
+      "totalSeconds": totalSeconds,
+      "lifetimeSeconds": lifetimeEntries.reduce(0) { $0 + intValue($1["lifetimeSeconds"]) },
+      "activityCount": activityCount,
+      "lifetimeActivityCount": lifetimeEntries.reduce(0) { $0 + intValue($1["lifetimeActivityCount"]) },
+      "limitReached": entries.contains { boolValue($0["limitReached"]) }
+        || (limitSeconds.map { totalSeconds >= $0 } ?? false),
+      "entries": entries
+    ]
+    let activityLabel = defaultActivityLabel(siteID: siteID)
+      ?? entries.compactMap { trimmedString($0["activityLabel"]) }.first
+    site["activityLabel"] = activityLabel ?? NSNull()
+    site["limitSeconds"] = limitSeconds ?? NSNull()
+    site["lastUpdatedAt"] = lastUpdatedAt ?? NSNull()
+    if siteID == "youtube" {
+      site["videoCount"] = activityCount
+      site["lifetimeVideoCount"] = lifetimeEntries.reduce(0) { $0 + intValue($1["lifetimeVideoCount"]) }
+    }
+    return site
+  }
+
+  let totalSeconds = sites.reduce(0) { $0 + intValue($1["totalSeconds"]) }
+  let lifetimeSeconds = sites.reduce(0) { $0 + intValue($1["lifetimeSeconds"]) }
+  var summary: [String: Any] = [
+    "schemaVersion": 1,
+    "date": date,
+    "totalSeconds": totalSeconds,
+    "lifetimeSeconds": lifetimeSeconds,
+    "activityCount": sites.reduce(0) { $0 + intValue($1["activityCount"]) },
+    "lifetimeActivityCount": sites.reduce(0) { $0 + intValue($1["lifetimeActivityCount"]) },
+    "sites": sites,
+    "entries": currentDayEntries
+  ]
+  summary["lastUpdatedAt"] = sites.compactMap { trimmedString($0["lastUpdatedAt"]) }.max() ?? NSNull()
+  return summary
+}
+
+func siteUsageSummaryValue() -> Any {
+  siteUsageSummary() ?? NSNull()
+}
+
+func youtubeUsageSummary(for date: String = localDateKey()) -> [String: Any]? {
+  let records = readYouTubeUsageRecords()
+  let currentDayRecords = records.filter { record in
+    guard let usage = record["youtubeUsage"] as? [String: Any] else {
+      return false
+    }
+    return trimmedString(usage["date"]) == date
+  }
+  guard !currentDayRecords.isEmpty else {
+    return nil
+  }
+
+  let allUsage = records.compactMap { $0["youtubeUsage"] as? [String: Any] }
+  let datedUsage = currentDayRecords.compactMap { $0["youtubeUsage"] as? [String: Any] }
+  let totalSeconds = datedUsage.reduce(0) { $0 + intValue($1["totalSeconds"]) }
+  let videoCount = datedUsage.reduce(0) { $0 + intValue($1["videoCount"]) }
+  let lifetimeSeconds = allUsage.reduce(0) { $0 + intValue($1["lifetimeSeconds"]) }
+  let lifetimeVideoCount = allUsage.reduce(0) { $0 + intValue($1["lifetimeVideoCount"]) }
+  let limitSeconds = datedUsage.compactMap { positiveIntValue($0["limitSeconds"]) }.min()
+  let lastUpdatedAt = currentDayRecords
+    .compactMap { record -> String? in
+      guard let usage = record["youtubeUsage"] as? [String: Any] else {
+        return trimmedString(record["lastSeenAt"])
+      }
+      return trimmedString(usage["lastUpdatedAt"]) ?? trimmedString(record["lastSeenAt"])
+    }
+    .max()
+
+  let entries = currentDayRecords.map { record -> [String: Any] in
+    var entry: [String: Any] = [
+      "id": trimmedString(record["id"]) ?? "",
+      "browserID": trimmedString(record["browserID"]) ?? "",
+      "browserName": trimmedString(record["browserName"]) ?? "",
+      "profileID": trimmedString(record["profileID"]) ?? "",
+      "label": trimmedString(record["label"]) ?? "",
+      "youtubeUsage": record["youtubeUsage"] as? [String: Any] ?? [:],
+      "lastSeenAt": trimmedString(record["lastSeenAt"]) ?? NSNull()
+    ]
+    entry["profileName"] = trimmedString(record["profileName"]) ?? NSNull()
+    return entry
+  }
+
+  var summary: [String: Any] = [
+    "schemaVersion": 1,
+    "date": date,
+    "totalSeconds": totalSeconds,
+    "lifetimeSeconds": lifetimeSeconds,
+    "videoCount": videoCount,
+    "lifetimeVideoCount": lifetimeVideoCount,
+    "limitReached": datedUsage.contains { boolValue($0["limitReached"]) }
+      || (limitSeconds.map { totalSeconds >= $0 } ?? false),
+    "entries": entries
+  ]
+  summary["limitSeconds"] = limitSeconds ?? NSNull()
+  summary["lastUpdatedAt"] = lastUpdatedAt ?? NSNull()
+  return summary
+}
+
+func youtubeUsageSummaryValue() -> Any {
+  youtubeUsageSummary() ?? NSNull()
 }
 
 func normalizedBrowserID(_ browserID: String?) -> String? {
@@ -578,6 +1149,7 @@ func writeBrowserStatus(from message: [String: Any]) throws {
   let browser = browserID(from: message)
   let extensionID = message["extensionID"] as? String ?? expectedExtensionID(for: browser)
   let profile = browserProfilePayload(browserID: browser)
+  let seenAt = ISO8601DateFormatter().string(from: Date())
   let scriptVersions = (message["scriptVersions"] as? [String: Any] ?? [:])
     .compactMapValues { value -> String? in
       guard let string = value as? String else {
@@ -590,7 +1162,7 @@ func writeBrowserStatus(from message: [String: Any]) throws {
     "schemaVersion": 1,
     "browserID": browser,
     "extensionID": extensionID,
-    "lastSeenAt": ISO8601DateFormatter().string(from: Date()),
+    "lastSeenAt": seenAt,
     "lastAppliedSettingsVersion": settingsVersion,
     "extensionVersion": message["extensionVersion"] as? String ?? "",
     "scriptVersions": scriptVersions,
@@ -607,11 +1179,29 @@ func writeBrowserStatus(from message: [String: Any]) throws {
   } else {
     status["adultProtection"] = NSNull()
   }
+  if let tunerHealth = message["tunerHealth"] as? [String: Any] {
+    status["tunerHealth"] = tunerHealth
+  } else {
+    status["tunerHealth"] = NSNull()
+  }
   if let youtubeUsage = message["youtubeUsage"] as? [String: Any] {
     status["youtubeUsage"] = youtubeUsage
   } else {
     status["youtubeUsage"] = NSNull()
   }
+  if let siteUsage = message["siteUsage"] {
+    status["siteUsage"] = siteUsage
+  } else {
+    status["siteUsage"] = NSNull()
+  }
+  if let usageRecord = youtubeUsageRecord(from: message, browserID: browser, profile: profile, seenAt: seenAt) {
+    try writeYouTubeUsageRecord(usageRecord, updatedAt: seenAt)
+  }
+  for usageRecord in siteUsageRecords(from: message, browserID: browser, profile: profile, seenAt: seenAt) {
+    try writeSiteUsageRecord(usageRecord, updatedAt: seenAt)
+  }
+  status["siteUsageSummary"] = siteUsageSummaryValue()
+  status["youtubeUsageSummary"] = youtubeUsageSummaryValue()
   if let profileID = profile?["id"] as? String {
     status["profileID"] = profileID
   } else {
@@ -674,7 +1264,9 @@ do {
       "ok": true,
       "settings": readSettings(),
       "browserID": browser,
-      "profile": profile
+      "profile": profile,
+      "siteUsageSummary": siteUsageSummaryValue(),
+      "youtubeUsageSummary": youtubeUsageSummaryValue()
     ])
   case "recordAppliedSettings":
     try writeBrowserStatus(from: message)
@@ -683,7 +1275,9 @@ do {
     try writeMessage([
       "ok": true,
       "browserID": browser,
-      "profile": profile
+      "profile": profile,
+      "siteUsageSummary": siteUsageSummaryValue(),
+      "youtubeUsageSummary": youtubeUsageSummaryValue()
     ])
   case "reportMissedAdultSite":
     try writeMessage(reportMissedAdultSite(from: message))

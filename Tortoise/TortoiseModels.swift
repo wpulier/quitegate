@@ -198,5 +198,6 @@ struct AccountHubSnapshot {
   var policy: PolicyEnvelope?
   var device: TortoiseDevice?
   var devices: [TortoiseDevice] = []
+  var siteUsageSummary: SiteUsageSummarySnapshot?
   var lastSyncedAt: Date?
 }

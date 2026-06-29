@@ -30,25 +30,25 @@
     {
       "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
       "css": ["content/youtube.css"],
-      "js": ["content/youtube.js"],
+      "js": ["content/site-usage.js", "content/youtube.js"],
       "run_at": "document_start"
     },
     {
       "matches": ["https://x.com/*", "https://twitter.com/*", "https://mobile.x.com/*"],
       "css": ["content/x.css"],
-      "js": ["content/x.js", "content/platform-controls.js"],
+      "js": ["content/site-usage.js", "content/x.js", "content/platform-controls.js"],
       "run_at": "document_start"
     },
     {
       "matches": ["https://www.instagram.com/*", "https://instagram.com/*"],
       "css": ["content/instagram.css"],
-      "js": ["content/instagram.js"],
+      "js": ["content/site-usage.js", "content/instagram.js"],
       "run_at": "document_start"
     },
     {
       "matches": ["https://www.reddit.com/*", "https://old.reddit.com/*", "https://new.reddit.com/*"],
       "css": ["content/reddit.css"],
-      "js": ["content/reddit.js", "content/platform-controls.js"],
+      "js": ["content/site-usage.js", "content/reddit.js", "content/platform-controls.js"],
       "run_at": "document_start"
     },
     {

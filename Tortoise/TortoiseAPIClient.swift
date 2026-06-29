@@ -34,6 +34,10 @@ struct TortoiseAPIClient {
     try await request(path: "/api/devices", token: token)
   }
 
+  func fetchSiteUsage(token: String) async throws -> SiteUsageEnvelope {
+    try await request(path: "/api/usage", token: token)
+  }
+
   func registerDevice(token: String, registration: DeviceRegistration) async throws -> DeviceEnvelope {
     try await request(path: "/api/devices", method: "POST", token: token, body: registration)
   }
@@ -44,6 +48,15 @@ struct TortoiseAPIClient {
       method: "POST",
       token: token,
       body: health
+    )
+  }
+
+  func postSiteUsage(token: String, deviceId: String, usage: SiteUsageReport) async throws -> SiteUsageEnvelope {
+    try await request(
+      path: "/api/devices/\(deviceId)/usage",
+      method: "POST",
+      token: token,
+      body: usage
     )
   }
 

@@ -1,5 +1,12 @@
+var quietGateRedditTunerVersion = "2026.06.29.1200";
+var existingQuietGateRedditController = window.__quietgateRedditTunerController;
+if (existingQuietGateRedditController?.version === quietGateRedditTunerVersion) {
+  existingQuietGateRedditController.refresh?.();
+} else {
+existingQuietGateRedditController?.dispose?.();
+
 const quietGateBrowser = typeof browser !== "undefined" ? browser : chrome;
-const TUNER_VERSION = "2026.06.11.01";
+const TUNER_VERSION = quietGateRedditTunerVersion;
 
 const DEFAULT_SETTINGS = {
   mode: "open",
@@ -76,6 +83,7 @@ let adultDomainSet = null;
 let adultDomainPayloadPromise = null;
 let syncInFlight = false;
 let applyQueued = false;
+let usageController = null;
 
 document.documentElement.dataset.quietgateRedditTuner = "loaded";
 document.documentElement.dataset.quietgateRedditTunerVersion = TUNER_VERSION;
@@ -282,6 +290,11 @@ function clearManagedItems() {
   resetAdultContextDataset();
   document.documentElement.dataset.quietgateRedditHiddenCount = "0";
   document.documentElement.dataset.quietgateRedditNSFWCount = "0";
+}
+
+function clearFeatureClasses() {
+  document.documentElement.classList.remove(...Object.values(FEATURE_CLASSES));
+  clearManagedItems();
 }
 
 function cleanupNSFWPlaceholders(activePlaceholders = new Set()) {
@@ -916,9 +929,13 @@ observer.observe(document.documentElement, {
 window.addEventListener("popstate", scheduleApplySettings);
 window.addEventListener("pageshow", scheduleApplySettings);
 
+usageController = window.__tortoiseSiteUsage?.initSiteUsageTracker({ siteID: "reddit" }) || null;
+
 window.__quietgateRedditTunerController = {
+  version: TUNER_VERSION,
   refresh: () => {
     loadSettings();
+    usageController?.refresh?.();
     syncNativeSettings();
     scheduleApplySettings();
   },
@@ -927,9 +944,12 @@ window.__quietgateRedditTunerController = {
     window.removeEventListener("popstate", scheduleApplySettings);
     window.removeEventListener("pageshow", scheduleApplySettings);
     quietGateBrowser.storage.onChanged.removeListener?.(handleStorageChange);
-    clearManagedItems();
+    usageController?.dispose?.();
+    usageController = null;
+    clearFeatureClasses();
   }
 };
 
 loadSettings();
 syncNativeSettings();
+}

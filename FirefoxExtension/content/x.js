@@ -1,5 +1,5 @@
 (() => {
-const TUNER_VERSION = "2026.06.11.01";
+const TUNER_VERSION = "2026.06.29.1200";
 const existingController = window.__quietgateXTunerController;
 if (existingController?.version === TUNER_VERSION) {
   existingController.refresh?.();
@@ -143,6 +143,7 @@ const RESERVED_PROFILE_PATHS = new Set([
 let currentSettings = DEFAULT_SETTINGS;
 let syncInFlight = false;
 let applyQueued = false;
+let usageController = null;
 
 document.documentElement.dataset.quietgateXTuner = "loaded";
 document.documentElement.dataset.quietgateXTunerVersion = TUNER_VERSION;
@@ -1246,9 +1247,12 @@ window.addEventListener("message", handlePageDetectorMessage);
 function refreshController() {
   injectPageDetectorScript();
   loadSettings();
+  usageController?.refresh?.();
   syncNativeSettings();
   scheduleApplySettings();
 }
+
+usageController = window.__tortoiseSiteUsage?.initSiteUsageTracker({ siteID: "x" }) || null;
 
 window.__quietgateXTunerController = {
   version: TUNER_VERSION,
@@ -1259,6 +1263,8 @@ window.__quietgateXTunerController = {
     window.removeEventListener("pageshow", scheduleApplySettings);
     window.removeEventListener("message", handlePageDetectorMessage);
     quietGateBrowser.storage.onChanged.removeListener?.(handleStorageChange);
+    usageController?.dispose?.();
+    usageController = null;
     clearManagedSurfaces();
   }
 };
