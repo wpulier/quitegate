@@ -1,5 +1,6 @@
 import ClerkKit
 import ClerkKitUI
+import FamilyControls
 import SwiftUI
 
 struct ContentView: View {
@@ -158,6 +159,7 @@ private struct TortoiseMobileShell: View {
   @State private var selectedSite = MobileTuningSite.youtube
   @State private var conceptStates: [String: Bool] = ["porn": true, "gambling": false, "news": false]
   @State private var featureStates: [String: Bool] = MobileTuningSite.defaultFeatureStates
+  @StateObject private var screenTime = IOSYouTubeScreenTimeController()
 
   var body: some View {
     ZStack(alignment: .bottom) {
@@ -184,13 +186,14 @@ private struct TortoiseMobileShell: View {
   private var screenContent: some View {
     switch section {
     case .usage:
-      MobileUsageScreen(selectedTab: $usageTab, model: model)
+      MobileUsageScreen(selectedTab: $usageTab, model: model, screenTime: screenTime)
     case .blocking:
-      MobileBlockingScreen(accessMode: $accessMode, conceptStates: $conceptStates)
+      MobileBlockingScreen(accessMode: $accessMode, conceptStates: $conceptStates, screenTime: screenTime)
     case .tuning:
       MobileTuningScreen(
         selectedSite: $selectedSite,
-        featureStates: $featureStates
+        featureStates: $featureStates,
+        screenTime: screenTime
       )
     case .devices:
       MobileDevicesScreen(accountLabel: accountLabel, model: model)
@@ -235,12 +238,17 @@ private struct TortoiseMobileShell: View {
 private struct MobileUsageScreen: View {
   @Binding var selectedTab: MobileUsageTab
   @ObservedObject var model: AccountHubModel
+  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       MobileHeader(kicker: todayLabel, title: "Usage")
       usageTabs
       usageHero
+
+      if selectedTab == .youtube {
+        MobileIOSYouTubeStatusCard(screenTime: screenTime)
+      }
 
       if selectedTab == .all {
         byAppCard
@@ -311,8 +319,15 @@ private struct MobileUsageScreen: View {
     MobileCard {
       VStack(alignment: .leading, spacing: 16) {
         MobileSectionLabel("By app")
-        ForEach(display.apps) { app in
-          MobileUsageAppRow(app: app)
+        if display.apps.isEmpty {
+          MobileEmptyState(
+            title: "No usage reported yet",
+            detail: "Connect browser helpers or set up iOS Screen Time targets for YouTube app and Safari."
+          )
+        } else {
+          ForEach(display.apps) { app in
+            MobileUsageAppRow(app: app)
+          }
         }
       }
     }
@@ -322,8 +337,15 @@ private struct MobileUsageScreen: View {
     MobileCard {
       VStack(alignment: .leading, spacing: 15) {
         MobileSectionLabel("Accounts")
-        ForEach(display.accounts) { account in
-          MobileAccountRow(account: account)
+        if display.accounts.isEmpty {
+          MobileEmptyState(
+            title: "No account activity",
+            detail: "QuietGate will show real synced browser and iOS entries here once they report usage."
+          )
+        } else {
+          ForEach(display.accounts) { account in
+            MobileAccountRow(account: account)
+          }
         }
       }
     }
@@ -333,7 +355,7 @@ private struct MobileUsageScreen: View {
     if let summary = model.snapshot.siteUsageSummary {
       return MobileUsageDisplay(summary: summary, tab: selectedTab)
     }
-    return .mock(tab: selectedTab)
+    return .empty(tab: selectedTab)
   }
 
   private var todayLabel: String {
@@ -346,6 +368,7 @@ private struct MobileUsageScreen: View {
 private struct MobileBlockingScreen: View {
   @Binding var accessMode: MobileAccessMode
   @Binding var conceptStates: [String: Bool]
+  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -358,13 +381,15 @@ private struct MobileBlockingScreen: View {
       VStack(spacing: 10) {
         ForEach(MobileAccessMode.allCases) { mode in
           Button {
-            accessMode = mode
+            selectMode(mode)
           } label: {
             MobileModeRow(mode: mode, isSelected: accessMode == mode)
           }
           .buttonStyle(.plain)
         }
       }
+
+      MobileIOSYouTubeStatusCard(screenTime: screenTime)
 
       MobileCard {
         VStack(alignment: .leading, spacing: 14) {
@@ -376,13 +401,13 @@ private struct MobileBlockingScreen: View {
             .foregroundStyle(TortoiseDesign.secondaryText)
           HStack(spacing: 8) {
             MobileSessionButton("Focus · 25m") {
-              accessMode = .focus
+              selectMode(.focus)
             }
             MobileSessionButton("Focus · 1h") {
-              accessMode = .focus
+              selectMode(.focus)
             }
             MobileSessionButton("Lock Strict · 2h", systemImage: "lock") {
-              accessMode = .strict
+              selectMode(.strict)
             }
           }
         }
@@ -419,11 +444,26 @@ private struct MobileBlockingScreen: View {
       }
     }
   }
+
+  private func selectMode(_ mode: MobileAccessMode) {
+    accessMode = mode
+    switch mode {
+    case .open:
+      screenTime.shieldingEnabled = false
+    case .focus:
+      break
+    case .strict:
+      if screenTime.canApplyShielding {
+        screenTime.shieldingEnabled = true
+      }
+    }
+  }
 }
 
 private struct MobileTuningScreen: View {
   @Binding var selectedSite: MobileTuningSite
   @Binding var featureStates: [String: Bool]
+  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -443,7 +483,7 @@ private struct MobileTuningScreen: View {
           } label: {
             MobileSiteTile(
               site: site,
-              countText: "\(enabledCount(for: site))/\(site.features.count)",
+              countText: countText(for: site),
               isSelected: selectedSite == site
             )
           }
@@ -465,53 +505,78 @@ private struct MobileTuningScreen: View {
               .foregroundStyle(TortoiseDesign.secondaryText)
           }
           Spacer()
-          Button(enabledCount(for: selectedSite) == selectedSite.features.count ? "Reset all" : "Hide all") {
-            toggleAll()
+          Button(tuningActionTitle) {
+            performTuningAction()
           }
           .buttonStyle(.bordered)
+          .disabled(selectedSite == .youtube && !screenTime.canApplyShielding)
         }
       }
 
-      MobileCard {
-        VStack(alignment: .leading, spacing: 14) {
-          HStack(spacing: 8) {
-            Image(systemName: "shield.checkered")
-              .foregroundStyle(TortoiseDesign.green)
-            Text("Active on")
-              .font(.system(size: 13, weight: .bold))
-            Text("· 3 accounts · iPhone")
-              .font(.system(size: 13, weight: .bold))
-              .foregroundStyle(TortoiseDesign.secondaryText)
-          }
-          LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
-            MobileScopeChip(avatar: "W", title: "Chrome · Will")
-            MobileScopeChip(avatar: "WA", title: "Chrome · wildstudio.ai")
-            MobileScopeChip(avatar: "W", title: "Chrome · will")
-            MobileScopeChip(avatar: "iP", title: "This iPhone")
-            Button {
-            } label: {
-              Label("Add account / device", systemImage: "plus")
-                .font(.system(size: 12, weight: .bold))
-            }
-            .buttonStyle(.bordered)
-          }
-        }
+      if selectedSite == .youtube {
+        MobileIOSYouTubeStatusCard(screenTime: screenTime)
       }
 
-      MobileCard {
-        VStack(spacing: 0) {
-          ForEach(Array(selectedSite.features.enumerated()), id: \.element.id) { index, feature in
-            if index > 0 {
-              MobileDivider()
-                .padding(.vertical, 13)
-            }
-            MobileTuningFeatureRow(
-              feature: feature,
-              isOn: Binding(
-                get: { featureStates[feature.id, default: feature.defaultOn] },
-                set: { featureStates[feature.id] = $0 }
-              )
+      if selectedSite == .youtube {
+        MobileCard {
+          VStack(alignment: .leading, spacing: 14) {
+            MobileSectionLabel("iOS enforcement")
+            MobileIOSPolicyRow(
+              systemImage: "play.rectangle.fill",
+              title: "YouTube app",
+              detail: screenTime.selection.applicationTokens.isEmpty ? "Select the native app in Screen Time." : "Selected through Screen Time."
             )
+            MobileDivider()
+              .padding(.vertical, 2)
+            MobileIOSPolicyRow(
+              systemImage: "safari.fill",
+              title: "YouTube in Safari",
+              detail: screenTime.selection.webDomainTokens.isEmpty ? "Select youtube.com as a web domain." : "Selected through Screen Time."
+            )
+            MobileDivider()
+              .padding(.vertical, 2)
+            MobileIOSPolicyRow(
+              systemImage: "hand.raised.fill",
+              title: "Shielding",
+              detail: screenTime.shieldingEnabled ? "Selected targets are blocked on this iPhone." : "Ready when you turn on iOS blocking."
+            )
+          }
+        }
+      } else {
+        MobileCard {
+          VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+              Image(systemName: "shield.checkered")
+                .foregroundStyle(TortoiseDesign.green)
+              Text("Active on")
+                .font(.system(size: 13, weight: .bold))
+              Text("· browser profiles")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(TortoiseDesign.secondaryText)
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
+              MobileScopeChip(avatar: "W", title: "Chrome · Will")
+              MobileScopeChip(avatar: "WA", title: "Chrome · wildstudio.ai")
+              MobileScopeChip(avatar: "W", title: "Chrome · will")
+            }
+          }
+        }
+
+        MobileCard {
+          VStack(spacing: 0) {
+            ForEach(Array(selectedSite.features.enumerated()), id: \.element.id) { index, feature in
+              if index > 0 {
+                MobileDivider()
+                  .padding(.vertical, 13)
+              }
+              MobileTuningFeatureRow(
+                feature: feature,
+                isOn: Binding(
+                  get: { featureStates[feature.id, default: feature.defaultOn] },
+                  set: { featureStates[feature.id] = $0 }
+                )
+              )
+            }
           }
         }
       }
@@ -520,6 +585,28 @@ private struct MobileTuningScreen: View {
 
   private func enabledCount(for site: MobileTuningSite) -> Int {
     site.features.filter { featureStates[$0.id, default: $0.defaultOn] }.count
+  }
+
+  private func countText(for site: MobileTuningSite) -> String {
+    if site == .youtube {
+      return screenTime.hasSelection ? "iOS ready" : "Setup"
+    }
+    return "\(enabledCount(for: site))/\(site.features.count)"
+  }
+
+  private var tuningActionTitle: String {
+    if selectedSite == .youtube {
+      return screenTime.shieldingEnabled ? "Unblock" : "Block now"
+    }
+    return enabledCount(for: selectedSite) == selectedSite.features.count ? "Reset all" : "Hide all"
+  }
+
+  private func performTuningAction() {
+    if selectedSite == .youtube {
+      screenTime.shieldingEnabled.toggle()
+      return
+    }
+    toggleAll()
   }
 
   private func toggleAll() {
@@ -607,6 +694,177 @@ private struct MobileDevicesScreen: View {
       MobileBrowserProfile(avatar: "WA", title: "Chrome · wildstudio.ai", subtitle: "will@wildstudio.ai"),
       MobileBrowserProfile(avatar: "W", title: "Chrome · will", subtitle: "willpulier8@gmail.com")
     ]
+  }
+}
+
+private struct MobileIOSYouTubeStatusCard: View {
+  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  @State private var pickerPresented = false
+
+  var body: some View {
+    MobileCard {
+      VStack(alignment: .leading, spacing: 15) {
+        HStack(alignment: .top, spacing: 12) {
+          MobileAvatar(text: "YT", size: 42, background: TortoiseDesign.red, foreground: .white, cornerRadius: 10)
+          VStack(alignment: .leading, spacing: 4) {
+            Text("YouTube on iPhone")
+              .font(.system(size: 17, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Text("Targets the native YouTube app and youtube.com in Safari through Screen Time.")
+              .font(.system(size: 13))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+          Spacer(minLength: 8)
+          IOSScreenTimeBadge(state: screenTime.authorizationState)
+        }
+
+        HStack(spacing: 9) {
+          MobileIOSCoverageMetric(title: "Selected", value: screenTime.coverageSummary)
+          MobileIOSCoverageMetric(title: "Blocking", value: screenTime.shieldingEnabled ? "On" : "Off")
+        }
+
+        Text(screenTime.statusMessage)
+          .font(.system(size: 12.5))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+          .fixedSize(horizontal: false, vertical: true)
+
+        HStack(spacing: 9) {
+          if screenTime.authorizationState != .approved {
+            Button {
+              Task {
+                await screenTime.requestAuthorization()
+              }
+            } label: {
+              Label("Allow Screen Time", systemImage: "checkmark.shield")
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+          }
+
+          Button {
+            pickerPresented = true
+          } label: {
+            Label(screenTime.hasSelection ? "Edit targets" : "Select targets", systemImage: "plus")
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.borderedProminent)
+          .disabled(screenTime.authorizationState != .approved)
+        }
+
+        HStack(spacing: 12) {
+          VStack(alignment: .leading, spacing: 3) {
+            Text("Block selected YouTube targets")
+              .font(.system(size: 13, weight: .bold))
+            Text("Applies to the selected app token and Safari web domain token.")
+              .font(.system(size: 12))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+          }
+          Spacer()
+          MobileSwitch(
+            isOn: Binding(
+              get: { screenTime.shieldingEnabled },
+              set: { screenTime.shieldingEnabled = $0 }
+            ),
+            isEnabled: screenTime.canApplyShielding
+          )
+        }
+
+        if screenTime.hasSelection {
+          Button(role: .destructive) {
+            screenTime.clearSelection()
+          } label: {
+            Label("Clear iOS YouTube targets", systemImage: "trash")
+              .font(.system(size: 12.5, weight: .bold))
+          }
+          .buttonStyle(.bordered)
+        }
+      }
+    }
+    .familyActivityPicker(isPresented: $pickerPresented, selection: $screenTime.selection)
+    .onAppear {
+      screenTime.refreshAuthorizationState()
+    }
+  }
+}
+
+private struct IOSScreenTimeBadge: View {
+  let state: IOSScreenTimeAuthorizationState
+
+  var body: some View {
+    Text(state.title.uppercased())
+      .font(.system(size: 9, weight: .bold))
+      .foregroundStyle(state == .approved ? TortoiseDesign.green : TortoiseDesign.orange)
+      .lineLimit(1)
+      .minimumScaleFactor(0.7)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 5)
+      .background(Color.white.opacity(0.08), in: Capsule())
+  }
+}
+
+private struct MobileIOSCoverageMetric: View {
+  let title: String
+  let value: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 3) {
+      Text(title.uppercased())
+        .font(.system(size: 10, weight: .bold))
+        .foregroundStyle(TortoiseDesign.tertiaryText)
+      Text(value)
+        .font(.system(size: 13, weight: .bold))
+        .foregroundStyle(TortoiseDesign.primaryText)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(12)
+    .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+  }
+}
+
+private struct MobileIOSPolicyRow: View {
+  let systemImage: String
+  let title: String
+  let detail: String
+
+  var body: some View {
+    HStack(spacing: 12) {
+      Image(systemName: systemImage)
+        .font(.system(size: 16, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.accent)
+        .frame(width: 36, height: 36)
+        .background(TortoiseDesign.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+      VStack(alignment: .leading, spacing: 3) {
+        Text(title)
+          .font(.system(size: 14, weight: .bold))
+          .foregroundStyle(TortoiseDesign.primaryText)
+        Text(detail)
+          .font(.system(size: 12.5))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+    }
+  }
+}
+
+private struct MobileEmptyState: View {
+  let title: String
+  let detail: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      Text(title)
+        .font(.system(size: 14, weight: .bold))
+        .foregroundStyle(TortoiseDesign.primaryText)
+      Text(detail)
+        .font(.system(size: 12.5))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(14)
+    .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
   }
 }
 
@@ -1069,8 +1327,8 @@ private enum MobileAccessMode: String, CaseIterable, Identifiable {
   var detail: String {
     switch self {
     case .open: return "No QuietGate rules applied."
-    case .focus: return "Adult blocking on. Feeds, Reels & recommendations hidden."
-    case .strict: return "Everything tuned to intentional use. Daily limits enforced."
+    case .focus: return "Keep current iOS shields and synced browser rules in place."
+    case .strict: return "Shield selected YouTube app and Safari targets when available."
     }
   }
 }
@@ -1266,8 +1524,8 @@ private struct MobileUsageDisplay {
 
   init(summary: SiteUsageSummarySnapshot, tab: MobileUsageTab) {
     let site = tab == .all ? nil : summary.sites.first { $0.siteID == tab.rawValue }
-    let entries = site?.entries ?? summary.entries ?? summary.sites.flatMap(\.entries)
-    let totalSeconds = site?.totalSeconds ?? summary.totalSeconds
+    let entries = tab == .all ? summary.entries ?? summary.sites.flatMap(\.entries) : site?.entries ?? []
+    let totalSeconds = tab == .all ? summary.totalSeconds : site?.totalSeconds ?? 0
     let webSeconds = entries.filter { !Self.isIOSEntry($0) }.reduce(0) { $0 + ($1.totalSeconds ?? 0) }
     let iosSeconds = entries.filter(Self.isIOSEntry).reduce(0) { $0 + ($1.totalSeconds ?? 0) }
 
@@ -1278,7 +1536,20 @@ private struct MobileUsageDisplay {
     web = webSeconds > 0 ? Self.duration(webSeconds) : "No data"
     ios = iosSeconds > 0 ? Self.duration(iosSeconds) : "No data"
     apps = tab == .all ? Self.apps(from: summary) : []
-    accounts = entries.isEmpty ? Self.mock(tab: tab).accounts : entries.map(Self.account(from:))
+    accounts = entries.map(Self.account(from:))
+  }
+
+  static func empty(tab: MobileUsageTab) -> MobileUsageDisplay {
+    MobileUsageDisplay(
+      hero: tab == .all ? "Today" : "\(tab.title) today",
+      total: "0m",
+      subtitle: tab == .all ? "No synced usage yet" : "No synced \(tab.title) usage yet",
+      activity: tab == .youtube ? "0 videos" : "0 accounts",
+      web: "No data",
+      ios: "No data",
+      apps: [],
+      accounts: []
+    )
   }
 
   static func mock(tab: MobileUsageTab) -> MobileUsageDisplay {

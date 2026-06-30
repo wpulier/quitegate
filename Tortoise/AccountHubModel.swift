@@ -70,7 +70,9 @@ final class AccountHubModel: ObservableObject {
             "siteUsageSummary": .string(siteUsageSummary == nil ? "no_data" : "live")
           ],
           adultProtection: [
-            "iosEnforcement": .string("not_supported_v1"),
+            "iosEnforcement": .string("screen_time_selection"),
+            "youtubeAppShielding": .string("family_controls"),
+            "youtubeSafariShielding": .string("managed_web_domains"),
             "siteUsage": .string("shared_summary_live"),
             "sourceOfTruth": .string("supabase_policy")
           ]
@@ -96,11 +98,13 @@ final class AccountHubModel: ObservableObject {
     "deviceHealth": .string("supported"),
     "siteUsageDisplay": .string("supported"),
     "siteUsageUpload": .string("supported"),
-    "iosUsageCollector": .string("ready_for_collector"),
-    "adultWebBlocking": .string("planned"),
+    "iosUsageCollector": .string("screen_time_privacy_limited"),
+    "adultWebBlocking": .string("screen_time_selection"),
+    "youtubeAppShielding": .string("family_controls"),
+    "youtubeSafariShielding": .string("managed_web_domains"),
     "xTuning": .string("not_supported_v1"),
     "redditTuning": .string("not_supported_v1"),
-    "youtubeTuning": .string("not_supported_v1"),
+    "youtubeTuning": .string("ios_screen_time_shielding"),
     "instagramBlocking": .string("not_supported_v1"),
     "macAppBlocking": .string("not_supported")
   ]

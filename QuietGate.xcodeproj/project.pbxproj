@@ -29,6 +29,7 @@
 		416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037C5FB406B8F0B9446463B /* ProtectionView.swift */; };
 		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
 		4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */; };
+		4FD59E62A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FD59E61A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift */; };
 		522F946F5B674055032FC0B0 /* AdultContentPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6581F448432CC167402E64 /* AdultContentPreset.swift */; };
 		543D3D77B8DCB58049FA2F27 /* AccessMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C718927D45622BE95F8A6 /* AccessMode.swift */; };
 		5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A31DDDECCBC62D89589294 /* AppBlocking.swift */; };
@@ -118,6 +119,7 @@
 		428CCAE23F622CC0E04DC22D /* TortoiseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseModels.swift; sourceTree = "<group>"; };
 		48D70E7CB61ED25567925555 /* AppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppsView.swift; sourceTree = "<group>"; };
 		49108B605636DFE560B901A1 /* FirefoxExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FirefoxExtension; sourceTree = SOURCE_ROOT; };
+		4FD59E61A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSYouTubeScreenTimeController.swift; sourceTree = "<group>"; };
 		57935D992DB807B116F700E1 /* TuningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningView.swift; sourceTree = "<group>"; };
 		59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTests.swift; sourceTree = "<group>"; };
 		5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
@@ -400,6 +402,7 @@
 				0A298AFE1684A25A4DDD00FD /* ContentView.swift */,
 				B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */,
 				C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */,
+				4FD59E61A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift */,
 				9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */,
 				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
 				CD16A82D2B5139D57A101409 /* TortoiseApp.swift */,
@@ -602,6 +605,7 @@
 				A23960B33703BC7432135741 /* AppConfig.swift in Sources */,
 				81D28CC8A95576F962D704A7 /* ContentView.swift in Sources */,
 				4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */,
+				4FD59E62A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift in Sources */,
 				A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */,
 				339528CD0C5C0D639462B725 /* SiteUsageModels.swift in Sources */,
 				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
@@ -683,7 +687,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606292141;
+				CURRENT_PROJECT_VERSION = 202606300722;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -853,7 +857,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606292141;
+				CURRENT_PROJECT_VERSION = 202606300722;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
