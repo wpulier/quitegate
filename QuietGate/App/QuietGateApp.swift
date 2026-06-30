@@ -46,6 +46,7 @@ struct QuietGateApp: App {
         }
     }
     .defaultSize(width: 1040, height: 760)
+    .windowStyle(.hiddenTitleBar)
     .commands {
       CommandGroup(replacing: .newItem) {}
       CommandGroup(replacing: .appTermination) {

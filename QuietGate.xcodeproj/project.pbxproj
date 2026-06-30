@@ -683,6 +683,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606292141;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -852,6 +853,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606292141;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
