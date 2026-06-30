@@ -1,0 +1,484 @@
+html.qg-youtube-home ytd-browse[page-subtype="home"] ytd-rich-grid-renderer,
+html.qg-youtube-home ytd-browse[page-subtype="home"] ytd-two-column-browse-results-renderer,
+html.qg-youtube-home ytd-browse[page-subtype="home"] #contents,
+html.qg-youtube-home ytd-browse[page-subtype="home"] ytd-rich-section-renderer {
+  display: none !important;
+}
+
+html.qg-youtube-home ytd-browse[page-subtype="home"]::before {
+  content: "Tortoise tuned this page.";
+  display: block;
+  margin: 72px auto 0;
+  max-width: 420px;
+  color: var(--yt-spec-text-secondary);
+  font: 500 18px/1.4 Roboto, Arial, sans-serif;
+  text-align: center;
+}
+
+html.qg-youtube-shorts a[href^="/shorts"],
+html.qg-youtube-shorts ytd-guide-entry-renderer a[title="Shorts"],
+html.qg-youtube-shorts ytd-mini-guide-entry-renderer a[title="Shorts"],
+html.qg-youtube-shorts ytd-reel-shelf-renderer,
+html.qg-youtube-shorts ytd-rich-shelf-renderer[is-shorts],
+html.qg-youtube-shorts ytd-video-renderer:has(a[href^="/shorts"]),
+html.qg-youtube-shorts ytd-rich-item-renderer:has(a[href^="/shorts"]) {
+  display: none !important;
+}
+
+html.qg-youtube-comments #comments,
+html.qg-youtube-comments ytd-comments {
+  display: none !important;
+}
+
+html.qg-youtube-video-sidebar #secondary,
+html.qg-youtube-video-sidebar #secondary-inner,
+html.qg-youtube-video-sidebar #related,
+html.qg-youtube-video-sidebar ytd-watch-next-secondary-results-renderer {
+  display: none !important;
+}
+
+html.qg-youtube-recommendations ytd-watch-next-secondary-results-renderer,
+html.qg-youtube-recommendations ytd-compact-video-renderer,
+html.qg-youtube-recommendations ytd-compact-playlist-renderer,
+html.qg-youtube-recommendations ytd-compact-radio-renderer {
+  display: none !important;
+}
+
+html.qg-youtube-search ytd-search ytd-reel-shelf-renderer,
+html.qg-youtube-search ytd-search ytd-rich-shelf-renderer,
+html.qg-youtube-search ytd-search ytd-shelf-renderer,
+html.qg-youtube-search ytd-search ytd-horizontal-card-list-renderer,
+html.qg-youtube-search ytd-search ytd-rich-section-renderer,
+html.qg-youtube-search ytd-search ytd-video-renderer:has(a[href^="/shorts"]) {
+  display: none !important;
+}
+
+html.qg-youtube-end-screens .ytp-endscreen-content,
+html.qg-youtube-end-screens .ytp-endscreen-previous,
+html.qg-youtube-end-screens .ytp-endscreen-next {
+  display: none !important;
+}
+
+html.qg-youtube-end-screen-cards .ytp-ce-element,
+html.qg-youtube-end-screen-cards .ytp-cards-teaser,
+html.qg-youtube-end-screen-cards .ytp-cards-button {
+  display: none !important;
+}
+
+html.qg-youtube-live-chat #chat,
+html.qg-youtube-live-chat #chat-container,
+html.qg-youtube-live-chat ytd-live-chat-frame {
+  display: none !important;
+}
+
+html.qg-youtube-playlists #playlist,
+html.qg-youtube-playlists ytd-playlist-panel-renderer,
+html.qg-youtube-playlists ytd-playlist-panel-video-renderer {
+  display: none !important;
+}
+
+html.qg-youtube-fundraisers ytd-donation-shelf-renderer,
+html.qg-youtube-fundraisers ytd-donation-companion-renderer,
+html.qg-youtube-fundraisers ytd-donation-compact-renderer,
+html.qg-youtube-fundraisers [is-donation-shelf],
+html.qg-youtube-fundraisers #donation-shelf,
+html.qg-youtube-fundraisers #fundraiser {
+  display: none !important;
+}
+
+html.qg-youtube-mixes ytd-radio-renderer,
+html.qg-youtube-mixes ytd-compact-radio-renderer,
+html.qg-youtube-mixes ytd-rich-item-renderer:has(a[href*="list=RD"]),
+html.qg-youtube-mixes ytd-video-renderer:has(a[href*="list=RD"]),
+html.qg-youtube-mixes ytd-compact-video-renderer:has(a[href*="list=RD"]),
+html.qg-youtube-mixes ytd-rich-item-renderer:has(a[href*="start_radio=1"]),
+html.qg-youtube-mixes ytd-video-renderer:has(a[href*="start_radio=1"]),
+html.qg-youtube-mixes #mix-result {
+  display: none !important;
+}
+
+html.qg-youtube-merch ytd-merch-shelf-renderer,
+html.qg-youtube-merch ytd-ticket-shelf-renderer,
+html.qg-youtube-merch ytd-commerce-shelf-renderer,
+html.qg-youtube-merch ytd-offer-module-renderer,
+html.qg-youtube-merch ytd-engagement-panel-section-list-renderer[target-id*="shopping"],
+html.qg-youtube-merch [is-merch-shelf],
+html.qg-youtube-merch #merch-shelf,
+html.qg-youtube-merch #merch {
+  display: none !important;
+}
+
+html.qg-youtube-video-info ytd-watch-metadata,
+html.qg-youtube-video-info ytd-video-primary-info-renderer,
+html.qg-youtube-video-info ytd-video-secondary-info-renderer,
+html.qg-youtube-video-info #above-the-fold,
+html.qg-youtube-video-info #info,
+html.qg-youtube-video-info #meta,
+html.qg-youtube-video-info #description,
+html.qg-youtube-video-info #video-info {
+  display: none !important;
+}
+
+html.qg-youtube-top-header ytd-masthead,
+html.qg-youtube-top-header #masthead,
+html.qg-youtube-top-header #masthead-container,
+html.qg-youtube-top-header #top-header {
+  display: none !important;
+}
+
+html.qg-youtube-top-header ytd-page-manager {
+  margin-top: 0 !important;
+}
+
+html.qg-youtube-notifications ytd-notification-topbar-button-renderer,
+html.qg-youtube-notifications button[aria-label*="Notifications"],
+html.qg-youtube-notifications a[href*="/notifications"],
+html.qg-youtube-notifications #notifications {
+  display: none !important;
+}
+
+html.qg-youtube-explore ytd-guide-entry-renderer:has(a[href="/feed/explore"]),
+html.qg-youtube-explore ytd-guide-entry-renderer:has(a[href="/feed/trending"]),
+html.qg-youtube-explore ytd-mini-guide-entry-renderer:has(a[href="/feed/explore"]),
+html.qg-youtube-explore ytd-mini-guide-entry-renderer:has(a[href="/feed/trending"]),
+html.qg-youtube-explore a[href="/feed/explore"],
+html.qg-youtube-explore a[href="/feed/trending"],
+html.qg-youtube-explore a[title="Explore"],
+html.qg-youtube-explore a[title="Trending"],
+html.qg-youtube-explore #explore-link,
+html.qg-youtube-explore #trending-link {
+  display: none !important;
+}
+
+html.qg-youtube-more-from-youtube ytd-guide-section-renderer:has(a[href^="/premium"]),
+html.qg-youtube-more-from-youtube ytd-guide-section-renderer:has(a[href*="music.youtube.com"]),
+html.qg-youtube-more-from-youtube ytd-guide-entry-renderer:has(a[href^="/premium"]),
+html.qg-youtube-more-from-youtube ytd-guide-entry-renderer:has(a[href*="music.youtube.com"]),
+html.qg-youtube-more-from-youtube ytd-guide-entry-renderer:has(a[href*="/gaming"]),
+html.qg-youtube-more-from-youtube ytd-guide-entry-renderer:has(a[href*="/movies"]),
+html.qg-youtube-more-from-youtube a[title="YouTube Premium"],
+html.qg-youtube-more-from-youtube a[title="YouTube Music"],
+html.qg-youtube-more-from-youtube a[title="YouTube Kids"],
+html.qg-youtube-more-from-youtube #more-from-youtube {
+  display: none !important;
+}
+
+html.qg-youtube-subscriptions ytd-guide-entry-renderer:has(a[href="/feed/subscriptions"]),
+html.qg-youtube-subscriptions ytd-mini-guide-entry-renderer:has(a[href="/feed/subscriptions"]),
+html.qg-youtube-subscriptions a[href="/feed/subscriptions"],
+html.qg-youtube-subscriptions #subscriptions-link {
+  display: none !important;
+}
+
+html.qg-youtube-annotations .annotation,
+html.qg-youtube-annotations .video-annotations,
+html.qg-youtube-annotations .ytp-ce-element,
+html.qg-youtube-annotations .ytp-cards-teaser,
+html.qg-youtube-annotations .ytp-cards-button,
+html.qg-youtube-annotations .ytp-paid-content-overlay,
+html.qg-youtube-annotations #annotation {
+  display: none !important;
+}
+
+#quietgate-youtube-usage {
+  position: fixed !important;
+  right: 16px !important;
+  bottom: 16px !important;
+  z-index: 2147483646 !important;
+  display: grid !important;
+  gap: 9px !important;
+  width: max-content !important;
+  max-width: min(410px, calc(100vw - 32px)) !important;
+  padding: 9px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 19px !important;
+  background: linear-gradient(180deg, rgba(31, 34, 39, 0.96), rgba(12, 14, 18, 0.95)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+  backdrop-filter: blur(18px) saturate(1.15) !important;
+  color: #fff !important;
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  font: 600 12px/1.35 Roboto, Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+  pointer-events: auto !important;
+  cursor: default !important;
+  outline: none !important;
+}
+
+#quietgate-youtube-usage:focus-visible {
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  box-shadow: 0 0 0 2px rgba(46, 134, 255, 0.7), 0 20px 52px rgba(0, 0, 0, 0.34) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-summary {
+  padding: 0 5px !important;
+  white-space: nowrap !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-detail {
+  display: none !important;
+  min-width: min(344px, calc(100vw - 50px)) !important;
+  max-height: min(620px, calc(100vh - 116px)) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding-right: 1px !important;
+  gap: 10px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-tabs {
+  display: flex !important;
+  gap: 5px !important;
+  overflow-x: auto !important;
+  padding: 1px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-tab {
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 6px 9px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.62) !important;
+  font: 800 11px/1 Roboto, Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-tab[aria-selected="true"] {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #fff !important;
+}
+
+#quietgate-youtube-usage:hover .qg-youtube-usage-detail,
+#quietgate-youtube-usage:focus-within .qg-youtube-usage-detail,
+#quietgate-youtube-usage.qg-youtube-usage-expanded .qg-youtube-usage-detail {
+  display: grid !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-hero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  gap: 12px !important;
+  padding: 13px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-hero-rail {
+  display: grid !important;
+  justify-items: end !important;
+  gap: 8px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-source {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  padding: 5px 8px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-youtube-icon {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 18px !important;
+  height: 12px !important;
+  border-radius: 4px !important;
+  background: #ff0033 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-youtube-icon::before {
+  content: "" !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin-left: 1px !important;
+  border-top: 3px solid transparent !important;
+  border-bottom: 3px solid transparent !important;
+  border-left: 5px solid #fff !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-site-dot {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.68) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-hero-copy {
+  display: grid !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-kicker {
+  color: rgba(255, 255, 255, 0.58) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-total {
+  color: #fff !important;
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-day-window {
+  color: rgba(255, 255, 255, 0.58) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-total-meta {
+  color: rgba(255, 255, 255, 0.68) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-account-count {
+  align-self: start !important;
+  white-space: nowrap !important;
+  padding: 5px 8px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-section-title {
+  padding: 0 5px !important;
+  color: rgba(255, 255, 255, 0.48) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-list {
+  display: grid !important;
+  gap: 7px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-height: 44px !important;
+  padding: 6px 7px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-avatar {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-icon {
+  font-size: 10px !important;
+  letter-spacing: 0 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-icon-ios {
+  border-radius: 10px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-row-muted {
+  opacity: 0.52 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-device-row-muted .qg-youtube-usage-row-value {
+  color: rgba(255, 255, 255, 0.48) !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-copy {
+  display: grid !important;
+  min-width: 0 !important;
+  gap: 1px !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-title,
+#quietgate-youtube-usage .qg-youtube-usage-row-subtitle {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-title {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-subtitle {
+  color: rgba(255, 255, 255, 0.52) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+}
+
+#quietgate-youtube-usage .qg-youtube-usage-row-value {
+  white-space: nowrap !important;
+  color: rgba(255, 255, 255, 0.76) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+html.qg-youtube-limit-reached ytd-app,
+html.qg-youtube-limit-reached ytm-app,
+html.qg-youtube-limit-reached ytd-watch-flexy,
+html.qg-youtube-limit-reached ytd-browse,
+html.qg-youtube-limit-reached ytd-search,
+html.qg-youtube-limit-reached ytd-page-manager {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html.qg-youtube-limit-reached #quietgate-youtube-usage {
+  right: 50% !important;
+  bottom: 28px !important;
+  transform: translateX(50%) !important;
+}
+
+#quietgate-youtube-limit {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 28px !important;
+  background: #111318 !important;
+  color: #fff !important;
+  font: 700 24px/1.35 Roboto, Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+}

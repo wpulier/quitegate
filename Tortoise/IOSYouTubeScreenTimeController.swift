@@ -1,59 +1,134 @@
+import DeviceActivity
 import FamilyControls
 import Foundation
 import ManagedSettings
+import UIKit
 
 @MainActor
-final class IOSYouTubeScreenTimeController: ObservableObject {
+final class IOSEnforcementController: ObservableObject {
   @Published var selection: FamilyActivitySelection {
     didSet {
       persistState()
-      applyShielding()
+      applyCurrentMode()
     }
   }
+
   @Published var shieldingEnabled: Bool {
     didSet {
       persistState()
-      applyShielding()
+      applyCurrentMode()
     }
   }
-  @Published private(set) var authorizationState: IOSScreenTimeAuthorizationState = .notDetermined
-  @Published private(set) var statusMessage: String = "Choose the YouTube app and youtube.com in Safari."
 
-  private let managedSettingsStore = ManagedSettingsStore(named: .tortoiseYouTube)
+  @Published var authorizationMode: IOSEnforcementAuthorizationMode {
+    didSet {
+      persistState()
+      saveSnapshot(lastError: lastError)
+      updateStatusMessage()
+    }
+  }
+
+  @Published var enforcementMode: IOSEnforcementMode {
+    didSet {
+      persistState()
+      applyCurrentMode()
+    }
+  }
+
+  @Published var dailyLimitMinutes: Int {
+    didSet {
+      dailyLimitMinutes = min(max(dailyLimitMinutes, 5), 480)
+      persistState()
+      applyCurrentMode()
+    }
+  }
+
+  @Published var safariExtensionAcknowledged: Bool {
+    didSet {
+      persistState()
+      writeSafariPolicy()
+      saveSnapshot(lastError: lastError)
+      updateStatusMessage()
+    }
+  }
+
+  @Published private(set) var authorizationState: IOSScreenTimeAuthorizationState = .notDetermined
+  @Published private(set) var statusMessage: String = "Choose setup type, allow Screen Time, then select apps and sites."
+  @Published private(set) var scheduleActive = false
+  @Published private(set) var syncHealth = "Waiting for setup"
+  @Published private(set) var lastError: String?
+
+  private let immediateStore = ManagedSettingsStore(named: .tortoiseImmediate)
+  private let activityCenter = DeviceActivityCenter()
+  private var isApplying = false
 
   init() {
-    let state = Self.loadState()
-    selection = state.selection
-    shieldingEnabled = state.shieldingEnabled
+    let persisted = Self.loadState()
+    selection = IOSEnforcementSharedStore.loadSelection()
+    shieldingEnabled = persisted.shieldingEnabled
+    authorizationMode = persisted.authorizationMode
+    enforcementMode = persisted.enforcementMode
+    dailyLimitMinutes = persisted.dailyLimitMinutes
+    safariExtensionAcknowledged = persisted.safariExtensionAcknowledged
     refreshAuthorizationState()
-    applyShielding()
+    applyCurrentMode()
   }
 
   var hasSelection: Bool {
-    !selection.applicationTokens.isEmpty || !selection.webDomainTokens.isEmpty
+    !selection.applicationTokens.isEmpty ||
+      !selection.categoryTokens.isEmpty ||
+      !selection.webDomainTokens.isEmpty
   }
 
   var coverageSummary: String {
     if !hasSelection {
-      return "No iOS YouTube targets selected"
+      return "No iOS targets selected"
     }
 
     let appText = "\(selection.applicationTokens.count) app\(selection.applicationTokens.count == 1 ? "" : "s")"
+    let categoryText = "\(selection.categoryTokens.count) categor\(selection.categoryTokens.count == 1 ? "y" : "ies")"
     let domainText = "\(selection.webDomainTokens.count) Safari domain\(selection.webDomainTokens.count == 1 ? "" : "s")"
-    return "\(appText) · \(domainText)"
+    return "\(appText) · \(categoryText) · \(domainText)"
   }
 
   var canApplyShielding: Bool {
-    authorizationState == .approved && hasSelection
+    authorizationState.isApproved && hasSelection
+  }
+
+  var canTurnOn: Bool {
+    canApplyShielding
+  }
+
+  var screenTimeStatusTitle: String {
+    authorizationState.title
+  }
+
+  var targetStatusTitle: String {
+    hasSelection ? coverageSummary : "Select apps, sites, or categories"
+  }
+
+  var safariStatusTitle: String {
+    safariExtensionAcknowledged ? "Checklist confirmed" : "Enable in Safari settings"
+  }
+
+  var schedulesStatusTitle: String {
+    scheduleActive ? "Daily monitor active" : "No active monitor"
+  }
+
+  var limitStatusTitle: String {
+    "\(dailyLimitMinutes)m selected-target limit"
   }
 
   func refreshAuthorizationState() {
-    switch AuthorizationCenter.shared.authorizationStatus {
+    let status = AuthorizationCenter.shared.authorizationStatus
+    switch status {
     case .notDetermined:
       authorizationState = .notDetermined
     case .denied:
       authorizationState = .denied
     case .approved:
+      authorizationState = .approved
+    case .approvedWithDataAccess:
       authorizationState = .approved
     @unknown default:
       authorizationState = .unknown
@@ -63,13 +138,36 @@ final class IOSYouTubeScreenTimeController: ObservableObject {
 
   func requestAuthorization() async {
     do {
-      try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+      try await AuthorizationCenter.shared.requestAuthorization(for: authorizationMode.familyMember)
       refreshAuthorizationState()
+      lastError = nil
     } catch {
       authorizationState = .denied
-      statusMessage = "Screen Time permission failed. Check the Family Controls entitlement before shipping."
+      lastError = error.localizedDescription
+      statusMessage = authorizationMode == .child
+        ? "Child setup needs Family Sharing and a child Apple Account before Screen Time authorization can finish."
+        : "Screen Time permission failed. Check the Family Controls entitlement and Settings."
     }
-    applyShielding()
+    applyCurrentMode()
+  }
+
+  func setMode(_ mode: IOSEnforcementMode) {
+    enforcementMode = mode
+    shieldingEnabled = mode != .open
+  }
+
+  func turnOn() {
+    if enforcementMode == .open {
+      enforcementMode = .focus
+    }
+    shieldingEnabled = true
+    applyCurrentMode()
+  }
+
+  func turnOff() {
+    shieldingEnabled = false
+    enforcementMode = .open
+    applyCurrentMode()
   }
 
   func clearSelection() {
@@ -77,64 +175,174 @@ final class IOSYouTubeScreenTimeController: ObservableObject {
     shieldingEnabled = false
   }
 
-  private func applyShielding() {
-    guard canApplyShielding, shieldingEnabled else {
-      managedSettingsStore.shield.applications = nil
-      managedSettingsStore.shield.webDomains = nil
+  func openSettings() {
+    guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
+      return
+    }
+    UIApplication.shared.open(settingsURL)
+  }
+
+  private func applyCurrentMode() {
+    guard !isApplying else {
+      return
+    }
+    isApplying = true
+    defer {
+      isApplying = false
       updateStatusMessage()
+    }
+
+    let shouldEnforce = shieldingEnabled && enforcementMode != .open && canApplyShielding
+    if !shouldEnforce {
+      IOSEnforcementShieldApplier.clearAllStores()
+      activityCenter.stopMonitoring([.tortoiseDaily])
+      scheduleActive = false
+      syncHealth = "Open mode"
+      writeSafariPolicy(mode: .open)
+      saveSnapshot(lastError: lastError)
       return
     }
 
-    managedSettingsStore.shield.applications = selection.applicationTokens.isEmpty
-      ? nil
-      : selection.applicationTokens
-    managedSettingsStore.shield.webDomains = selection.webDomainTokens.isEmpty
-      ? nil
-      : selection.webDomainTokens
-    updateStatusMessage()
+    let adultWebFilterEnabled = enforcementMode == .strict
+    IOSEnforcementShieldApplier.applySelection(
+      selection,
+      to: immediateStore,
+      adultWebFilterEnabled: adultWebFilterEnabled
+    )
+    startDailyMonitoring()
+    writeSafariPolicy()
+    saveSnapshot(lastError: lastError)
+    syncHealth = "Screen Time and Safari policy current"
+  }
+
+  private func startDailyMonitoring() {
+    let schedule = DeviceActivitySchedule(
+      intervalStart: DateComponents(hour: 0, minute: 0),
+      intervalEnd: DateComponents(hour: 23, minute: 59, second: 59),
+      repeats: true,
+      warningTime: DateComponents(minute: 5)
+    )
+
+    let event = DeviceActivityEvent(
+      applications: selection.applicationTokens,
+      categories: selection.categoryTokens,
+      webDomains: selection.webDomainTokens,
+      threshold: DateComponents(minute: dailyLimitMinutes)
+    )
+
+    do {
+      try activityCenter.startMonitoring(
+        .tortoiseDaily,
+        during: schedule,
+        events: [.tortoiseDailyLimit: event]
+      )
+      scheduleActive = true
+      lastError = nil
+    } catch {
+      scheduleActive = false
+      lastError = error.localizedDescription
+    }
+  }
+
+  private func writeSafariPolicy(mode overrideMode: IOSEnforcementMode? = nil) {
+    let mode = overrideMode ?? (shieldingEnabled ? enforcementMode : .open)
+    let policy = SafariExtensionPolicy.policy(
+      for: mode,
+      dailyLimitMinutes: dailyLimitMinutes,
+      adultWebFilterEnabled: mode == .strict
+    )
+    IOSEnforcementSharedStore.saveSafariPolicy(policy)
+  }
+
+  private func saveSnapshot(lastError: String?) {
+    IOSEnforcementSharedStore.saveSelection(selection)
+    IOSEnforcementSharedStore.saveSnapshot(
+      IOSEnforcementSnapshot(
+        mode: enforcementMode,
+        authorizationMode: authorizationMode,
+        shieldingEnabled: shieldingEnabled,
+        dailyLimitMinutes: dailyLimitMinutes,
+        adultWebFilterEnabled: enforcementMode == .strict && shieldingEnabled,
+        safariExtensionEnabled: safariExtensionAcknowledged,
+        selectedApplicationCount: selection.applicationTokens.count,
+        selectedCategoryCount: selection.categoryTokens.count,
+        selectedWebDomainCount: selection.webDomainTokens.count,
+        scheduleActive: scheduleActive,
+        lastAppliedAt: Date(),
+        lastError: lastError
+      )
+    )
   }
 
   private func updateStatusMessage() {
     switch authorizationState {
+    case .approved where shieldingEnabled && enforcementMode == .strict && hasSelection:
+      statusMessage = "Strict is active. Selected apps/sites are shielded, Safari tuners are on, and the daily limit monitor is running."
     case .approved where shieldingEnabled && hasSelection:
-      statusMessage = "Blocking selected YouTube app and Safari targets on this iPhone."
+      statusMessage = "Focus is active. Selected apps/sites are shielded and Safari tuners are synced."
     case .approved where hasSelection:
-      statusMessage = "Ready. Turn on iOS blocking when you want the selected targets shielded."
+      statusMessage = "Ready. Turn on iOS enforcement to shield selected apps/sites and sync Safari tuners."
     case .approved:
-      statusMessage = "Screen Time is approved. Select YouTube app and youtube.com next."
+      statusMessage = "Screen Time is approved. Select apps, categories, youtube.com, and other Safari domains next."
     case .denied:
-      statusMessage = "Screen Time permission is not approved for QuietGate."
+      statusMessage = authorizationMode == .child
+        ? "Child setup is not authorized. Confirm Family Sharing and Screen Time permissions for this child device."
+        : "Screen Time permission is not approved for QuietGate."
     case .notDetermined:
-      statusMessage = "Allow Screen Time, then select YouTube app and youtube.com."
+      statusMessage = "Choose My iPhone or Child device, then allow Screen Time."
     case .unknown:
       statusMessage = "Screen Time permission status is unavailable."
     }
   }
 
   private func persistState() {
-    let state = PersistedState(selection: selection, shieldingEnabled: shieldingEnabled)
+    IOSEnforcementSharedStore.saveSelection(selection)
+    let state = PersistedIOSEnforcementState(
+      authorizationMode: authorizationMode,
+      enforcementMode: enforcementMode,
+      shieldingEnabled: shieldingEnabled,
+      dailyLimitMinutes: dailyLimitMinutes,
+      safariExtensionAcknowledged: safariExtensionAcknowledged
+    )
     guard let data = try? JSONEncoder().encode(state) else {
       return
     }
     UserDefaults.standard.set(data, forKey: Self.stateKey)
+    TortoiseAppGroup.defaults.set(data, forKey: Self.stateKey)
   }
 
-  private static func loadState() -> PersistedState {
-    guard let data = UserDefaults.standard.data(forKey: stateKey),
-          let state = try? JSONDecoder().decode(PersistedState.self, from: data) else {
-      return PersistedState(selection: FamilyActivitySelection(), shieldingEnabled: false)
+  private static func loadState() -> PersistedIOSEnforcementState {
+    let stores = [TortoiseAppGroup.defaults, UserDefaults.standard]
+    for store in stores {
+      guard let data = store.data(forKey: stateKey),
+            let state = try? JSONDecoder().decode(PersistedIOSEnforcementState.self, from: data) else {
+        continue
+      }
+      return state
     }
-    return state
+    return PersistedIOSEnforcementState(
+      authorizationMode: .individual,
+      enforcementMode: .open,
+      shieldingEnabled: false,
+      dailyLimitMinutes: 30,
+      safariExtensionAcknowledged: false
+    )
   }
 
-  private static let stateKey = "TortoiseYouTubeScreenTimeState"
+  private static let stateKey = "TortoiseIOSEnforcementState"
 }
+
+typealias IOSYouTubeScreenTimeController = IOSEnforcementController
 
 enum IOSScreenTimeAuthorizationState: Equatable {
   case notDetermined
   case denied
   case approved
   case unknown
+
+  var isApproved: Bool {
+    self == .approved
+  }
 
   var title: String {
     switch self {
@@ -150,11 +358,10 @@ enum IOSScreenTimeAuthorizationState: Equatable {
   }
 }
 
-private struct PersistedState: Codable {
-  let selection: FamilyActivitySelection
+private struct PersistedIOSEnforcementState: Codable {
+  let authorizationMode: IOSEnforcementAuthorizationMode
+  let enforcementMode: IOSEnforcementMode
   let shieldingEnabled: Bool
-}
-
-private extension ManagedSettingsStore.Name {
-  static let tortoiseYouTube = Self("tortoise.youtube")
+  let dailyLimitMinutes: Int
+  let safariExtensionAcknowledged: Bool
 }

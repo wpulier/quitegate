@@ -30,6 +30,22 @@
 		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
 		4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */; };
 		4FD59E62A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FD59E61A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift */; };
+		0A722748CCBFCEE51591BA5D /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B76465DC600DDC399E4972 /* IOSEnforcementShared.swift */; };
+		B4BF8F674D349FDEB2957385 /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B76465DC600DDC399E4972 /* IOSEnforcementShared.swift */; };
+		99E9570359523A099DB8A61E /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B76465DC600DDC399E4972 /* IOSEnforcementShared.swift */; };
+		ACA127EA6D225F39EB67B783 /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62DE00AF7B77B8B961DC2596 /* DeviceActivityMonitorExtension.swift */; };
+		8203E36F577BC14F9AEAF172 /* ShieldConfigurationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A4952FD3F07BDF17BE68B6 /* ShieldConfigurationExtension.swift */; };
+		5D3B2300600FB02B2AD7198C /* ShieldActionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26EA3C16C1D9A47FB85A4DB5 /* ShieldActionExtension.swift */; };
+		C002DA5169B880CE1D3ED347 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA76135DA64F9684EA26691 /* SafariWebExtensionHandler.swift */; };
+		704FF826F0990924AC371D3F /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 52DC5E0F6EAAA01658E67D7E /* manifest.json */; };
+		CD7761BF0B21DF1DB2D33D39 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 10EB1A50001B8923F28E5FEB /* background.js */; };
+		EB4F8DC5CFF5FD82402DF6E8 /* content in Resources */ = {isa = PBXBuildFile; fileRef = F23AA794CED34F2DF7D7ED98 /* content */; };
+		0E7387D7922C763266686B04 /* blocked in Resources */ = {isa = PBXBuildFile; fileRef = D35570AFCCCED4BF84592F54 /* blocked */; };
+		85A107FE222C6B29F673FBFA /* rules in Resources */ = {isa = PBXBuildFile; fileRef = 531350F66BDB279AD0D26D7B /* rules */; };
+		C5C081BF741193422FD0902B /* TortoiseDeviceActivityMonitor.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A5C98478BDA3A11EA22C543A /* TortoiseDeviceActivityMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3F99EF86AFDE9EC7710FCCD0 /* TortoiseShieldConfiguration.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 3477D1A6277593C25B30F714 /* TortoiseShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		DE104C77DE0A83E3B370E082 /* TortoiseShieldAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 30CE47F59C0429518C7EFE18 /* TortoiseShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A52AE7301528DE49CBF0C632 /* TortoiseSafariExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = EA4226811C3F2D09EDC18895 /* TortoiseSafariExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		522F946F5B674055032FC0B0 /* AdultContentPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6581F448432CC167402E64 /* AdultContentPreset.swift */; };
 		543D3D77B8DCB58049FA2F27 /* AccessMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F2C718927D45622BE95F8A6 /* AccessMode.swift */; };
 		5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A31DDDECCBC62D89589294 /* AppBlocking.swift */; };
@@ -93,6 +109,34 @@
 			remoteGlobalIDString = 017E4BD045B6A71A7806E69D;
 			remoteInfo = QuietGate;
 		};
+		C64FDF52B5F77D226D2A6936 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3E0C0B058615E28B20DE909F;
+			remoteInfo = TortoiseDeviceActivityMonitor;
+		};
+		C51EEDAA67F5EC1D321B2565 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C3A21FB150EA303F381D70FF;
+			remoteInfo = TortoiseShieldConfiguration;
+		};
+		4C7BD63650B025A9CEE55904 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CBA8736C4B55F08297729A4B;
+			remoteInfo = TortoiseShieldAction;
+		};
+		4FE08CA502E2E394AC5929A4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB5FD3E0CD0E1131982D8184;
+			remoteInfo = TortoiseSafariExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -120,6 +164,28 @@
 		48D70E7CB61ED25567925555 /* AppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppsView.swift; sourceTree = "<group>"; };
 		49108B605636DFE560B901A1 /* FirefoxExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FirefoxExtension; sourceTree = SOURCE_ROOT; };
 		4FD59E61A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSYouTubeScreenTimeController.swift; sourceTree = "<group>"; };
+		13B76465DC600DDC399E4972 /* IOSEnforcementShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSEnforcementShared.swift; sourceTree = "<group>"; };
+		62DE00AF7B77B8B961DC2596 /* DeviceActivityMonitorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityMonitorExtension.swift; sourceTree = "<group>"; };
+		BEA6F9347B2D0B3C0485AC0B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FC23EBD56918167D4D2F5374 /* TortoiseDeviceActivityMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TortoiseDeviceActivityMonitor.entitlements; sourceTree = "<group>"; };
+		A5C98478BDA3A11EA22C543A /* TortoiseDeviceActivityMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TortoiseDeviceActivityMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9A4952FD3F07BDF17BE68B6 /* ShieldConfigurationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldConfigurationExtension.swift; sourceTree = "<group>"; };
+		5DB4A64A61586D88CC7AF355 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6CDF8AB56B014E62035F972F /* TortoiseShieldConfiguration.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TortoiseShieldConfiguration.entitlements; sourceTree = "<group>"; };
+		3477D1A6277593C25B30F714 /* TortoiseShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TortoiseShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		26EA3C16C1D9A47FB85A4DB5 /* ShieldActionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldActionExtension.swift; sourceTree = "<group>"; };
+		BBD636649B0084AAFBF4B67C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		61333001840F456C8A0F33D3 /* TortoiseShieldAction.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TortoiseShieldAction.entitlements; sourceTree = "<group>"; };
+		30CE47F59C0429518C7EFE18 /* TortoiseShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TortoiseShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3CA76135DA64F9684EA26691 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		A61D674624D5CEBBE7887687 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5F361F75AE75CD40A952E0EB /* TortoiseSafariExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TortoiseSafariExtension.entitlements; sourceTree = "<group>"; };
+		52DC5E0F6EAAA01658E67D7E /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
+		10EB1A50001B8923F28E5FEB /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = background.js; sourceTree = "<group>"; };
+		F23AA794CED34F2DF7D7ED98 /* content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = content; sourceTree = "<group>"; };
+		D35570AFCCCED4BF84592F54 /* blocked */ = {isa = PBXFileReference; lastKnownFileType = folder; path = blocked; sourceTree = "<group>"; };
+		531350F66BDB279AD0D26D7B /* rules */ = {isa = PBXFileReference; lastKnownFileType = folder; path = rules; sourceTree = "<group>"; };
+		EA4226811C3F2D09EDC18895 /* TortoiseSafariExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TortoiseSafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		57935D992DB807B116F700E1 /* TuningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningView.swift; sourceTree = "<group>"; };
 		59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTests.swift; sourceTree = "<group>"; };
 		5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
@@ -193,6 +259,34 @@
 			files = (
 				069DD65F934AA7A22AD97145 /* ClerkKit in Frameworks */,
 				1A1CF74086AB973AB7DEE327 /* ClerkKitUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A2C5AF4DB4C8D371E6CE906D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DEABDA9EBC5282BC10041C5E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B5D647A075AD9A149357669D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		158050CABD19F9BAF4AE9999 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -326,6 +420,10 @@
 				073ED66446800B330D1E1ABF /* QuietGate */,
 				AB1FD2770B604EF23DF7E703 /* QuietGateTests */,
 				B172E14680A07B4EA9696475 /* Tortoise */,
+				AE0CC44E3EF17FB720DF962F /* TortoiseDeviceActivityMonitor */,
+				D0C206024337ED49406F1311 /* TortoiseShieldConfiguration */,
+				E1DD6AC8E235B65288679D05 /* TortoiseShieldAction */,
+				E6633715F6CE894FEE1A20FC /* TortoiseSafariExtension */,
 				1920BC17A12A463C24897D5C /* Frameworks */,
 				AE6AE2ACAE9921CD861AEBD2 /* Products */,
 			);
@@ -390,6 +488,10 @@
 				0C83EBBC9802A1BFFC76350D /* QuietGate.app */,
 				3C49769AEAE0E4CB543ED3C7 /* QuietGateTests.xctest */,
 				E10882E6DFEB8F566BA4D8E2 /* Tortoise.app */,
+				A5C98478BDA3A11EA22C543A /* TortoiseDeviceActivityMonitor.appex */,
+				3477D1A6277593C25B30F714 /* TortoiseShieldConfiguration.appex */,
+				30CE47F59C0429518C7EFE18 /* TortoiseShieldAction.appex */,
+				EA4226811C3F2D09EDC18895 /* TortoiseSafariExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -402,6 +504,7 @@
 				0A298AFE1684A25A4DDD00FD /* ContentView.swift */,
 				B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */,
 				C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */,
+				13B76465DC600DDC399E4972 /* IOSEnforcementShared.swift */,
 				4FD59E61A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift */,
 				9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */,
 				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
@@ -422,7 +525,69 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		AE0CC44E3EF17FB720DF962F /* TortoiseDeviceActivityMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				62DE00AF7B77B8B961DC2596 /* DeviceActivityMonitorExtension.swift */,
+				BEA6F9347B2D0B3C0485AC0B /* Info.plist */,
+				FC23EBD56918167D4D2F5374 /* TortoiseDeviceActivityMonitor.entitlements */,
+			);
+			path = TortoiseDeviceActivityMonitor;
+			sourceTree = "<group>";
+		};
+		D0C206024337ED49406F1311 /* TortoiseShieldConfiguration */ = {
+			isa = PBXGroup;
+			children = (
+				A9A4952FD3F07BDF17BE68B6 /* ShieldConfigurationExtension.swift */,
+				5DB4A64A61586D88CC7AF355 /* Info.plist */,
+				6CDF8AB56B014E62035F972F /* TortoiseShieldConfiguration.entitlements */,
+			);
+			path = TortoiseShieldConfiguration;
+			sourceTree = "<group>";
+		};
+		E1DD6AC8E235B65288679D05 /* TortoiseShieldAction */ = {
+			isa = PBXGroup;
+			children = (
+				26EA3C16C1D9A47FB85A4DB5 /* ShieldActionExtension.swift */,
+				BBD636649B0084AAFBF4B67C /* Info.plist */,
+				61333001840F456C8A0F33D3 /* TortoiseShieldAction.entitlements */,
+			);
+			path = TortoiseShieldAction;
+			sourceTree = "<group>";
+		};
+		E6633715F6CE894FEE1A20FC /* TortoiseSafariExtension */ = {
+			isa = PBXGroup;
+			children = (
+				3CA76135DA64F9684EA26691 /* SafariWebExtensionHandler.swift */,
+				A61D674624D5CEBBE7887687 /* Info.plist */,
+				5F361F75AE75CD40A952E0EB /* TortoiseSafariExtension.entitlements */,
+				52DC5E0F6EAAA01658E67D7E /* manifest.json */,
+				10EB1A50001B8923F28E5FEB /* background.js */,
+				F23AA794CED34F2DF7D7ED98 /* content */,
+				D35570AFCCCED4BF84592F54 /* blocked */,
+				531350F66BDB279AD0D26D7B /* rules */,
+			);
+			path = TortoiseSafariExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FFCF2B9814868A554D2DADBF /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C5C081BF741193422FD0902B /* TortoiseDeviceActivityMonitor.appex in Embed App Extensions */,
+				3F99EF86AFDE9EC7710FCCD0 /* TortoiseShieldConfiguration.appex in Embed App Extensions */,
+				DE104C77DE0A83E3B370E082 /* TortoiseShieldAction.appex in Embed App Extensions */,
+				A52AE7301528DE49CBF0C632 /* TortoiseSafariExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		017E4BD045B6A71A7806E69D /* QuietGate */ = {
@@ -452,10 +617,15 @@
 				845B4F3932C0800177BCADAA /* Sources */,
 				9A9B6565CA5BB88DAD5DF420 /* Resources */,
 				D3573715305225CB0A30D3CA /* Frameworks */,
+				FFCF2B9814868A554D2DADBF /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				045407F868C2B71A32B2A421 /* PBXTargetDependency */,
+				CA725578D232627AE2828D0A /* PBXTargetDependency */,
+				5E92B39526A16F936A9C8C32 /* PBXTargetDependency */,
+				AEBE371F89EFAD3C20D925A6 /* PBXTargetDependency */,
 			);
 			name = Tortoise;
 			packageProductDependencies = (
@@ -465,6 +635,82 @@
 			productName = Tortoise;
 			productReference = E10882E6DFEB8F566BA4D8E2 /* Tortoise.app */;
 			productType = "com.apple.product-type.application";
+		};
+		3E0C0B058615E28B20DE909F /* TortoiseDeviceActivityMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3AC6059B0F04E7C90702DE61 /* Build configuration list for PBXNativeTarget "TortoiseDeviceActivityMonitor" */;
+			buildPhases = (
+				F3B063025F8F3AF2062FD5A1 /* Sources */,
+				AD8AE19B0E0C813554EB844B /* Resources */,
+				A2C5AF4DB4C8D371E6CE906D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TortoiseDeviceActivityMonitor;
+			packageProductDependencies = (
+			);
+			productName = TortoiseDeviceActivityMonitor;
+			productReference = A5C98478BDA3A11EA22C543A /* TortoiseDeviceActivityMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C3A21FB150EA303F381D70FF /* TortoiseShieldConfiguration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2E9A34D4D6594DC3E8742A80 /* Build configuration list for PBXNativeTarget "TortoiseShieldConfiguration" */;
+			buildPhases = (
+				6CFADB214D091ED4C0A2A1C2 /* Sources */,
+				3B9F1A991D3B5EDCC0C53AA6 /* Resources */,
+				DEABDA9EBC5282BC10041C5E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TortoiseShieldConfiguration;
+			packageProductDependencies = (
+			);
+			productName = TortoiseShieldConfiguration;
+			productReference = 3477D1A6277593C25B30F714 /* TortoiseShieldConfiguration.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		CBA8736C4B55F08297729A4B /* TortoiseShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5AB5A5646A45498C4CBF56BA /* Build configuration list for PBXNativeTarget "TortoiseShieldAction" */;
+			buildPhases = (
+				BFE07E9FCCF01D75A40FED55 /* Sources */,
+				DC0CC5AF6032F4EDD60E9462 /* Resources */,
+				B5D647A075AD9A149357669D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TortoiseShieldAction;
+			packageProductDependencies = (
+			);
+			productName = TortoiseShieldAction;
+			productReference = 30CE47F59C0429518C7EFE18 /* TortoiseShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BB5FD3E0CD0E1131982D8184 /* TortoiseSafariExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6E67F81FEEF4766BB56E24F7 /* Build configuration list for PBXNativeTarget "TortoiseSafariExtension" */;
+			buildPhases = (
+				837DDAF75CB562E26CAF9557 /* Sources */,
+				1211B60CF99B8996E411F217 /* Resources */,
+				158050CABD19F9BAF4AE9999 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TortoiseSafariExtension;
+			packageProductDependencies = (
+			);
+			productName = TortoiseSafariExtension;
+			productReference = EA4226811C3F2D09EDC18895 /* TortoiseSafariExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		D8B23943A4C465B5EBF87BDF /* QuietGateTests */ = {
 			isa = PBXNativeTarget;
@@ -501,6 +747,22 @@
 						DevelopmentTeam = SY7TABCD5M;
 						ProvisioningStyle = Automatic;
 					};
+					3E0C0B058615E28B20DE909F = {
+						DevelopmentTeam = SY7TABCD5M;
+						ProvisioningStyle = Automatic;
+					};
+					C3A21FB150EA303F381D70FF = {
+						DevelopmentTeam = SY7TABCD5M;
+						ProvisioningStyle = Automatic;
+					};
+					CBA8736C4B55F08297729A4B = {
+						DevelopmentTeam = SY7TABCD5M;
+						ProvisioningStyle = Automatic;
+					};
+					BB5FD3E0CD0E1131982D8184 = {
+						DevelopmentTeam = SY7TABCD5M;
+						ProvisioningStyle = Automatic;
+					};
 					D8B23943A4C465B5EBF87BDF = {
 						DevelopmentTeam = V558WV68AM;
 						ProvisioningStyle = Manual;
@@ -527,6 +789,10 @@
 				017E4BD045B6A71A7806E69D /* QuietGate */,
 				D8B23943A4C465B5EBF87BDF /* QuietGateTests */,
 				B556D480FA402030EE600C06 /* Tortoise */,
+				3E0C0B058615E28B20DE909F /* TortoiseDeviceActivityMonitor */,
+				C3A21FB150EA303F381D70FF /* TortoiseShieldConfiguration */,
+				CBA8736C4B55F08297729A4B /* TortoiseShieldAction */,
+				BB5FD3E0CD0E1131982D8184 /* TortoiseSafariExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -548,6 +814,39 @@
 			buildActionMask = 2147483647;
 			files = (
 				62380A554A1A14A8137CD046 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD8AE19B0E0C813554EB844B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B9F1A991D3B5EDCC0C53AA6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DC0CC5AF6032F4EDD60E9462 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1211B60CF99B8996E411F217 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				704FF826F0990924AC371D3F /* manifest.json in Resources */,
+				CD7761BF0B21DF1DB2D33D39 /* background.js in Resources */,
+				EB4F8DC5CFF5FD82402DF6E8 /* content in Resources */,
+				0E7387D7922C763266686B04 /* blocked in Resources */,
+				85A107FE222C6B29F673FBFA /* rules in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -605,12 +904,47 @@
 				A23960B33703BC7432135741 /* AppConfig.swift in Sources */,
 				81D28CC8A95576F962D704A7 /* ContentView.swift in Sources */,
 				4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */,
+				B4BF8F674D349FDEB2957385 /* IOSEnforcementShared.swift in Sources */,
 				4FD59E62A5E24C15A3B6D8EF /* IOSYouTubeScreenTimeController.swift in Sources */,
 				A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */,
 				339528CD0C5C0D639462B725 /* SiteUsageModels.swift in Sources */,
 				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
 				F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */,
 				D63FC3D276A14BA56B25250B /* TortoiseModels.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3B063025F8F3AF2062FD5A1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ACA127EA6D225F39EB67B783 /* DeviceActivityMonitorExtension.swift in Sources */,
+				0A722748CCBFCEE51591BA5D /* IOSEnforcementShared.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6CFADB214D091ED4C0A2A1C2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8203E36F577BC14F9AEAF172 /* ShieldConfigurationExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BFE07E9FCCF01D75A40FED55 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5D3B2300600FB02B2AD7198C /* ShieldActionExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		837DDAF75CB562E26CAF9557 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C002DA5169B880CE1D3ED347 /* SafariWebExtensionHandler.swift in Sources */,
+				99E9570359523A099DB8A61E /* IOSEnforcementShared.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -675,9 +1009,259 @@
 			target = 017E4BD045B6A71A7806E69D /* QuietGate */;
 			targetProxy = D7329381712620908D66A209 /* PBXContainerItemProxy */;
 		};
+		045407F868C2B71A32B2A421 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3E0C0B058615E28B20DE909F /* TortoiseDeviceActivityMonitor */;
+			targetProxy = C64FDF52B5F77D226D2A6936 /* PBXContainerItemProxy */;
+		};
+		CA725578D232627AE2828D0A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C3A21FB150EA303F381D70FF /* TortoiseShieldConfiguration */;
+			targetProxy = C51EEDAA67F5EC1D321B2565 /* PBXContainerItemProxy */;
+		};
+		5E92B39526A16F936A9C8C32 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CBA8736C4B55F08297729A4B /* TortoiseShieldAction */;
+			targetProxy = 4C7BD63650B025A9CEE55904 /* PBXContainerItemProxy */;
+		};
+		AEBE371F89EFAD3C20D925A6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB5FD3E0CD0E1131982D8184 /* TortoiseSafariExtension */;
+			targetProxy = 4FE08CA502E2E394AC5929A4 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		9D60756E0704808F6AF6FCFB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseDeviceActivityMonitor/TortoiseDeviceActivityMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseDeviceActivityMonitor/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.DeviceActivityMonitor;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B27294F39E4BB536C415EB76 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseDeviceActivityMonitor/TortoiseDeviceActivityMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseDeviceActivityMonitor/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.DeviceActivityMonitor;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		810D369AF59BDB7A850E05C6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseShieldConfiguration/TortoiseShieldConfiguration.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseShieldConfiguration/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.ShieldConfiguration;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		17BDF969D8763508BA4D5A65 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseShieldConfiguration/TortoiseShieldConfiguration.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseShieldConfiguration/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.ShieldConfiguration;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		82C37AC2912732C6397E0DFF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseShieldAction/TortoiseShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseShieldAction/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.ShieldAction;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		89808303FE7CAA5048BEA83A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseShieldAction/TortoiseShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseShieldAction/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.ShieldAction;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4346027162F5D4F682CDC262 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseSafariExtension/TortoiseSafariExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseSafariExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-framework SafariServices";
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.SafariExtension;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A5E77F211BFBDB820D8F1302 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = TortoiseSafariExtension/TortoiseSafariExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202606300722;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TortoiseSafariExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-framework SafariServices";
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourtortoise.Tortoise.SafariExtension;
+				PRODUCT_BUNDLE_PACKAGE_TYPE = "XPC!";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		0E91807B72D20879385C177B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -685,7 +1269,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				CLERK_PUBLISHABLE_KEY = "";
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 202606300722;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
@@ -855,7 +1439,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				CLERK_PUBLISHABLE_KEY = "";
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 202606300722;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
@@ -942,6 +1526,42 @@
 			buildConfigurations = (
 				0E91807B72D20879385C177B /* Debug */,
 				9BFBC418EE3DD8F5CBA6ADE6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3AC6059B0F04E7C90702DE61 /* Build configuration list for PBXNativeTarget "TortoiseDeviceActivityMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D60756E0704808F6AF6FCFB /* Debug */,
+				B27294F39E4BB536C415EB76 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2E9A34D4D6594DC3E8742A80 /* Build configuration list for PBXNativeTarget "TortoiseShieldConfiguration" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				810D369AF59BDB7A850E05C6 /* Debug */,
+				17BDF969D8763508BA4D5A65 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5AB5A5646A45498C4CBF56BA /* Build configuration list for PBXNativeTarget "TortoiseShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				82C37AC2912732C6397E0DFF /* Debug */,
+				89808303FE7CAA5048BEA83A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6E67F81FEEF4766BB56E24F7 /* Build configuration list for PBXNativeTarget "TortoiseSafariExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4346027162F5D4F682CDC262 /* Debug */,
+				A5E77F211BFBDB820D8F1302 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

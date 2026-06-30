@@ -447,16 +447,7 @@ private struct MobileBlockingScreen: View {
 
   private func selectMode(_ mode: MobileAccessMode) {
     accessMode = mode
-    switch mode {
-    case .open:
-      screenTime.shieldingEnabled = false
-    case .focus:
-      break
-    case .strict:
-      if screenTime.canApplyShielding {
-        screenTime.shieldingEnabled = true
-      }
-    }
+    screenTime.setMode(mode.iosMode)
   }
 }
 
@@ -589,21 +580,25 @@ private struct MobileTuningScreen: View {
 
   private func countText(for site: MobileTuningSite) -> String {
     if site == .youtube {
-      return screenTime.hasSelection ? "iOS ready" : "Setup"
+      return screenTime.shieldingEnabled ? "iOS on" : (screenTime.hasSelection ? "iOS ready" : "Setup")
     }
     return "\(enabledCount(for: site))/\(site.features.count)"
   }
 
   private var tuningActionTitle: String {
     if selectedSite == .youtube {
-      return screenTime.shieldingEnabled ? "Unblock" : "Block now"
+      return screenTime.shieldingEnabled ? "Turn off" : "Turn on"
     }
     return enabledCount(for: selectedSite) == selectedSite.features.count ? "Reset all" : "Hide all"
   }
 
   private func performTuningAction() {
     if selectedSite == .youtube {
-      screenTime.shieldingEnabled.toggle()
+      if screenTime.shieldingEnabled {
+        screenTime.turnOff()
+      } else {
+        screenTime.turnOn()
+      }
       return
     }
     toggleAll()
@@ -703,14 +698,14 @@ private struct MobileIOSYouTubeStatusCard: View {
 
   var body: some View {
     MobileCard {
-      VStack(alignment: .leading, spacing: 15) {
+      VStack(alignment: .leading, spacing: 16) {
         HStack(alignment: .top, spacing: 12) {
-          MobileAvatar(text: "YT", size: 42, background: TortoiseDesign.red, foreground: .white, cornerRadius: 10)
+          MobileAvatar(text: "iOS", size: 42, background: TortoiseDesign.accent, foreground: .white, cornerRadius: 10)
           VStack(alignment: .leading, spacing: 4) {
-            Text("YouTube on iPhone")
+            Text("Turn on iOS protection")
               .font(.system(size: 17, weight: .bold))
               .foregroundStyle(TortoiseDesign.primaryText)
-            Text("Targets the native YouTube app and youtube.com in Safari through Screen Time.")
+            Text("Screen Time blocks selected apps/sites. Safari handles page tuners and web usage.")
               .font(.system(size: 13))
               .foregroundStyle(TortoiseDesign.secondaryText)
               .fixedSize(horizontal: false, vertical: true)
@@ -719,9 +714,26 @@ private struct MobileIOSYouTubeStatusCard: View {
           IOSScreenTimeBadge(state: screenTime.authorizationState)
         }
 
+        HStack(spacing: 8) {
+          ForEach(IOSEnforcementAuthorizationMode.allCases) { mode in
+            Button {
+              screenTime.authorizationMode = mode
+            } label: {
+              Label(mode.title, systemImage: mode.systemImage)
+                .font(.system(size: 12, weight: .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .tint(screenTime.authorizationMode == mode ? TortoiseDesign.accent : TortoiseDesign.secondaryText)
+          }
+        }
+
         HStack(spacing: 9) {
           MobileIOSCoverageMetric(title: "Selected", value: screenTime.coverageSummary)
-          MobileIOSCoverageMetric(title: "Blocking", value: screenTime.shieldingEnabled ? "On" : "Off")
+          MobileIOSCoverageMetric(title: "Mode", value: screenTime.enforcementMode.rawValue.capitalized)
+          MobileIOSCoverageMetric(title: "Safari", value: screenTime.safariExtensionAcknowledged ? "Ready" : "Setup")
         }
 
         Text(screenTime.statusMessage)
@@ -752,21 +764,108 @@ private struct MobileIOSYouTubeStatusCard: View {
           .disabled(screenTime.authorizationState != .approved)
         }
 
+        HStack(spacing: 9) {
+          Button {
+            if screenTime.shieldingEnabled {
+              screenTime.turnOff()
+            } else {
+              screenTime.turnOn()
+            }
+          } label: {
+            Label(screenTime.shieldingEnabled ? "Turn off" : "Turn on", systemImage: screenTime.shieldingEnabled ? "power" : "shield.checkered")
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.borderedProminent)
+          .disabled(!screenTime.canTurnOn && !screenTime.shieldingEnabled)
+
+          Button {
+            screenTime.openSettings()
+          } label: {
+            Label("Settings", systemImage: "gearshape")
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.bordered)
+        }
+
+        MobileDivider()
+
         HStack(spacing: 12) {
           VStack(alignment: .leading, spacing: 3) {
-            Text("Block selected YouTube targets")
+            Text("Safari extension enabled")
               .font(.system(size: 13, weight: .bold))
-            Text("Applies to the selected app token and Safari web domain token.")
+            Text("Enable QuietGate in Settings > Safari > Extensions, then confirm here.")
               .font(.system(size: 12))
               .foregroundStyle(TortoiseDesign.secondaryText)
           }
           Spacer()
           MobileSwitch(
             isOn: Binding(
-              get: { screenTime.shieldingEnabled },
-              set: { screenTime.shieldingEnabled = $0 }
-            ),
-            isEnabled: screenTime.canApplyShielding
+              get: { screenTime.safariExtensionAcknowledged },
+              set: { screenTime.safariExtensionAcknowledged = $0 }
+            )
+          )
+        }
+
+        HStack(spacing: 10) {
+          VStack(alignment: .leading, spacing: 3) {
+            Text("Daily selected-target limit")
+              .font(.system(size: 13, weight: .bold))
+            Text(screenTime.limitStatusTitle)
+              .font(.system(size: 12))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+          }
+          Spacer()
+          HStack(spacing: 8) {
+            MobileStepperButton(systemImage: "minus") {
+              screenTime.dailyLimitMinutes -= 5
+            }
+            Text("\(screenTime.dailyLimitMinutes)m")
+              .font(.system(size: 13, weight: .bold))
+              .frame(width: 48)
+            MobileStepperButton(systemImage: "plus") {
+              screenTime.dailyLimitMinutes += 5
+            }
+          }
+        }
+
+        VStack(spacing: 0) {
+          MobileIOSEnforcementChecklistRow(
+            systemImage: "checkmark.shield",
+            title: "Screen Time",
+            detail: screenTime.screenTimeStatusTitle,
+            isComplete: screenTime.authorizationState == .approved
+          )
+          MobileDivider()
+            .padding(.vertical, 11)
+          MobileIOSEnforcementChecklistRow(
+            systemImage: "square.grid.2x2",
+            title: "Targets",
+            detail: screenTime.targetStatusTitle,
+            isComplete: screenTime.hasSelection
+          )
+          MobileDivider()
+            .padding(.vertical, 11)
+          MobileIOSEnforcementChecklistRow(
+            systemImage: "safari",
+            title: "Safari extension",
+            detail: screenTime.safariStatusTitle,
+            isComplete: screenTime.safariExtensionAcknowledged
+          )
+          MobileDivider()
+            .padding(.vertical, 11)
+          MobileIOSEnforcementChecklistRow(
+            systemImage: "calendar.badge.clock",
+            title: "Schedules",
+            detail: screenTime.schedulesStatusTitle,
+            isComplete: screenTime.scheduleActive
+          )
+          MobileDivider()
+            .padding(.vertical, 11)
+          MobileIOSEnforcementChecklistRow(
+            systemImage: "arrow.triangle.2.circlepath",
+            title: "Sync",
+            detail: screenTime.syncHealth,
+            isComplete: screenTime.syncHealth.contains("current")
           )
         }
 
@@ -774,7 +873,7 @@ private struct MobileIOSYouTubeStatusCard: View {
           Button(role: .destructive) {
             screenTime.clearSelection()
           } label: {
-            Label("Clear iOS YouTube targets", systemImage: "trash")
+            Label("Clear iOS targets", systemImage: "trash")
               .font(.system(size: 12.5, weight: .bold))
           }
           .buttonStyle(.bordered)
@@ -785,6 +884,47 @@ private struct MobileIOSYouTubeStatusCard: View {
     .onAppear {
       screenTime.refreshAuthorizationState()
     }
+  }
+}
+
+private struct MobileIOSEnforcementChecklistRow: View {
+  let systemImage: String
+  let title: String
+  let detail: String
+  let isComplete: Bool
+
+  var body: some View {
+    HStack(spacing: 11) {
+      Image(systemName: isComplete ? "checkmark.circle.fill" : systemImage)
+        .font(.system(size: 16, weight: .semibold))
+        .foregroundStyle(isComplete ? TortoiseDesign.green : TortoiseDesign.secondaryText)
+        .frame(width: 24)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+          .font(.system(size: 13, weight: .bold))
+          .foregroundStyle(TortoiseDesign.primaryText)
+        Text(detail)
+          .font(.system(size: 12))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+          .lineLimit(2)
+          .minimumScaleFactor(0.82)
+      }
+      Spacer()
+    }
+  }
+}
+
+private struct MobileStepperButton: View {
+  let systemImage: String
+  let action: () -> Void
+
+  var body: some View {
+    Button(action: action) {
+      Image(systemName: systemImage)
+        .font(.system(size: 12, weight: .bold))
+        .frame(width: 28, height: 28)
+    }
+    .buttonStyle(.bordered)
   }
 }
 
@@ -1326,9 +1466,40 @@ private enum MobileAccessMode: String, CaseIterable, Identifiable {
 
   var detail: String {
     switch self {
-    case .open: return "No QuietGate rules applied."
-    case .focus: return "Keep current iOS shields and synced browser rules in place."
-    case .strict: return "Shield selected YouTube app and Safari targets when available."
+    case .open: return "Clear iOS shields, monitoring, and Safari tuners."
+    case .focus: return "Apply selected app/site shields and focus Safari tuners."
+    case .strict: return "Apply immediate shields, adult filtering, Safari tuners, and daily limits."
+    }
+  }
+
+  var iosMode: IOSEnforcementMode {
+    switch self {
+    case .open:
+      return .open
+    case .focus:
+      return .focus
+    case .strict:
+      return .strict
+    }
+  }
+}
+
+private extension IOSEnforcementAuthorizationMode {
+  var title: String {
+    switch self {
+    case .individual:
+      return "My iPhone"
+    case .child:
+      return "Child device"
+    }
+  }
+
+  var systemImage: String {
+    switch self {
+    case .individual:
+      return "iphone"
+    case .child:
+      return "person.2"
     }
   }
 }

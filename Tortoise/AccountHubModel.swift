@@ -26,6 +26,7 @@ final class AccountHubModel: ObservableObject {
       }
 
       let policy = try await apiClient.fetchPolicy(token: token)
+      let enforcementSnapshot = IOSEnforcementSharedStore.loadSnapshot()
       let registration = DeviceRegistration(
         installationId: InstallationStore.installationId(),
         platform: "ios",
@@ -62,18 +63,29 @@ final class AccountHubModel: ObservableObject {
           platformMetadata: [
             "setupStatus": .string("signed_in"),
             "policyVersion": .string("\(policy.settingsVersion)"),
-            "capabilities": .object(Self.iosCapabilities)
+            "capabilities": .object(Self.iosCapabilities),
+            "iosEnforcement": .object(Self.enforcementMetadata(enforcementSnapshot))
           ],
           canaryStatus: [
             "accountHub": .string("live"),
             "policySync": .string("live"),
-            "siteUsageSummary": .string(siteUsageSummary == nil ? "no_data" : "live")
+            "siteUsageSummary": .string(siteUsageSummary == nil ? "no_data" : "live"),
+            "iosScreenTime": .string(enforcementSnapshot.shieldingEnabled ? "configured" : "available"),
+            "iosSafariExtension": .string(enforcementSnapshot.safariExtensionEnabled ? "enabled_by_user" : "setup_required")
           ],
           adultProtection: [
-            "iosEnforcement": .string("screen_time_selection"),
-            "youtubeAppShielding": .string("family_controls"),
-            "youtubeSafariShielding": .string("managed_web_domains"),
-            "siteUsage": .string("shared_summary_live"),
+            "iosEnforcement": .string("screen_time_device_activity"),
+            "iosAuthorizationMode": .string(enforcementSnapshot.authorizationMode.rawValue),
+            "iosMode": .string(enforcementSnapshot.mode.rawValue),
+            "youtubeAppShielding": .string("family_controls_managed_settings"),
+            "youtubeSafariShielding": .string("managed_web_domains_device_activity"),
+            "iosSafariTuning": .string("safari_web_extension"),
+            "deviceActivityMonitor": .string("installed"),
+            "shieldConfiguration": .string("installed"),
+            "shieldAction": .string("installed"),
+            "appGroup": .string(TortoiseAppGroup.identifier),
+            "screenTimeTokenPrivacy": .string("device_local_counts_only"),
+            "siteUsage": .string("safari_extension_summary_live"),
             "sourceOfTruth": .string("supabase_policy")
           ]
         )
@@ -99,15 +111,32 @@ final class AccountHubModel: ObservableObject {
     "siteUsageDisplay": .string("supported"),
     "siteUsageUpload": .string("supported"),
     "iosUsageCollector": .string("screen_time_privacy_limited"),
-    "adultWebBlocking": .string("screen_time_selection"),
-    "youtubeAppShielding": .string("family_controls"),
-    "youtubeSafariShielding": .string("managed_web_domains"),
-    "xTuning": .string("not_supported_v1"),
-    "redditTuning": .string("not_supported_v1"),
-    "youtubeTuning": .string("ios_screen_time_shielding"),
-    "instagramBlocking": .string("not_supported_v1"),
+    "adultWebBlocking": .string("managed_settings_web_content_filter"),
+    "youtubeAppShielding": .string("family_controls_device_activity"),
+    "youtubeSafariShielding": .string("managed_web_domains_device_activity"),
+    "youtubeDailyLimit": .string("device_activity_event"),
+    "safariWebExtension": .string("supported"),
+    "xTuning": .string("safari_web_extension"),
+    "redditTuning": .string("safari_web_extension"),
+    "youtubeTuning": .string("safari_web_extension"),
+    "instagramTuning": .string("safari_web_extension"),
+    "instagramBlocking": .string("screen_time_selection"),
     "macAppBlocking": .string("not_supported")
   ]
+
+  private static func enforcementMetadata(_ snapshot: IOSEnforcementSnapshot) -> [String: JSONValue] {
+    [
+      "mode": .string(snapshot.mode.rawValue),
+      "authorizationMode": .string(snapshot.authorizationMode.rawValue),
+      "shieldingEnabled": .bool(snapshot.shieldingEnabled),
+      "dailyLimitMinutes": .int(snapshot.dailyLimitMinutes),
+      "selectedApplicationCount": .int(snapshot.selectedApplicationCount),
+      "selectedCategoryCount": .int(snapshot.selectedCategoryCount),
+      "selectedWebDomainCount": .int(snapshot.selectedWebDomainCount),
+      "safariExtensionEnabled": .bool(snapshot.safariExtensionEnabled),
+      "scheduleActive": .bool(snapshot.scheduleActive)
+    ]
+  }
 }
 
 private extension Bundle {

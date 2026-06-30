@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_PATH="$ROOT_DIR/QuietGate.xcodeproj"
 SCHEME="Tortoise"
-TEAM_ID="${TORTOISE_TEAM_ID:-V558WV68AM}"
+TEAM_ID="${TORTOISE_TEAM_ID:-SY7TABCD5M}"
 BUILD_ROOT="$ROOT_DIR/build/TestFlight"
 ARCHIVE_PATH="$BUILD_ROOT/Tortoise.xcarchive"
 EXPORT_PATH="$BUILD_ROOT/export"

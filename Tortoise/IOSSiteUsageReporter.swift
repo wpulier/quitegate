@@ -2,10 +2,10 @@ import Foundation
 import UIKit
 
 enum IOSSiteUsageReporter {
-  private static let localUsageKey = "TortoiseSiteUsageBySite"
+  private static let localUsageKey = IOSEnforcementSharedStore.siteUsageKey
 
   static func pendingReport(deviceName: String = UIDevice.current.name) -> SiteUsageReport? {
-    guard let rawUsage = UserDefaults.standard.dictionary(forKey: localUsageKey) as? [String: [String: Any]] else {
+    guard let rawUsage = appGroupUsage() ?? standardUsage() else {
       return nil
     }
 
@@ -93,5 +93,13 @@ enum IOSSiteUsageReporter {
   private static func optionalIntValue(_ value: Any?) -> Int? {
     let value = intValue(value)
     return value > 0 ? value : nil
+  }
+
+  private static func appGroupUsage() -> [String: [String: Any]]? {
+    IOSEnforcementSharedStore.loadSiteUsageBySite()
+  }
+
+  private static func standardUsage() -> [String: [String: Any]]? {
+    UserDefaults.standard.dictionary(forKey: localUsageKey) as? [String: [String: Any]]
   }
 }
