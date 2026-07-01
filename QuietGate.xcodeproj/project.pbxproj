@@ -42,6 +42,7 @@
 		EB4F8DC5CFF5FD82402DF6E8 /* content in Resources */ = {isa = PBXBuildFile; fileRef = F23AA794CED34F2DF7D7ED98 /* content */; };
 		0E7387D7922C763266686B04 /* blocked in Resources */ = {isa = PBXBuildFile; fileRef = D35570AFCCCED4BF84592F54 /* blocked */; };
 		85A107FE222C6B29F673FBFA /* rules in Resources */ = {isa = PBXBuildFile; fileRef = 531350F66BDB279AD0D26D7B /* rules */; };
+		9956FF31F71BA51A7BA70A14 /* icons in Resources */ = {isa = PBXBuildFile; fileRef = D8B30F1916C2B0D086B98702 /* icons */; };
 		C5C081BF741193422FD0902B /* TortoiseDeviceActivityMonitor.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A5C98478BDA3A11EA22C543A /* TortoiseDeviceActivityMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3F99EF86AFDE9EC7710FCCD0 /* TortoiseShieldConfiguration.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 3477D1A6277593C25B30F714 /* TortoiseShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		DE104C77DE0A83E3B370E082 /* TortoiseShieldAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 30CE47F59C0429518C7EFE18 /* TortoiseShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -185,6 +186,7 @@
 		F23AA794CED34F2DF7D7ED98 /* content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = content; sourceTree = "<group>"; };
 		D35570AFCCCED4BF84592F54 /* blocked */ = {isa = PBXFileReference; lastKnownFileType = folder; path = blocked; sourceTree = "<group>"; };
 		531350F66BDB279AD0D26D7B /* rules */ = {isa = PBXFileReference; lastKnownFileType = folder; path = rules; sourceTree = "<group>"; };
+		D8B30F1916C2B0D086B98702 /* icons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = icons; sourceTree = "<group>"; };
 		EA4226811C3F2D09EDC18895 /* TortoiseSafariExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TortoiseSafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		57935D992DB807B116F700E1 /* TuningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningView.swift; sourceTree = "<group>"; };
 		59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTests.swift; sourceTree = "<group>"; };
@@ -566,6 +568,7 @@
 				F23AA794CED34F2DF7D7ED98 /* content */,
 				D35570AFCCCED4BF84592F54 /* blocked */,
 				531350F66BDB279AD0D26D7B /* rules */,
+				D8B30F1916C2B0D086B98702 /* icons */,
 			);
 			path = TortoiseSafariExtension;
 			sourceTree = "<group>";
@@ -847,6 +850,7 @@
 				EB4F8DC5CFF5FD82402DF6E8 /* content in Resources */,
 				0E7387D7922C763266686B04 /* blocked in Resources */,
 				85A107FE222C6B29F673FBFA /* rules in Resources */,
+				9956FF31F71BA51A7BA70A14 /* icons in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
