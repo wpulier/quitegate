@@ -1043,7 +1043,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseDeviceActivityMonitor/TortoiseDeviceActivityMonitor.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseDeviceActivityMonitor/Info.plist;
@@ -1071,7 +1071,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseDeviceActivityMonitor/TortoiseDeviceActivityMonitor.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseDeviceActivityMonitor/Info.plist;
@@ -1100,7 +1100,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseShieldConfiguration/TortoiseShieldConfiguration.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseShieldConfiguration/Info.plist;
@@ -1128,7 +1128,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseShieldConfiguration/TortoiseShieldConfiguration.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseShieldConfiguration/Info.plist;
@@ -1157,7 +1157,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseShieldAction/TortoiseShieldAction.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseShieldAction/Info.plist;
@@ -1185,7 +1185,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseShieldAction/TortoiseShieldAction.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseShieldAction/Info.plist;
@@ -1214,7 +1214,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseSafariExtension/TortoiseSafariExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseSafariExtension/Info.plist;
@@ -1243,7 +1243,7 @@
 				CODE_SIGN_ENTITLEMENTS = TortoiseSafariExtension/TortoiseSafariExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TortoiseSafariExtension/Info.plist;
@@ -1275,7 +1275,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1445,7 +1445,7 @@
 				CODE_SIGN_ENTITLEMENTS = Tortoise/Resources/Tortoise.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202606300722;
+				CURRENT_PROJECT_VERSION = 202607011105;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				INFOPLIST_FILE = Tortoise/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
