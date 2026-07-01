@@ -2,6 +2,7 @@ import DeviceActivity
 import FamilyControls
 import Foundation
 import ManagedSettings
+import SafariServices
 import UIKit
 
 @MainActor
@@ -57,6 +58,11 @@ final class IOSEnforcementController: ObservableObject {
   @Published private(set) var scheduleActive = false
   @Published private(set) var syncHealth = "Waiting for setup"
   @Published private(set) var lastError: String?
+  @Published private(set) var safariExtensionState: IOSSafariExtensionState = .unknown
+  @Published private(set) var lastSafariExtensionSeenAt: Date?
+  @Published private(set) var lastSafariPolicyAppliedAt: Date?
+  @Published private(set) var lastSetupCheckAt: Date?
+  @Published private(set) var safariExtensionStatusError: String?
 
   private let immediateStore = ManagedSettingsStore(named: .tortoiseImmediate)
   private let activityCenter = DeviceActivityCenter()
@@ -70,7 +76,9 @@ final class IOSEnforcementController: ObservableObject {
     enforcementMode = persisted.enforcementMode
     dailyLimitMinutes = persisted.dailyLimitMinutes
     safariExtensionAcknowledged = persisted.safariExtensionAcknowledged
+    loadSafariSetupSnapshot()
     refreshAuthorizationState()
+    refreshSetupStatus()
     applyCurrentMode()
   }
 
@@ -99,6 +107,114 @@ final class IOSEnforcementController: ObservableObject {
     canApplyShielding
   }
 
+  var connectionState: IOSEnforcementConnectionState {
+    if authorizationState == .denied || lastError != nil || safariExtensionState == .failed {
+      return .repairRequired
+    }
+
+    if authorizationState != .approved || !hasSelection {
+      return .setupRequired
+    }
+
+    if shieldingEnabled && enforcementMode != .open && scheduleActive && safariExtensionConnected {
+      return .connected
+    }
+
+    if shieldingEnabled || safariExtensionConnected || scheduleActive {
+      return .partial
+    }
+
+    return .setupRequired
+  }
+
+  var setupProgressText: String {
+    let completeCount = IOSEnforcementSetupStep.allCases.filter { setupStatus(for: $0) == .complete }.count
+    return "\(completeCount)/\(IOSEnforcementSetupStep.allCases.count) ready"
+  }
+
+  var connectionTitle: String {
+    switch connectionState {
+    case .connected:
+      return "iOS connected"
+    case .partial:
+      return "iOS partially connected"
+    case .setupRequired:
+      return "iOS setup needed"
+    case .repairRequired:
+      return "iOS needs repair"
+    }
+  }
+
+  var connectionDetail: String {
+    switch connectionState {
+    case .connected:
+      return "Screen Time, selected targets, Safari tuners, monitoring, and local policy are active."
+    case .partial:
+      return "Some pieces are ready. Finish the checklist so app blocking and Safari tuning both work."
+    case .setupRequired:
+      return "Finish Screen Time permission, target selection, Safari extension, and Turn On."
+    case .repairRequired:
+      return repairDetail
+    }
+  }
+
+  var deviceStatusSubtitle: String {
+    switch connectionState {
+    case .connected:
+      return "\(enforcementMode.rawValue.capitalized) active · \(coverageSummary) · \(safariStateTitle)"
+    case .partial:
+      return "\(enforcementMode.rawValue.capitalized) partially active · \(coverageSummary) · \(safariStateTitle)"
+    case .setupRequired:
+      return "Finish iOS setup · \(coverageSummary) · \(safariStateTitle)"
+    case .repairRequired:
+      return repairDetail
+    }
+  }
+
+  var repairDetail: String {
+    if authorizationState == .denied {
+      return authorizationMode == .child
+        ? "Child setup needs Family Sharing and Screen Time approval on the child device."
+        : "Screen Time permission is blocked. Re-enable App & Website Activity for QuietGate, then retry."
+    }
+    if safariExtensionState == .failed {
+      return safariExtensionStatusError ?? "Safari extension status could not be checked."
+    }
+    return lastError ?? "QuietGate could not apply the latest iOS protection state."
+  }
+
+  var safariExtensionConnected: Bool {
+    switch safariExtensionState {
+    case .connected:
+      return true
+    case .unavailable:
+      return safariExtensionAcknowledged && safariHeartbeatIsFresh
+    default:
+      return false
+    }
+  }
+
+  var safariHeartbeatIsFresh: Bool {
+    IOSEnforcementSharedStore.safariHeartbeatIsFresh(lastSafariExtensionSeenAt)
+  }
+
+  var safariStateTitle: String {
+    switch safariExtensionState {
+    case .connected:
+      return "Safari connected"
+    case .enabledWaitingForHeartbeat:
+      return "Enabled, waiting for Safari"
+    case .disabled:
+      return "Safari extension off"
+    case .unavailable:
+      return safariExtensionAcknowledged ? "Manual Safari check pending" : "Manual Safari setup"
+    case .failed:
+      return "Safari check failed"
+    case .unknown:
+      return "Checking Safari"
+    }
+  }
+
   var screenTimeStatusTitle: String {
     authorizationState.title
   }
@@ -108,7 +224,20 @@ final class IOSEnforcementController: ObservableObject {
   }
 
   var safariStatusTitle: String {
-    safariExtensionAcknowledged ? "Checklist confirmed" : "Enable in Safari settings"
+    switch safariExtensionState {
+    case .connected:
+      return "Heartbeat verified"
+    case .enabledWaitingForHeartbeat:
+      return "Open Safari to verify"
+    case .disabled:
+      return "Enable in Safari settings"
+    case .unavailable:
+      return safariExtensionAcknowledged ? "Manual confirmation saved" : "Enable in Safari settings"
+    case .failed:
+      return "Tap Recheck or use manual setup"
+    case .unknown:
+      return "Checking extension state"
+    }
   }
 
   var schedulesStatusTitle: String {
@@ -117,6 +246,52 @@ final class IOSEnforcementController: ObservableObject {
 
   var limitStatusTitle: String {
     "\(dailyLimitMinutes)m selected-target limit"
+  }
+
+  var safariManualSetupText: String {
+    "Settings -> Apps -> Safari -> Extensions -> QuietGate Safari -> Allow Extension"
+  }
+
+  func setupStatus(for step: IOSEnforcementSetupStep) -> IOSEnforcementSetupStatus {
+    switch step {
+    case .account:
+      return .complete
+    case .authorizationMode:
+      return .complete
+    case .screenTimePermission:
+      switch authorizationState {
+      case .approved:
+        return .complete
+      case .denied:
+        return .failed
+      case .notDetermined:
+        return .needsAction
+      case .unknown:
+        return .checking
+      }
+    case .targets:
+      return hasSelection ? .complete : .needsAction
+    case .safariExtension:
+      switch safariExtensionState {
+      case .connected:
+        return .complete
+      case .enabledWaitingForHeartbeat:
+        return .checking
+      case .disabled, .unavailable:
+        return .needsAction
+      case .failed:
+        return .failed
+      case .unknown:
+        return .checking
+      }
+    case .mode:
+      return shieldingEnabled && enforcementMode != .open ? .complete : .needsAction
+    case .sync:
+      if let lastError, !lastError.isEmpty {
+        return .failed
+      }
+      return syncHealth.contains("current") || connectionState == .connected ? .complete : .checking
+    }
   }
 
   func refreshAuthorizationState() {
@@ -134,6 +309,14 @@ final class IOSEnforcementController: ObservableObject {
       authorizationState = .unknown
     }
     updateStatusMessage()
+  }
+
+  func refreshSetupStatus() {
+    refreshAuthorizationState()
+    loadSafariSetupSnapshot()
+    lastSetupCheckAt = Date()
+    refreshSafariExtensionState()
+    saveSnapshot(lastError: lastError)
   }
 
   func requestAuthorization() async {
@@ -175,11 +358,109 @@ final class IOSEnforcementController: ObservableObject {
     shieldingEnabled = false
   }
 
+  func retrySetupStep(_ step: IOSEnforcementSetupStep) {
+    switch step {
+    case .screenTimePermission:
+      Task {
+        await requestAuthorization()
+      }
+    case .safariExtension:
+      openSafariExtensionSettings()
+    case .mode:
+      turnOn()
+    case .sync, .account, .authorizationMode, .targets:
+      refreshSetupStatus()
+    }
+  }
+
   func openSettings() {
     guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
       return
     }
     UIApplication.shared.open(settingsURL)
+  }
+
+  func openSafariExtensionSettings() {
+    if #available(iOS 26.2, *) {
+      SFSafariSettings.openExtensionsSettings(forIdentifiers: [Self.safariExtensionBundleIdentifier]) { [weak self] error in
+        guard let self else {
+          return
+        }
+        if let error {
+          Task { @MainActor in
+            self.safariExtensionStatusError = error.localizedDescription
+            self.openSettings()
+          }
+        }
+      }
+      return
+    }
+
+    openSettings()
+  }
+
+  func openSafariVerificationPage() {
+    guard let url = URL(string: "https://youtube.com") else {
+      return
+    }
+    UIApplication.shared.open(url)
+  }
+
+  private func loadSafariSetupSnapshot() {
+    let snapshot = IOSEnforcementSharedStore.loadSnapshot()
+    lastSafariExtensionSeenAt = snapshot.lastSafariExtensionSeenAt
+    lastSafariPolicyAppliedAt = snapshot.lastSafariPolicyAppliedAt
+    if let storedState = snapshot.safariExtensionState {
+      safariExtensionState = resolvedSafariState(from: storedState)
+    } else if safariExtensionAcknowledged {
+      safariExtensionState = safariHeartbeatIsFresh ? .connected : .enabledWaitingForHeartbeat
+    }
+  }
+
+  private func refreshSafariExtensionState() {
+    loadSafariSetupSnapshot()
+
+    if #available(iOS 26.2, *) {
+      safariExtensionState = .unknown
+      SFSafariExtensionManager.getStateOfExtension(withIdentifier: Self.safariExtensionBundleIdentifier) { [weak self] state, error in
+        Task { @MainActor in
+          guard let self else {
+            return
+          }
+
+          self.lastSetupCheckAt = Date()
+          if let error {
+            self.safariExtensionStatusError = error.localizedDescription
+            self.safariExtensionState = .failed
+          } else if state?.isEnabled == true {
+            self.safariExtensionStatusError = nil
+            self.safariExtensionState = self.safariHeartbeatIsFresh ? .connected : .enabledWaitingForHeartbeat
+          } else {
+            self.safariExtensionStatusError = nil
+            self.safariExtensionState = .disabled
+          }
+          self.saveSnapshot(lastError: self.lastError)
+          self.updateStatusMessage()
+        }
+      }
+      return
+    }
+
+    safariExtensionStatusError = nil
+    safariExtensionState = safariExtensionAcknowledged
+      ? (safariHeartbeatIsFresh ? .connected : .enabledWaitingForHeartbeat)
+      : .unavailable
+  }
+
+  private func resolvedSafariState(from storedState: IOSSafariExtensionState) -> IOSSafariExtensionState {
+    switch storedState {
+    case .connected:
+      return safariHeartbeatIsFresh ? .connected : .enabledWaitingForHeartbeat
+    case .enabledWaitingForHeartbeat, .unavailable:
+      return safariExtensionAcknowledged && safariHeartbeatIsFresh ? .connected : storedState
+    case .unknown, .disabled, .failed:
+      return storedState
+    }
   }
 
   private func applyCurrentMode() {
@@ -256,22 +537,28 @@ final class IOSEnforcementController: ObservableObject {
 
   private func saveSnapshot(lastError: String?) {
     IOSEnforcementSharedStore.saveSelection(selection)
-    IOSEnforcementSharedStore.saveSnapshot(
-      IOSEnforcementSnapshot(
-        mode: enforcementMode,
-        authorizationMode: authorizationMode,
-        shieldingEnabled: shieldingEnabled,
-        dailyLimitMinutes: dailyLimitMinutes,
-        adultWebFilterEnabled: enforcementMode == .strict && shieldingEnabled,
-        safariExtensionEnabled: safariExtensionAcknowledged,
-        selectedApplicationCount: selection.applicationTokens.count,
-        selectedCategoryCount: selection.categoryTokens.count,
-        selectedWebDomainCount: selection.webDomainTokens.count,
-        scheduleActive: scheduleActive,
-        lastAppliedAt: Date(),
-        lastError: lastError
-      )
+    var snapshot = IOSEnforcementSnapshot(
+      mode: enforcementMode,
+      authorizationMode: authorizationMode,
+      shieldingEnabled: shieldingEnabled,
+      dailyLimitMinutes: dailyLimitMinutes,
+      adultWebFilterEnabled: enforcementMode == .strict && shieldingEnabled,
+      safariExtensionEnabled: safariExtensionConnected || safariExtensionAcknowledged,
+      selectedApplicationCount: selection.applicationTokens.count,
+      selectedCategoryCount: selection.categoryTokens.count,
+      selectedWebDomainCount: selection.webDomainTokens.count,
+      scheduleActive: scheduleActive,
+      lastAppliedAt: Date(),
+      lastError: lastError
     )
+    snapshot.safariExtensionState = safariExtensionState
+    snapshot.lastSafariExtensionSeenAt = lastSafariExtensionSeenAt
+    snapshot.lastSafariPolicyAppliedAt = lastSafariPolicyAppliedAt
+    snapshot.lastSetupCheckAt = lastSetupCheckAt
+    if let previousMode = IOSEnforcementSharedStore.loadSnapshot().lastSafariPolicyMode {
+      snapshot.lastSafariPolicyMode = previousMode
+    }
+    IOSEnforcementSharedStore.saveSnapshot(snapshot)
   }
 
   private func updateStatusMessage() {
@@ -330,6 +617,7 @@ final class IOSEnforcementController: ObservableObject {
   }
 
   private static let stateKey = "TortoiseIOSEnforcementState"
+  private static let safariExtensionBundleIdentifier = "com.yourtortoise.Tortoise.SafariExtension"
 }
 
 typealias IOSYouTubeScreenTimeController = IOSEnforcementController

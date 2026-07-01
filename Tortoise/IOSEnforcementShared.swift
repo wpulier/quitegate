@@ -35,6 +35,41 @@ enum IOSEnforcementAuthorizationMode: String, Codable, CaseIterable, Identifiabl
   }
 }
 
+enum IOSEnforcementSetupStep: String, Codable, CaseIterable, Identifiable {
+  case account
+  case authorizationMode
+  case screenTimePermission
+  case targets
+  case safariExtension
+  case mode
+  case sync
+
+  var id: String { rawValue }
+}
+
+enum IOSEnforcementSetupStatus: String, Codable, Equatable {
+  case complete
+  case needsAction
+  case checking
+  case failed
+}
+
+enum IOSEnforcementConnectionState: String, Codable, Equatable {
+  case connected
+  case partial
+  case setupRequired
+  case repairRequired
+}
+
+enum IOSSafariExtensionState: String, Codable, Equatable {
+  case unknown
+  case unavailable
+  case disabled
+  case enabledWaitingForHeartbeat
+  case connected
+  case failed
+}
+
 struct IOSEnforcementSnapshot: Codable, Equatable {
   var mode: IOSEnforcementMode
   var authorizationMode: IOSEnforcementAuthorizationMode
@@ -48,6 +83,11 @@ struct IOSEnforcementSnapshot: Codable, Equatable {
   var scheduleActive: Bool
   var lastAppliedAt: Date?
   var lastError: String?
+  var safariExtensionState: IOSSafariExtensionState? = nil
+  var lastSafariExtensionSeenAt: Date? = nil
+  var lastSafariPolicyMode: IOSEnforcementMode? = nil
+  var lastSafariPolicyAppliedAt: Date? = nil
+  var lastSetupCheckAt: Date? = nil
 
   var hasSelectedTargets: Bool {
     selectedApplicationCount > 0 || selectedCategoryCount > 0 || selectedWebDomainCount > 0
@@ -245,6 +285,7 @@ enum IOSEnforcementSharedStore {
   private static let safariPolicyKey = "TortoiseIOSSafariPolicy"
   static let siteUsageKey = "TortoiseSiteUsageBySite"
   private static let thresholdEventsKey = "TortoiseIOSThresholdEvents"
+  static let safariHeartbeatFreshInterval: TimeInterval = 15 * 60
 
   static func loadSelection() -> FamilyActivitySelection {
     guard let data = defaults.data(forKey: selectionKey),
@@ -276,6 +317,12 @@ enum IOSEnforcementSharedStore {
     defaults.set(data, forKey: snapshotKey)
   }
 
+  static func updateSnapshot(_ update: (inout IOSEnforcementSnapshot) -> Void) {
+    var snapshot = loadSnapshot()
+    update(&snapshot)
+    saveSnapshot(snapshot)
+  }
+
   static func loadSafariPolicy() -> SafariExtensionPolicy {
     guard let data = defaults.data(forKey: safariPolicyKey),
           let policy = try? JSONDecoder().decode(SafariExtensionPolicy.self, from: data) else {
@@ -289,6 +336,24 @@ enum IOSEnforcementSharedStore {
       return
     }
     defaults.set(data, forKey: safariPolicyKey)
+  }
+
+  static func recordSafariExtensionHeartbeat(policyMode: IOSEnforcementMode) {
+    updateSnapshot { snapshot in
+      let now = Date()
+      snapshot.safariExtensionEnabled = true
+      snapshot.safariExtensionState = .connected
+      snapshot.lastSafariExtensionSeenAt = now
+      snapshot.lastSafariPolicyMode = policyMode
+      snapshot.lastSafariPolicyAppliedAt = now
+    }
+  }
+
+  static func safariHeartbeatIsFresh(_ date: Date?, now: Date = Date()) -> Bool {
+    guard let date else {
+      return false
+    }
+    return now.timeIntervalSince(date) <= safariHeartbeatFreshInterval
   }
 
   static func saveSiteUsageBySite(_ usage: [String: Any]) {

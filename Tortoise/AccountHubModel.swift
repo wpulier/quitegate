@@ -71,7 +71,7 @@ final class AccountHubModel: ObservableObject {
             "policySync": .string("live"),
             "siteUsageSummary": .string(siteUsageSummary == nil ? "no_data" : "live"),
             "iosScreenTime": .string(enforcementSnapshot.shieldingEnabled ? "configured" : "available"),
-            "iosSafariExtension": .string(enforcementSnapshot.safariExtensionEnabled ? "enabled_by_user" : "setup_required")
+            "iosSafariExtension": .string(enforcementSnapshot.safariExtensionState?.rawValue ?? (enforcementSnapshot.safariExtensionEnabled ? "manual_confirmed" : "setup_required"))
           ],
           adultProtection: [
             "iosEnforcement": .string("screen_time_device_activity"),
@@ -134,8 +134,19 @@ final class AccountHubModel: ObservableObject {
       "selectedCategoryCount": .int(snapshot.selectedCategoryCount),
       "selectedWebDomainCount": .int(snapshot.selectedWebDomainCount),
       "safariExtensionEnabled": .bool(snapshot.safariExtensionEnabled),
+      "safariExtensionState": .string(snapshot.safariExtensionState?.rawValue ?? "unknown"),
+      "lastSafariExtensionSeenAt": .string(Self.isoString(snapshot.lastSafariExtensionSeenAt)),
+      "lastSafariPolicyAppliedAt": .string(Self.isoString(snapshot.lastSafariPolicyAppliedAt)),
+      "lastSetupCheckAt": .string(Self.isoString(snapshot.lastSetupCheckAt)),
       "scheduleActive": .bool(snapshot.scheduleActive)
     ]
+  }
+
+  private static func isoString(_ date: Date?) -> String {
+    guard let date else {
+      return ""
+    }
+    return ISO8601DateFormatter().string(from: date)
   }
 }
 
