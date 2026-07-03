@@ -37,7 +37,7 @@ export default async function ExtensionConnectPage({ searchParams }: PageProps) 
   let error: string | null = null;
 
   if (!hasSupabaseAdminConfig()) {
-    error = "QuietGate extension sync is not configured yet.";
+    error = "Tortoise extension sync is not configured yet.";
   } else if (userId) {
     try {
       const parsed = parseExtensionLinkRequest(linkRequest);
@@ -49,7 +49,7 @@ export default async function ExtensionConnectPage({ searchParams }: PageProps) 
       };
     } catch (caught) {
       if (caught instanceof ZodError) {
-        error = "QuietGate for Chrome opened an invalid connection URL.";
+        error = "Tortoise for Chrome opened an invalid connection URL.";
       } else if (caught instanceof ExtensionAuthError) {
         error = caught.message;
       } else {
@@ -66,10 +66,10 @@ export default async function ExtensionConnectPage({ searchParams }: PageProps) 
             Extension sync
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
-            Connect QuietGate for Chrome.
+            Connect Tortoise for Chrome.
           </h1>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
-            This links Chrome to your QuietGate account so it can read your shared protection policy and report health.
+            This links Chrome to your Tortoise account so it can read your shared protection policy and report health.
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export default async function ExtensionConnectPage({ searchParams }: PageProps) 
             <p className="text-sm font-medium text-zinc-500">Account required</p>
             <p className="mt-2 text-2xl font-semibold text-zinc-950">Sign in to continue</p>
             <p className="mt-3 text-sm leading-6 text-zinc-600">
-              QuietGate needs your Clerk account before it can link this browser.
+              Tortoise needs your account before it can link this browser.
             </p>
             <SignInButton>
               <button className="mt-5 rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white">
@@ -93,7 +93,7 @@ export default async function ExtensionConnectPage({ searchParams }: PageProps) 
             <p className="text-sm font-medium text-zinc-500">Connection failed</p>
             <p className="mt-2 text-2xl font-semibold text-zinc-950">Needs attention</p>
             <p className="mt-3 text-sm leading-6 text-zinc-600">
-              {error || "QuietGate could not prepare extension setup."}
+              {error || "Tortoise could not prepare extension setup."}
             </p>
           </div>
         )}

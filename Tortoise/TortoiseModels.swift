@@ -17,7 +17,8 @@ struct PolicyEnvelope: Decodable {
   let updatedAt: String
 }
 
-struct TortoisePolicy: Decodable {
+struct TortoisePolicy: Codable {
+  let schemaVersion: Int
   let mode: String
   let adultBlockingEnabled: Bool
   let browser: BrowserPolicy?
@@ -25,24 +26,24 @@ struct TortoisePolicy: Decodable {
   let applications: ApplicationsPolicy?
 }
 
-struct BrowserPolicy: Decodable {
+struct BrowserPolicy: Codable {
   let features: [String: Bool]
   let blockedDomains: [String]
   let blockedCategories: [String]
   let options: BrowserPolicyOptions?
 }
 
-struct BrowserPolicyOptions: Decodable {
+struct BrowserPolicyOptions: Codable {
   let explicitHideStyle: String?
   let youtubeDailyLimitMinutes: Int?
 }
 
-struct SchedulePolicy: Decodable {
+struct SchedulePolicy: Codable {
   let enabled: Bool
   let dailyFocusWindows: [FocusWindowPolicy]
 }
 
-struct FocusWindowPolicy: Decodable {
+struct FocusWindowPolicy: Codable {
   let id: String
   let title: String
   let startMinute: Int
@@ -51,13 +52,13 @@ struct FocusWindowPolicy: Decodable {
   let isEnabled: Bool
 }
 
-struct ApplicationsPolicy: Decodable {
+struct ApplicationsPolicy: Codable {
   let enforcementEnabled: Bool
   let blocked: [ApplicationPolicyRule]
   let allowed: [ApplicationPolicyRule]
 }
 
-struct ApplicationPolicyRule: Decodable, Identifiable {
+struct ApplicationPolicyRule: Codable, Identifiable {
   let bundleIdentifier: String
   let displayName: String
   let isEnabled: Bool
@@ -69,6 +70,61 @@ struct ApplicationPolicyRule: Decodable, Identifiable {
 }
 
 extension TortoisePolicy {
+  static let browserFeatureKeys = [
+    "youtubeHome",
+    "youtubeVideoSidebar",
+    "youtubeRecommendations",
+    "youtubeLiveChat",
+    "youtubePlaylists",
+    "youtubeFundraisers",
+    "youtubeEndScreens",
+    "youtubeEndScreenCards",
+    "youtubeShorts",
+    "youtubeComments",
+    "youtubeMixes",
+    "youtubeMerch",
+    "youtubeVideoInfo",
+    "youtubeTopHeader",
+    "youtubeNotifications",
+    "youtubeSearch",
+    "youtubeExplore",
+    "youtubeMoreFromYouTube",
+    "youtubeSubscriptions",
+    "youtubeAutoplay",
+    "youtubeAnnotations",
+    "youtubeUsageTracking",
+    "youtubeDailyLimit",
+    "xSensitiveMedia",
+    "xExplicitContent",
+    "xExplicitSearch",
+    "xVideos",
+    "xPhotos",
+    "xMediaCards",
+    "xExploreTrends",
+    "instagramReels",
+    "instagramExplore",
+    "instagramSuggested",
+    "instagramStories",
+    "redditPopularAll",
+    "redditRecommendations",
+    "redditNSFW",
+    "redditMedia",
+    "redditSidebars"
+  ]
+
+  static let focusBrowserFeatureKeys: Set<String> = [
+    "youtubeHome",
+    "youtubeShorts",
+    "youtubeUsageTracking",
+    "xSensitiveMedia",
+    "xVideos",
+    "instagramReels",
+    "instagramExplore",
+    "instagramSuggested",
+    "redditPopularAll",
+    "redditRecommendations"
+  ]
+
   var normalizedMode: String {
     mode.capitalized
   }
@@ -94,6 +150,97 @@ extension TortoisePolicy {
 
   var activeFocusWindowCount: Int {
     schedules?.dailyFocusWindows.filter(\.isEnabled).count ?? 0
+  }
+
+  func settingMode(_ mode: String) -> TortoisePolicy {
+    let normalizedMode = ["open", "focus", "strict"].contains(mode) ? mode : "focus"
+    return TortoisePolicy(
+      schemaVersion: schemaVersion,
+      mode: normalizedMode,
+      adultBlockingEnabled: normalizedMode != "open",
+      browser: normalizedBrowserPolicy(settingFeatures: Self.defaultFeatures(for: normalizedMode), mode: normalizedMode),
+      schedules: normalizedSchedulePolicy(),
+      applications: normalizedApplicationsPolicy()
+    )
+  }
+
+  func settingBrowserFeature(_ feature: String, enabled: Bool) -> TortoisePolicy {
+    settingBrowserFeatures([feature], enabled: enabled)
+  }
+
+  func settingBrowserFeatures(_ features: [String], enabled: Bool) -> TortoisePolicy {
+    var nextFeatures = normalizedBrowserFeatures()
+    for feature in features where Self.browserFeatureKeys.contains(feature) {
+      nextFeatures[feature] = enabled
+    }
+
+    return TortoisePolicy(
+      schemaVersion: schemaVersion,
+      mode: mode,
+      adultBlockingEnabled: adultBlockingEnabled,
+      browser: normalizedBrowserPolicy(settingFeatures: nextFeatures, mode: mode),
+      schedules: normalizedSchedulePolicy(),
+      applications: normalizedApplicationsPolicy()
+    )
+  }
+
+  func settingYouTubeDailyLimit(minutes: Int) -> TortoisePolicy {
+    let boundedMinutes = min(max(minutes, 5), 480)
+    let normalizedBrowser = normalizedBrowserPolicy(settingFeatures: normalizedBrowserFeatures(), mode: mode)
+    let options = BrowserPolicyOptions(
+      explicitHideStyle: normalizedBrowser.options?.explicitHideStyle ?? "post",
+      youtubeDailyLimitMinutes: boundedMinutes
+    )
+    return TortoisePolicy(
+      schemaVersion: schemaVersion,
+      mode: mode,
+      adultBlockingEnabled: adultBlockingEnabled,
+      browser: BrowserPolicy(
+        features: normalizedBrowser.features,
+        blockedDomains: normalizedBrowser.blockedDomains,
+        blockedCategories: normalizedBrowser.blockedCategories,
+        options: options
+      ),
+      schedules: normalizedSchedulePolicy(),
+      applications: normalizedApplicationsPolicy()
+    )
+  }
+
+  private static func defaultFeatures(for mode: String) -> [String: Bool] {
+    switch mode {
+    case "strict":
+      return Dictionary(uniqueKeysWithValues: browserFeatureKeys.map { ($0, true) })
+    case "focus":
+      return Dictionary(uniqueKeysWithValues: browserFeatureKeys.map { ($0, focusBrowserFeatureKeys.contains($0)) })
+    default:
+      return Dictionary(uniqueKeysWithValues: browserFeatureKeys.map { ($0, false) })
+    }
+  }
+
+  private func normalizedBrowserFeatures() -> [String: Bool] {
+    let existing = browser?.features ?? Self.defaultFeatures(for: mode)
+    return Dictionary(uniqueKeysWithValues: Self.browserFeatureKeys.map { ($0, existing[$0] ?? false) })
+  }
+
+  private func normalizedBrowserPolicy(settingFeatures features: [String: Bool], mode: String) -> BrowserPolicy {
+    let existing = browser
+    return BrowserPolicy(
+      features: Dictionary(uniqueKeysWithValues: Self.browserFeatureKeys.map { ($0, features[$0] ?? false) }),
+      blockedDomains: existing?.blockedDomains ?? [],
+      blockedCategories: mode == "open" ? [] : (existing?.blockedCategories.isEmpty == false ? existing?.blockedCategories ?? ["adultContent"] : ["adultContent"]),
+      options: BrowserPolicyOptions(
+        explicitHideStyle: existing?.options?.explicitHideStyle ?? "post",
+        youtubeDailyLimitMinutes: existing?.options?.youtubeDailyLimitMinutes ?? 30
+      )
+    )
+  }
+
+  private func normalizedSchedulePolicy() -> SchedulePolicy {
+    schedules ?? SchedulePolicy(enabled: false, dailyFocusWindows: [])
+  }
+
+  private func normalizedApplicationsPolicy() -> ApplicationsPolicy {
+    applications ?? ApplicationsPolicy(enforcementEnabled: true, blocked: [], allowed: [])
   }
 }
 
@@ -192,6 +339,11 @@ struct DeviceHealth: Encodable {
   let platformMetadata: [String: JSONValue]
   let canaryStatus: [String: JSONValue]
   let adultProtection: [String: JSONValue]
+}
+
+struct PolicyUpdateRequest: Encodable {
+  let expectedSettingsVersion: Int
+  let policy: TortoisePolicy
 }
 
 struct AccountHubSnapshot {

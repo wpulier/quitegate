@@ -9,7 +9,7 @@ struct AppsView: View {
     ProductPage(maxWidth: 820) {
       ProductHeader(
         title: "Apps",
-        subtitle: "Close distracting Mac apps and keep QuietGate ready after restart.",
+        subtitle: "Close distracting Mac apps and keep Tortoise ready after restart.",
         systemImage: "app.badge"
       )
 
@@ -17,7 +17,7 @@ struct AppsView: View {
 
       ProductCallout(
         title: "Close blocked apps",
-        detail: "QuietGate watches for selected apps and closes them as soon as they launch. The app may briefly appear; stronger launch prevention is planned.",
+        detail: "Tortoise watches for selected apps and closes them as soon as they launch. The app may briefly appear; stronger launch prevention is planned.",
         systemImage: "macwindow.badge.plus",
         tint: .blue
       ) {
@@ -112,7 +112,7 @@ private struct StartupPanel: View {
 
   var body: some View {
     ProductCallout(
-      title: "Start QuietGate when you sign in",
+      title: "Start Tortoise when you sign in",
       detail: store.startupStatusSummary,
       systemImage: "power.circle",
       tint: tint

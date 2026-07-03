@@ -27,3 +27,8 @@ swiftc \
 lipo -create "$ARM64_OUTPUT" "$X86_64_OUTPUT" -output "$OUTPUT"
 rm -f "$ARM64_OUTPUT" "$X86_64_OUTPUT"
 chmod 755 "$OUTPUT"
+
+# The native host is bundled as executable code inside the Mac app. Sign it
+# ad-hoc with hardened runtime so Xcode's Developer ID export preserves the
+# runtime requirement for notarization.
+codesign --force --options runtime --sign - "$OUTPUT"

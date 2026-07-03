@@ -65,11 +65,11 @@ enum MacStartupState: Equatable {
   var detail: String {
     switch self {
     case .enabled:
-      return "QuietGate starts when you sign in, so app blocking can keep working."
+      return "Tortoise starts when you sign in, so app blocking can keep working."
     case .needsApproval:
-      return "macOS needs your approval before QuietGate can start when you sign in."
+      return "macOS needs your approval before Tortoise can start when you sign in."
     case .off:
-      return "Turn this on so QuietGate can keep app blocking ready after a restart."
+      return "Turn this on so Tortoise can keep app blocking ready after a restart."
     case .unavailable(let message):
       return message
     }

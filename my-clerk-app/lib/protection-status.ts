@@ -35,7 +35,7 @@ export type DeviceStatus =
   | "Stale";
 
 type Surface = "macos" | "ios" | "chrome";
-type Capability = "supported" | "not_supported" | "not_supported_v1" | "planned";
+type Capability = "supported" | "not_supported" | "planned";
 
 export type CoverageRow = {
   id: string;
@@ -57,7 +57,7 @@ const featureGroups = [
       policy.browser.blockedCategories.includes("adultContent"),
     capabilities: {
       macos: "supported",
-      ios: "planned",
+      ios: "supported",
       chrome: "supported",
     },
   },
@@ -70,7 +70,7 @@ const featureGroups = [
       ),
     capabilities: {
       macos: "supported",
-      ios: "not_supported_v1",
+      ios: "supported",
       chrome: "supported",
     },
   },
@@ -83,7 +83,7 @@ const featureGroups = [
       ),
     capabilities: {
       macos: "supported",
-      ios: "not_supported_v1",
+      ios: "supported",
       chrome: "supported",
     },
   },
@@ -96,7 +96,7 @@ const featureGroups = [
       ),
     capabilities: {
       macos: "supported",
-      ios: "not_supported_v1",
+      ios: "supported",
       chrome: "supported",
     },
   },
@@ -109,7 +109,7 @@ const featureGroups = [
       ),
     capabilities: {
       macos: "supported",
-      ios: "not_supported_v1",
+      ios: "supported",
       chrome: "supported",
     },
   },
@@ -133,7 +133,7 @@ const featureGroups = [
       policy.schedules.dailyFocusWindows.some((window) => window.isEnabled),
     capabilities: {
       macos: "supported",
-      ios: "planned",
+      ios: "supported",
       chrome: "planned",
     },
   },
@@ -147,7 +147,7 @@ const featureGroups = [
 export function statusTone(status: DeviceStatus) {
   switch (status) {
     case "Protected":
-      return "bg-emerald-50 text-emerald-700 ring-emerald-200";
+      return "bg-blue-50 text-blue-700 ring-blue-200";
     case "Synced":
       return "bg-blue-50 text-blue-700 ring-blue-200";
     case "Signed in":
@@ -217,12 +217,24 @@ export function presentDeviceStatus(
     return "Setup incomplete";
   }
 
-  if (device.platform === "ios") {
-    return hasCurrentPolicy ? "Synced" : "Signed in";
-  }
-
   if (hasCurrentPolicy && setupStatus === "protected" && hasPassingProof(latestHealth)) {
     return "Protected";
+  }
+
+  if (device.platform === "ios") {
+    const iosEnforcement = recordValue(metadata.iosEnforcement);
+    const selectedTargetCount =
+      numberValue(iosEnforcement.selectedApplicationCount) +
+      numberValue(iosEnforcement.selectedCategoryCount) +
+      numberValue(iosEnforcement.selectedWebDomainCount);
+    const safariState = stringValue(iosEnforcement.safariExtensionState);
+    if (hasCurrentPolicy && selectedTargetCount > 0 && safariState === "connected") {
+      return "Protected";
+    }
+    if (hasCurrentPolicy && (selectedTargetCount > 0 || safariState === "enabledWaitingForHeartbeat" || latestHealth)) {
+      return "Partially protected";
+    }
+    return hasCurrentPolicy ? "Synced" : "Signed in";
   }
 
   if (hasCurrentPolicy && hasPartialProof(latestHealth)) {
@@ -244,9 +256,25 @@ export function deviceDetail(device?: DashboardDevice) {
   const metadata = mergedMetadata(device);
   const policyVersion = stringValue(metadata.policyVersion);
   if (device.platform === "ios") {
+    const iosEnforcement = recordValue(metadata.iosEnforcement);
+    const selectedTargetCount =
+      numberValue(iosEnforcement.selectedApplicationCount) +
+      numberValue(iosEnforcement.selectedCategoryCount) +
+      numberValue(iosEnforcement.selectedWebDomainCount);
+    const safariState = stringValue(iosEnforcement.safariExtensionState);
+    if (selectedTargetCount > 0 && safariState === "connected") {
+      return policyVersion
+        ? `Synced policy version ${policyVersion}. Screen Time targets and Safari extension are connected.`
+        : "Screen Time targets and Safari extension are connected.";
+    }
+    if (selectedTargetCount > 0) {
+      return policyVersion
+        ? `Synced policy version ${policyVersion}. Screen Time targets are selected; finish Safari extension verification.`
+        : "Screen Time targets are selected; finish Safari extension verification.";
+    }
     return policyVersion
-      ? `Account hub synced policy version ${policyVersion}. iOS enforcement is not available in v1.`
-      : "Signed in as an account hub. iOS enforcement is not available in v1.";
+      ? `Synced policy version ${policyVersion}. Finish iPhone setup to apply Screen Time and Safari protection.`
+      : "Signed in. Finish iPhone setup to apply Screen Time and Safari protection.";
   }
 
   if (policyVersion) {
@@ -289,8 +317,6 @@ function coverageStatus(
   }
 
   switch (capability) {
-    case "not_supported_v1":
-      return "Not available on iOS yet";
     case "not_supported":
       return "Not supported here";
     case "planned":
@@ -324,6 +350,10 @@ function recordValue(value: unknown): Record<string, unknown> {
 
 function stringValue(value: unknown) {
   return typeof value === "string" ? value : null;
+}
+
+function numberValue(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
 function hasPassingProof(health?: DeviceHealthRow | null) {

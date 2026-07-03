@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="QuietGate"
+PUBLIC_DMG_NAME="Tortoise"
 DIST_DIR="$ROOT_DIR/dist"
 RELEASE_APP="$ROOT_DIR/build/PublicRelease/DerivedData/Build/Products/Release/$APP_NAME.app"
 NOTARY_PROFILE="${QUIETGATE_NOTARY_PROFILE:-quietgate-notary}"
@@ -63,11 +64,29 @@ require_https_plist_url() {
   fi
 }
 
+optional_https_plist_url() {
+  local key="$1"
+  local label="$2"
+  local value
+  value="$(plist_value "$key")"
+  if [[ "$value" == https://* ]]; then
+    ok "$label configured: $value"
+  else
+    warn "$label is not configured in QuietGate/Resources/Info.plist ($key)"
+  fi
+}
+
 printf 'QuietGate public release status\n'
 printf 'Repo: %s\n\n' "$ROOT_DIR"
 
-LOCAL_DMG="$(latest_dist_file "$APP_NAME-*-local.dmg")"
-NOTARIZED_DMG="$(latest_dist_file "$APP_NAME-*-notarize.dmg")"
+LOCAL_DMG="$(latest_dist_file "$PUBLIC_DMG_NAME-*-local.dmg")"
+if [[ -z "$LOCAL_DMG" ]]; then
+  LOCAL_DMG="$(latest_dist_file "$APP_NAME-*-local.dmg")"
+fi
+NOTARIZED_DMG="$(latest_dist_file "$PUBLIC_DMG_NAME-*-notarize.dmg")"
+if [[ -z "$NOTARIZED_DMG" ]]; then
+  NOTARIZED_DMG="$(latest_dist_file "$APP_NAME-*-notarize.dmg")"
+fi
 
 for tool in xcodebuild xcrun hdiutil codesign security shasum; do
   if have_command "$tool"; then
@@ -89,7 +108,7 @@ else
 fi
 
 require_https_plist_url "QuietGateChromiumExtensionStoreURL" "Published Chromium helper URL"
-require_https_plist_url "QuietGateFirefoxExtensionStoreURL" "Published Firefox helper URL"
+optional_https_plist_url "QuietGateFirefoxExtensionStoreURL" "Published Firefox helper URL"
 
 if [[ -n "$LOCAL_DMG" && -f "$LOCAL_DMG" ]]; then
   ok "Local preview DMG exists: $LOCAL_DMG"
@@ -153,8 +172,8 @@ Next public-release gates:
 2. Save notary credentials:
    xcrun notarytool store-credentials quietgate-notary --apple-id APPLE_ID --team-id TEAM_ID --password APP_SPECIFIC_PASSWORD
 3. Publish the browser helpers and add their store URLs to QuietGate/Resources/Info.plist:
-   QuietGateChromiumExtensionStoreURL
-   QuietGateFirefoxExtensionStoreURL
+   QuietGateChromiumExtensionStoreURL is required for launch.
+   QuietGateFirefoxExtensionStoreURL is optional until the Firefox listing is public.
 4. Configure a git origin remote for the public repo.
 5. Build, notarize, verify, and publish:
    script/release_public.sh
@@ -162,7 +181,7 @@ Next public-release gates:
    script/configure_github_release_secrets.sh path/to/DeveloperIDApplication.p12
 
 The public website/download button should use the stable GitHub asset:
-   https://github.com/OWNER/REPO/releases/latest/download/QuietGate.dmg
+   https://github.com/OWNER/REPO/releases/latest/download/Tortoise.dmg
 NEXT
   exit 1
 fi
@@ -174,5 +193,5 @@ Build, notarize, verify, and publish:
   script/release_public.sh
 
 Use this stable URL for the public website/download button:
-  https://github.com/OWNER/REPO/releases/latest/download/QuietGate.dmg
+  https://github.com/OWNER/REPO/releases/latest/download/Tortoise.dmg
 READY

@@ -1,33 +1,33 @@
 export const metadata = {
-  title: "Data Use | QuietGate",
-  description: "QuietGate Chrome extension data use and permission disclosure.",
+  title: "Data Use | Tortoise",
+  description: "Tortoise Chrome extension data use and permission disclosure.",
 };
 
 const permissions = [
   {
-    name: "Host access for X, Reddit, YouTube, Instagram, and QuietGate",
+    name: "Host access for X, Reddit, YouTube, Instagram, and Tortoise",
     reason:
-      "QuietGate needs scoped host access to inject local tuning scripts, hide configured surfaces, and connect the extension to your QuietGate account.",
+      "Tortoise needs scoped host access to inject local tuning scripts, hide configured surfaces, and connect the extension to your Tortoise account.",
   },
   {
     name: "Declarative Net Request",
     reason:
-      "QuietGate uses packaged DNR rules to block adult domains and site-specific media requests without sending browsing traffic to a remote service.",
+      "Tortoise uses packaged DNR rules to block adult domains and site-specific media requests without sending browsing traffic to a remote service.",
   },
   {
     name: "Scripting",
     reason:
-      "QuietGate uses scripting to refresh tuners in already-open tabs after policy changes and to run the optional all-site classifier only after you grant that permission.",
+      "Tortoise uses scripting to refresh tuners in already-open tabs after policy changes and to run the optional all-site classifier only after you grant that permission.",
   },
   {
     name: "Storage",
     reason:
-      "QuietGate stores local policy cache, extension device token, sync state, and local signed-out adult blocking preference.",
+      "Tortoise stores local policy cache, extension device token, sync state, and local signed-out adult blocking preference.",
   },
   {
     name: "Alarms",
     reason:
-      "QuietGate syncs policy periodically so browser protection stays current while Chrome is open.",
+      "Tortoise syncs policy periodically so browser protection stays current while Chrome is open.",
   },
   {
     name: "Optional all-site access",
@@ -45,10 +45,10 @@ export default function DataUsePage() {
             Chrome extension
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
-            QuietGate Data Use
+            Tortoise Data Use
           </h1>
           <p className="mt-4 text-lg leading-8 text-zinc-600">
-            QuietGate has a single purpose: block distracting and adult content
+            Tortoise has a single purpose: block distracting and adult content
             according to the policy you configure and sync across your devices.
           </p>
         </div>

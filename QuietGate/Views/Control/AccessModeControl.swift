@@ -6,7 +6,7 @@ struct AccessModeControl: View {
   var body: some View {
     ProductPanel(
       title: "Protection categories",
-      subtitle: "Choose the category QuietGate should use right now."
+      subtitle: "Choose the category Tortoise should use right now."
     ) {
       VStack(alignment: .leading, spacing: 12) {
         ViewThatFits(in: .horizontal) {
@@ -104,7 +104,7 @@ private struct SelectedCategoryLine: View {
   private var categoryDetail: String {
     switch mode {
     case .open:
-      return "QuietGate is ready, but not blocking yet."
+      return "Tortoise is ready, but not blocking yet."
     case .focus:
       return "Blocks adult websites and quiets YouTube plus sensitive X media."
     case .strict:

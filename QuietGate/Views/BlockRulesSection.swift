@@ -69,8 +69,8 @@ struct BlockRulesSection: View {
       ProductPanel(
         title: "What gets blocked",
         subtitle: store.legacyBlockingProviderEnabled
-          ? "These switches change what QuietGate blocks on this Mac."
-          : "These switches change what QuietGate blocks in connected browsers."
+          ? "These switches change what Tortoise blocks on this Mac."
+          : "These switches change what Tortoise blocks in connected browsers."
       ) {
         VStack(alignment: .leading, spacing: 0) {
           ForEach(store.blockCategories) { rule in
@@ -128,7 +128,7 @@ struct BlockRulesSection: View {
         ContentUnavailableView(
           "No specific websites yet",
           systemImage: "plus.circle",
-          description: Text("Add one above when you want QuietGate to block a site by name.")
+          description: Text("Add one above when you want Tortoise to block a site by name.")
         )
         .frame(maxWidth: .infinity, minHeight: 140)
       } else {
@@ -255,7 +255,7 @@ private struct HiddenRestrictionsNotice: View {
   var body: some View {
     ProductCallout(
       title: "Another web setting is still on",
-      detail: "Still active: \(restrictions). Turn it off here if you want QuietGate to be the only setting changing web results.",
+      detail: "Still active: \(restrictions). Turn it off here if you want Tortoise to be the only setting changing web results.",
       systemImage: "exclamationmark.triangle.fill",
       tint: .orange
     ) {
@@ -475,14 +475,14 @@ private struct FriendlySiteRow: View {
     }
     if isOn {
       if applicationStatus.tone == .positive {
-        return "Blocked by QuietGate. Browser tabs can take about a minute to catch up."
+        return "Blocked by Tortoise. Browser tabs can take about a minute to catch up."
       }
       return friendlyStatus(applicationStatus.text)
     }
     if applicationStatus.tone == .warning {
       return friendlyStatus(applicationStatus.text)
     }
-    return "Allowed by QuietGate"
+    return "Allowed by Tortoise"
   }
 
   private var statusColor: Color {
@@ -516,17 +516,17 @@ private func friendlyStatus(_ text: String) -> String {
   case "On here - finishing setup", "On here - not confirmed yet":
     return "Turning on. This usually takes about a minute."
   case "Off here - still blocked by account":
-    return "Off in QuietGate. Another saved setting may still block it."
+    return "Off in Tortoise. Another saved setting may still block it."
   case "Off here - this Mac still blocks it":
-    return "Off in QuietGate. Something else on this Mac may still block it."
+    return "Off in Tortoise. Something else on this Mac may still block it."
   case "Off here - checking":
     return "Turning off. This usually takes about a minute."
   case "Off here - waiting for check":
     return "Turning off. This usually takes about a minute."
   case "Cannot prove off":
-    return "Off in QuietGate. This Mac is still catching up."
+    return "Off in Tortoise. This Mac is still catching up."
   case "Off - verified":
-    return "Allowed by QuietGate"
+    return "Allowed by Tortoise"
   default:
     return text
   }
@@ -535,5 +535,5 @@ private func friendlyStatus(_ text: String) -> String {
 private func friendlyTransactionMessage(_ message: String) -> String {
   message
     .replacingOccurrences(of: "Blocking is on and verified.", with: "Blocking is on. Browser tabs can take about a minute to catch up.")
-    .replacingOccurrences(of: "Blocking is off and verified.", with: "Allowed by QuietGate.")
+    .replacingOccurrences(of: "Blocking is off and verified.", with: "Allowed by Tortoise.")
 }

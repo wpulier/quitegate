@@ -175,12 +175,12 @@ final class IOSEnforcementController: ObservableObject {
     if authorizationState == .denied {
       return authorizationMode == .child
         ? "Child setup needs Family Sharing and Screen Time approval on the child device."
-        : "Screen Time permission is blocked. Re-enable App & Website Activity for QuietGate, then retry."
+        : "Screen Time permission is blocked. Re-enable App & Website Activity for Tortoise, then retry."
     }
     if safariExtensionState == .failed {
       return safariExtensionStatusError ?? "Safari extension status could not be checked."
     }
-    return lastError ?? "QuietGate could not apply the latest iOS protection state."
+    return lastError ?? "Tortoise could not apply the latest iOS protection state."
   }
 
   var safariExtensionConnected: Bool {
@@ -249,7 +249,7 @@ final class IOSEnforcementController: ObservableObject {
   }
 
   var safariManualSetupText: String {
-    "Settings -> Apps -> Safari -> Extensions -> QuietGate Safari -> Allow Extension"
+    "Settings -> Apps -> Safari -> Extensions -> Tortoise Safari -> Allow Extension"
   }
 
   func setupStatus(for step: IOSEnforcementSetupStep) -> IOSEnforcementSetupStatus {
@@ -574,7 +574,7 @@ final class IOSEnforcementController: ObservableObject {
     case .denied:
       statusMessage = authorizationMode == .child
         ? "Child setup is not authorized. Confirm Family Sharing and Screen Time permissions for this child device."
-        : "Screen Time permission is not approved for QuietGate."
+        : "Screen Time permission is not approved for Tortoise."
     case .notDetermined:
       statusMessage = "Choose My iPhone or Child device, then allow Screen Time."
     case .unknown:

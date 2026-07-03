@@ -1,14 +1,20 @@
 import { type NextRequest } from "next/server";
 import { fail, ok, upstreamFailure } from "@/lib/api-response";
 import { ExtensionAuthError, getExtensionPolicy } from "@/lib/quietgate-extension";
+import { rateLimit } from "@/lib/request-guards";
 import { hasSupabaseAdminConfig } from "@/lib/supabase-admin";
 
 export async function GET(request: NextRequest) {
+  const limited = rateLimit(request, "extension-policy:get", { limit: 120, windowMs: 60_000 });
+  if (limited) {
+    return limited;
+  }
+
   if (!hasSupabaseAdminConfig()) {
     return fail(
       503,
       "extension_not_configured",
-      "QuietGate extension sync is not configured.",
+      "Tortoise extension sync is not configured.",
     );
   }
 

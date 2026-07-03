@@ -6,7 +6,7 @@ struct TimedSessionControl: View {
   var body: some View {
     ProductPanel(
       title: "Focus timer",
-      subtitle: "Turn on a temporary protection category. QuietGate switches back when the timer ends."
+      subtitle: "Turn on a temporary protection category. Tortoise switches back when the timer ends."
     ) {
       HStack(alignment: .firstTextBaseline) {
         TimelineView(.periodic(from: Date(), by: 30)) { _ in

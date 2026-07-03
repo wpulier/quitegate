@@ -39,7 +39,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         "storedAt": ISO8601DateFormatter().string(from: Date())
       ]
     default:
-      os_log(.debug, "Unhandled QuietGate Safari message: %@", type)
+      os_log(.debug, "Unhandled Tortoise Safari message: %@", type)
       return policyResponse()
     }
   }

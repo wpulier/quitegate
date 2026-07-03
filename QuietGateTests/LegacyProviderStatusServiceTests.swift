@@ -30,7 +30,7 @@ final class LegacyProviderStatusServiceTests: XCTestCase {
   func testParseStatusReportsUnexpectedBodyInsteadOfRawDecoderMessage() {
     XCTAssertThrowsError(try LegacyProviderStatusService.parseStatus(from: Data("not-json".utf8))) { error in
       XCTAssertEqual(error as? ResolverStatusError, .unexpectedResponsePreview("not-json"))
-      XCTAssertTrue(error.localizedDescription.contains("QuietGate received an unexpected connection response"))
+      XCTAssertTrue(error.localizedDescription.contains("Tortoise received an unexpected connection response"))
     }
   }
 }

@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CERTIFICATE_PATH="${1:-}"
-APPLE_TEAM_ID="${APPLE_TEAM_ID:-${QUIETGATE_APPLE_TEAM_ID:-V558WV68AM}}"
+APPLE_TEAM_ID="${APPLE_TEAM_ID:-${QUIETGATE_APPLE_TEAM_ID:-SY7TABCD5M}}"
 
 usage() {
   cat <<'USAGE'

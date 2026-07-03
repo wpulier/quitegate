@@ -191,7 +191,7 @@ final class FakePlatformControlsChecker: PlatformControlsChecking {
       items: [
         PlatformControlItem(
           id: .quietGateTuners,
-          title: "QuietGate tuner",
+          title: "Tortoise tuner",
           detail: quietGateTunersReady ? "Ready" : "Not ready",
           state: quietGateTunersReady ? .enabled : .needsAction,
           actionTitle: nil,
@@ -224,7 +224,7 @@ final class FakeSystemProfileChecker: SystemProfileChecking {
 }
 
 final class FakeLocalHostsScriptGenerator: LocalHostsBlockerScriptGenerating {
-  let url = URL(fileURLWithPath: "/tmp/QuietGate Local Hosts Blocker.command")
+  let url = URL(fileURLWithPath: "/tmp/Tortoise Local Hosts Blocker.command")
   var domains: [String] = []
   var installedDomains: [String] = []
   var installCount = 0

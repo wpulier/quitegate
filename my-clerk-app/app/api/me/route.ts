@@ -1,4 +1,5 @@
 import { fail, ok, upstreamFailure } from "@/lib/api-response";
+import { rateLimit } from "@/lib/request-guards";
 import {
   countQuietGateDevices,
   currentClerkIdentity,
@@ -8,6 +9,11 @@ import {
 import { type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
+  const limited = rateLimit(request, "me:get", { limit: 120, windowMs: 60_000 });
+  if (limited) {
+    return limited;
+  }
+
   const clerkUser = await currentClerkIdentity(request);
 
   if (!clerkUser) {

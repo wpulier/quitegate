@@ -4,7 +4,7 @@ enum DisabledLegacyProviderServiceError: LocalizedError {
   case disabled
 
   var errorDescription: String? {
-    "This setup path is not available in this QuietGate build."
+    "This setup path is not available in this Tortoise build."
   }
 }
 

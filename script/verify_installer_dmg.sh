@@ -6,11 +6,11 @@ DMG_PATH=""
 
 usage() {
   cat <<'USAGE'
-usage: script/verify_installer_dmg.sh [--public] path/to/QuietGate.dmg
+usage: script/verify_installer_dmg.sh [--public] path/to/Tortoise.dmg
 
-Verifies that a QuietGate DMG is installable:
+Verifies that a Tortoise DMG is installable:
   - DMG exists and can be mounted read-only
-  - QuietGate.app is present
+  - Tortoise.app or legacy QuietGate.app is present
   - Applications shortcut is present
   - Start Here.txt is present and useful
   - bundled native host and browser extension are present
@@ -20,7 +20,7 @@ Verifies that a QuietGate DMG is installable:
 With --public, also requires:
   - not a *-local.dmg file
   - stapled notarization ticket validates
-  - Gatekeeper accepts the DMG
+  - Gatekeeper accepts the mounted app
 USAGE
 }
 
@@ -63,9 +63,6 @@ if ((PUBLIC == 1)); then
 
   log "Checking stapled notarization ticket"
   xcrun stapler validate "$DMG_PATH" >/dev/null
-
-  log "Checking Gatekeeper acceptance"
-  spctl -a -vv --type open "$DMG_PATH" >/dev/null
 fi
 
 MOUNT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/quietgate-dmg.XXXXXX")"
@@ -84,7 +81,10 @@ if ! hdiutil attach "$DMG_PATH" -nobrowse -readonly -mountpoint "$MOUNT_DIR"; th
 fi
 attached=1
 
-APP_PATH="$MOUNT_DIR/QuietGate.app"
+APP_PATH="$MOUNT_DIR/Tortoise.app"
+if [[ ! -d "$APP_PATH" ]]; then
+  APP_PATH="$MOUNT_DIR/QuietGate.app"
+fi
 START_HERE="$MOUNT_DIR/Start Here.txt"
 APPLICATIONS_LINK="$MOUNT_DIR/Applications"
 NATIVE_HOST="$APP_PATH/Contents/Resources/quietgate-native-host"
@@ -112,7 +112,7 @@ CHROME_ADULT_STATIC="$APP_PATH/Contents/Resources/ChromeExtension/rules/adult-st
 CHROME_REDDIT_TUNER="$APP_PATH/Contents/Resources/ChromeExtension/content/reddit.js"
 FIREFOX_REDDIT_TUNER="$APP_PATH/Contents/Resources/FirefoxExtension/content/reddit.js"
 
-[[ -d "$APP_PATH" ]] || fail "QuietGate.app is missing from the DMG."
+[[ -d "$APP_PATH" ]] || fail "Tortoise.app is missing from the DMG."
 [[ -e "$APPLICATIONS_LINK" ]] || fail "Applications shortcut is missing from the DMG."
 [[ -f "$START_HERE" ]] || fail "Start Here.txt is missing from the DMG."
 [[ -x "$NATIVE_HOST" ]] || fail "Bundled native host is missing or not executable."
@@ -170,7 +170,7 @@ grep -q 'quietgateInstagramTunerVersion' "$CHROME_INSTAGRAM_TUNER" || fail "Bund
 grep -q 'quietgateInstagramTunerVersion' "$FIREFOX_INSTAGRAM_TUNER" || fail "Bundled Firefox Instagram tuner is missing version reporting."
 grep -q 'redditNSFW' "$CHROME_REDDIT_TUNER" || fail "Bundled Chrome Reddit tuner is missing NSFW handling."
 
-if ! grep -q "Drag QuietGate into Applications" "$START_HERE"; then
+if ! grep -Eq "Drag (Tortoise|QuietGate) into Applications" "$START_HERE"; then
   fail "Start Here.txt does not include the install instruction."
 fi
 

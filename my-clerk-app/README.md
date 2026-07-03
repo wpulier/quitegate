@@ -1,4 +1,22 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tortoise Web
+
+This is the public setup site and account dashboard for Tortoise.
+
+## Required Launch Environment
+
+The dad-test install flow depends on these public URLs being real before launch:
+
+```env
+NEXT_PUBLIC_MAC_DOWNLOAD_URL=https://github.com/wpulier/quitegate/releases/latest/download/Tortoise.dmg
+NEXT_PUBLIC_IOS_TESTFLIGHT_URL=https://testflight.apple.com/join/762eByyC
+NEXT_PUBLIC_CHROME_EXTENSION_URL=https://chromewebstore.google.com/detail/fedpnejbgmllajjlfkahlnjbgfmjjmmf
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+CLERK_JWT_AUDIENCE=tortoise-api
+CLERK_AUTHORIZED_PARTIES=https://yourtortoise.com
+```
+
+Do not use `https://testflight.apple.com/` as the iOS URL. The download route treats that generic URL as missing.
 
 ## Getting Started
 
@@ -14,11 +32,14 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Primary routes:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` public landing page
+- `/setup` guided install checklist
+- `/dashboard` technical account/device dashboard
+- `/download/mac`, `/download/ios`, `/download/chrome` env-backed redirects
 
 ## Learn More
 

@@ -34,7 +34,7 @@ enum AccessMode: String, CaseIterable, Codable, Identifiable {
   var summary: String {
     switch self {
     case .open:
-      return "No QuietGate rules are applied."
+      return "No Tortoise rules are applied."
     case .focus:
       return "Blocks adult domains and high-confidence explicit pages while removing the noisiest browser surfaces."
     case .strict:
@@ -45,9 +45,9 @@ enum AccessMode: String, CaseIterable, Codable, Identifiable {
   var blockerSummary: String {
     switch self {
     case .open:
-      return "QuietGate blocking is off."
+      return "Tortoise blocking is off."
     case .focus, .strict:
-      return "QuietGate is blocking adult domains, adult-host media, and high-confidence explicit pages."
+      return "Tortoise is blocking adult domains, adult-host media, and high-confidence explicit pages."
     }
   }
 

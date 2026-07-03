@@ -174,18 +174,18 @@ extension ProtectionStore {
     let detail: String
     let action: ReadinessAction?
     if legacyProviderControlConnected {
-      detail = "QuietGate can update the saved rules."
+      detail = "Tortoise can update the saved rules."
       action = nil
     } else if legacyProviderKeyNeedsPermission {
       detail =
-        "macOS is protecting a saved setup key. Allow QuietGate to read it so blocking changes can sync."
+        "macOS is protecting a saved setup key. Allow Tortoise to read it so blocking changes can sync."
       action = .allowSavedProviderCredentialAccess
     } else if case .error = connectionState {
       detail =
-        "QuietGate could not use the saved connection. Connect again, then save again."
+        "Tortoise could not use the saved connection. Connect again, then save again."
       action = .openLegacyProviderAccount
     } else if configured {
-      detail = "The setup details are saved, but QuietGate has not verified them yet."
+      detail = "The setup details are saved, but Tortoise has not verified them yet."
       action = .refreshProtectionStatus
     } else {
       detail = "Add the two connection codes."
@@ -206,14 +206,14 @@ extension ProtectionStore {
     if websiteBlockingReady {
       detail = "Blocking is ready on this Mac."
     } else if legacyProviderHardBlockReady {
-      detail = "QuietGate needs a fresh status check before it can promise blocking is ready."
+      detail = "Tortoise needs a fresh status check before it can promise blocking is ready."
     } else if legacyMacConnectionReady && !legacyProviderControlConnected {
-      detail = "This Mac is connected, but QuietGate still needs to verify saved access."
+      detail = "This Mac is connected, but Tortoise still needs to verify saved access."
     } else if legacyProviderRulesSyncPending && legacyProviderControlConnected {
       detail =
         legacyProviderKeyNeedsPermission
-        ? "Changes are saved. Allow setup access so QuietGate can send them."
-        : "Changes are saved. Check the connection so QuietGate can confirm them."
+        ? "Changes are saved. Allow setup access so Tortoise can send them."
+        : "Changes are saved. Check the connection so Tortoise can confirm them."
     } else {
       detail = "Finish connection codes and Mac approval before saved blocks can work."
     }
@@ -245,18 +245,18 @@ extension ProtectionStore {
     let detail: String
     let ready = macOSConfiguredLegacyProviderProfileInstalled || legacyMacConnectionReady
     if legacyMacConnectionReady {
-      detail = "This Mac is using the approved QuietGate profile."
+      detail = "This Mac is using the approved Tortoise profile."
     } else if macOSConfiguredLegacyProviderProfileInstalled {
-      detail = "QuietGate is approved in Device Management."
+      detail = "Tortoise is approved in Device Management."
     } else if legacyMacConnectionUsesAppleProfile {
       detail =
-        "This Mac has a blocking permission, but QuietGate cannot find its approved permission yet."
+        "This Mac has a blocking permission, but Tortoise cannot find its approved permission yet."
     } else if macOSLegacyProviderProfileInstalled {
       detail =
-        "A blocking permission is approved, but QuietGate cannot match it to the saved setup."
+        "A blocking permission is approved, but Tortoise cannot match it to the saved setup."
     } else if generatedAppleProfileURL != nil {
       detail =
-        "Mac approval is ready. Approve QuietGate in System Settings, then return here."
+        "Mac approval is ready. Approve Tortoise in System Settings, then return here."
     } else if hasProfileID {
       detail = "Prepare Mac approval for this setup."
     } else {
@@ -278,25 +278,25 @@ extension ProtectionStore {
     let detail: String
     if ready {
       if detectedLegacyProviderProfileID?.caseInsensitiveCompare(trimmedProfileID) == .orderedSame {
-        detail = "This Mac is using the permission QuietGate updates."
+        detail = "This Mac is using the permission Tortoise updates."
       } else {
         detail =
-          "This Mac is using the approved QuietGate permission. No action is needed."
+          "This Mac is using the approved Tortoise permission. No action is needed."
       }
     } else if legacyMacConnectionUsesAppleProfile {
       detail =
-        "This Mac has a blocking permission, but QuietGate cannot confirm it belongs to QuietGate. Approve the QuietGate permission, then return to QuietGate."
+        "This Mac has a blocking permission, but Tortoise cannot confirm it belongs to Tortoise. Approve the Tortoise permission, then return to Tortoise."
     } else if legacyMacConnectionUsesProvider && legacyMacConnectionProfileDetected {
       detail =
-        "This Mac is using a different blocking setup. Open System Settings and switch this Mac to QuietGate, then return to QuietGate."
+        "This Mac is using a different blocking setup. Open System Settings and switch this Mac to Tortoise, then return to Tortoise."
     } else if legacyMacConnectionUsesProvider {
       detail =
-        "This Mac is using a blocking setup, but QuietGate cannot confirm which one. Install or enable the QuietGate approval."
+        "This Mac is using a blocking setup, but Tortoise cannot confirm which one. Install or enable the Tortoise approval."
     } else if let resolverStatus {
       detail =
-        "This Mac reports \(resolverStatus.status). Install or enable the QuietGate permission."
+        "This Mac reports \(resolverStatus.status). Install or enable the Tortoise permission."
     } else {
-      detail = "Check whether this Mac is using QuietGate's approved permission."
+      detail = "Check whether this Mac is using Tortoise's approved permission."
     }
 
     return ReadinessCheck(

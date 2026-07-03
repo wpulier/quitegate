@@ -152,7 +152,7 @@ final class LocalHostsBlockerScriptGenerator: LocalHostsBlockerScriptGenerating 
     }
 
     try fileManager.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
-    let url = outputDirectory.appendingPathComponent("QuietGate Local Hosts Blocker.command")
+    let url = outputDirectory.appendingPathComponent("Tortoise Local Hosts Blocker.command")
     let data = Data(Self.scriptText(for: domains).utf8)
     try data.write(to: url, options: .atomic)
     try fileManager.setAttributes(
@@ -219,12 +219,12 @@ final class LocalHostsBlockerScriptGenerator: LocalHostsBlockerScriptGenerating 
     trap cleanup EXIT
 
     cat <<'QUIETGATE_INTRO'
-    QuietGate Local Hosts Blocker
+    Tortoise Local Hosts Blocker
 
     1) Install/update local blocks
-    2) Remove QuietGate local blocks
+    2) Remove Tortoise local blocks
 
-    This edits only the marked QuietGate section in /etc/hosts.
+    This edits only the marked Tortoise section in /etc/hosts.
     macOS will ask for your password because /etc/hosts is system-owned.
     QUIETGATE_INTRO
 
@@ -259,7 +259,7 @@ final class LocalHostsBlockerScriptGenerator: LocalHostsBlockerScriptGenerating 
     sudo killall -HUP mDNSResponder || true
 
     echo
-    echo "QuietGate local hosts blocklist: $ACTION complete."
+    echo "Tortoise local hosts blocklist: $ACTION complete."
     echo "Backup: $BACKUP"
     read -r -p "Press Return to close."
     """
@@ -428,7 +428,7 @@ final class LegacyProviderAppleProfileGenerator: LegacyProviderProfileGenerating
     )
     try fileManager.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 
-    let url = outputDirectory.appendingPathComponent("QuietGate Blocking.mobileconfig")
+    let url = outputDirectory.appendingPathComponent("Tortoise Blocking.mobileconfig")
     try data.write(to: url, options: .atomic)
     return url
   }
@@ -455,8 +455,8 @@ final class LegacyProviderAppleProfileGenerator: LegacyProviderProfileGenerating
         "ServerURL": serverURL.absoluteString
       ],
       "OnDemandRules": onDemandRules,
-      "PayloadDescription": "Allows this Mac to use QuietGate blocking.",
-      "PayloadDisplayName": "QuietGate Blocking",
+      "PayloadDescription": "Allows this Mac to use Tortoise blocking.",
+      "PayloadDisplayName": "Tortoise Blocking",
       "PayloadIdentifier": "com.willpulier.quietgate.nextdns.dns.\(identifierSuffix)",
       "PayloadType": "com.apple.dnsSettings.managed",
       "PayloadUUID": payloadUUID.uuidString,
@@ -465,10 +465,10 @@ final class LegacyProviderAppleProfileGenerator: LegacyProviderProfileGenerating
 
     let profile: [String: Any] = [
       "PayloadContent": [payload],
-      "PayloadDescription": "Installs the Mac approval used by QuietGate blocking.",
-      "PayloadDisplayName": "QuietGate Blocking",
+      "PayloadDescription": "Installs the Mac approval used by Tortoise blocking.",
+      "PayloadDisplayName": "Tortoise Blocking",
       "PayloadIdentifier": "com.willpulier.quietgate.nextdns.\(identifierSuffix)",
-      "PayloadOrganization": "QuietGate",
+      "PayloadOrganization": "Tortoise",
       "PayloadRemovalDisallowed": false,
       "PayloadScope": "System",
       "PayloadType": "Configuration",
@@ -485,8 +485,8 @@ final class LegacyProviderAppleProfileGenerator: LegacyProviderProfileGenerating
 
     let encodedProfileID = profileID.addingPercentEncoding(withAllowedCharacters: allowedPathCharacters) ?? profileID
     let trimmedDeviceName = deviceName.trimmingCharacters(in: .whitespacesAndNewlines)
-    let deviceName = trimmedDeviceName.isEmpty ? "QuietGate-Mac" : trimmedDeviceName
-    let encodedDeviceName = deviceName.addingPercentEncoding(withAllowedCharacters: allowedPathCharacters) ?? "QuietGate-Mac"
+    let deviceName = trimmedDeviceName.isEmpty ? "Tortoise-Mac" : trimmedDeviceName
+    let encodedDeviceName = deviceName.addingPercentEncoding(withAllowedCharacters: allowedPathCharacters) ?? "Tortoise-Mac"
 
     return URL(string: "https://apple.dns.nextdns.io/\(encodedProfileID)/\(encodedDeviceName)")
   }

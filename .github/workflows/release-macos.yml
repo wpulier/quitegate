@@ -59,11 +59,17 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           QUIETGATE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          TORTOISE_API_BASE_URL: ${{ vars.TORTOISE_API_BASE_URL || 'https://www.yourtortoise.com' }}
         run: |
           set -euo pipefail
 
           if [[ -z "${APPLE_ID:-}" || -z "${APPLE_APP_SPECIFIC_PASSWORD:-}" || -z "${QUIETGATE_APPLE_TEAM_ID:-}" ]]; then
             echo "Missing Apple notarization secrets." >&2
+            exit 1
+          fi
+          if [[ -z "${CLERK_PUBLISHABLE_KEY:-}" ]]; then
+            echo "Missing CLERK_PUBLISHABLE_KEY secret." >&2
             exit 1
           fi
 
@@ -73,26 +79,31 @@ jobs:
         id: dmg
         run: |
           set -euo pipefail
-          DMG_PATH="$(find dist -maxdepth 1 -type f -name 'QuietGate-*-notarize.dmg' -print | sort | tail -n 1)"
+          DMG_PATH="$(find dist -maxdepth 1 -type f \( -name 'Tortoise-*-notarize.dmg' -o -name 'QuietGate-*-notarize.dmg' \) -print | sort | tail -n 1)"
           if [[ -z "$DMG_PATH" ]]; then
             echo "No notarized DMG produced." >&2
             exit 1
           fi
-          STABLE_DMG_PATH="dist/QuietGate.dmg"
+          STABLE_DMG_PATH="dist/Tortoise.dmg"
+          LEGACY_DMG_PATH="dist/QuietGate.dmg"
           cp "$DMG_PATH" "$STABLE_DMG_PATH"
+          cp "$DMG_PATH" "$LEGACY_DMG_PATH"
           echo "path=$DMG_PATH" >> "$GITHUB_OUTPUT"
           echo "filename=$(basename "$DMG_PATH")" >> "$GITHUB_OUTPUT"
           echo "stable_path=$STABLE_DMG_PATH" >> "$GITHUB_OUTPUT"
-          echo "stable_filename=QuietGate.dmg" >> "$GITHUB_OUTPUT"
+          echo "stable_filename=Tortoise.dmg" >> "$GITHUB_OUTPUT"
+          echo "legacy_path=$LEGACY_DMG_PATH" >> "$GITHUB_OUTPUT"
           VERSIONED_SHA="$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')"
           printf '%s  %s\n' "$VERSIONED_SHA" "$(basename "$DMG_PATH")" | tee "$DMG_PATH.sha256"
-          printf '%s  QuietGate.dmg\n' "$VERSIONED_SHA" | tee "$STABLE_DMG_PATH.sha256"
+          printf '%s  Tortoise.dmg\n' "$VERSIONED_SHA" | tee "$STABLE_DMG_PATH.sha256"
+          printf '%s  QuietGate.dmg\n' "$VERSIONED_SHA" | tee "$LEGACY_DMG_PATH.sha256"
 
       - name: Validate public installer
         run: |
           set -euo pipefail
           script/verify_installer_dmg.sh --public "${{ steps.dmg.outputs.path }}"
           script/verify_installer_dmg.sh --public "${{ steps.dmg.outputs.stable_path }}"
+          script/verify_installer_dmg.sh --public "${{ steps.dmg.outputs.legacy_path }}"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -103,6 +114,8 @@ jobs:
             ${{ steps.dmg.outputs.path }}.sha256
             ${{ steps.dmg.outputs.stable_path }}
             ${{ steps.dmg.outputs.stable_path }}.sha256
+            ${{ steps.dmg.outputs.legacy_path }}
+            ${{ steps.dmg.outputs.legacy_path }}.sha256
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -113,8 +126,10 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           DMG_PATH="${{ steps.dmg.outputs.path }}"
           STABLE_DMG_PATH="${{ steps.dmg.outputs.stable_path }}"
+          LEGACY_DMG_PATH="${{ steps.dmg.outputs.legacy_path }}"
           SHA_PATH="$DMG_PATH.sha256"
           STABLE_SHA_PATH="$STABLE_DMG_PATH.sha256"
+          LEGACY_SHA_PATH="$LEGACY_DMG_PATH.sha256"
           SHA256="$(awk '{print $1}' "$SHA_PATH")"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
@@ -123,29 +138,33 @@ jobs:
           fi
 
           cat > "$RUNNER_TEMP/release-notes.md" <<NOTES
-          QuietGate ${TAG}
+          Tortoise ${TAG}
 
           Install:
           1. Download the DMG.
           2. Open it.
-          3. Drag QuietGate to Applications.
-          4. Open QuietGate and follow Setup.
+          3. Drag Tortoise to Applications.
+          4. Open Tortoise and follow Setup.
 
           SHA-256:
           ${SHA256}
 
           Stable latest download:
+          https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/Tortoise.dmg
+
+          Legacy latest download:
           https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/QuietGate.dmg
 
           Versioned download:
           https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${{ steps.dmg.outputs.filename }}
           NOTES
 
-          gh release create "$TAG" "$DMG_PATH" "$SHA_PATH" "$STABLE_DMG_PATH" "$STABLE_SHA_PATH" \
-            --title "QuietGate ${TAG}" \
+          gh release create "$TAG" "$DMG_PATH" "$SHA_PATH" "$STABLE_DMG_PATH" "$STABLE_SHA_PATH" "$LEGACY_DMG_PATH" "$LEGACY_SHA_PATH" \
+            --title "Tortoise ${TAG}" \
             --notes-file "$RUNNER_TEMP/release-notes.md"
 
           REPO="${GITHUB_REPOSITORY}"
           FILENAME="$(basename "$DMG_PATH")"
           echo "Download URL: https://github.com/$REPO/releases/download/$TAG/$FILENAME"
-          echo "Stable latest download: https://github.com/$REPO/releases/latest/download/QuietGate.dmg"
+          echo "Stable latest download: https://github.com/$REPO/releases/latest/download/Tortoise.dmg"
+          echo "Legacy latest download: https://github.com/$REPO/releases/latest/download/QuietGate.dmg"

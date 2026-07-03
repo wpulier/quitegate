@@ -104,6 +104,80 @@ final class AccountHubModel: ObservableObject {
     }
   }
 
+  @discardableResult
+  func updatePolicy(
+    using clerk: Clerk,
+    transform: (TortoisePolicy) -> TortoisePolicy
+  ) async -> TortoisePolicy? {
+    guard let session = clerk.session else {
+      syncMessage = "Sign in to sync this device."
+      return nil
+    }
+
+    if snapshot.policy == nil {
+      await refresh(using: clerk)
+    }
+
+    guard let currentEnvelope = snapshot.policy else {
+      syncMessage = "Policy sync unavailable. Try again after account services are reachable."
+      return nil
+    }
+
+    isSyncing = true
+    defer { isSyncing = false }
+
+    do {
+      guard let token = try await session.getToken() else {
+        throw TortoiseAPIError.missingSessionToken
+      }
+
+      let nextPolicy = transform(currentEnvelope.policy)
+      let updatedEnvelope = try await apiClient.updatePolicy(
+        token: token,
+        policy: nextPolicy,
+        expectedSettingsVersion: currentEnvelope.settingsVersion
+      )
+      snapshot.policy = updatedEnvelope
+      snapshot.lastSyncedAt = Date()
+      syncMessage = "Tortoise settings are synced."
+      return updatedEnvelope.policy
+    } catch {
+      if let apiError = error as? TortoiseAPIError,
+         case .server(let message) = apiError,
+         message.localizedCaseInsensitiveContains("changed") {
+        await refresh(using: clerk)
+        syncMessage = "Settings changed elsewhere. Refreshed policy; try again."
+      } else {
+        syncMessage = error.localizedDescription
+      }
+      return nil
+    }
+  }
+
+  func setPolicyMode(_ mode: IOSEnforcementMode, using clerk: Clerk) async -> TortoisePolicy? {
+    await updatePolicy(using: clerk) { policy in
+      policy.settingMode(mode.rawValue)
+    }
+  }
+
+  func setBrowserFeature(_ feature: String, enabled: Bool, using clerk: Clerk) async -> TortoisePolicy? {
+    await updatePolicy(using: clerk) { policy in
+      policy.settingBrowserFeature(feature, enabled: enabled)
+    }
+  }
+
+  func setBrowserFeatures(_ features: [String], enabled: Bool, using clerk: Clerk) async -> TortoisePolicy? {
+    await updatePolicy(using: clerk) { policy in
+      policy.settingBrowserFeatures(features, enabled: enabled)
+    }
+  }
+
+  func setYouTubeDailyLimit(minutes: Int, using clerk: Clerk) async -> TortoisePolicy? {
+    await updatePolicy(using: clerk) { policy in
+      policy.settingYouTubeDailyLimit(minutes: minutes)
+    }
+  }
+
   private static let iosCapabilities: [String: JSONValue] = [
     "accountHub": .string("supported"),
     "policySync": .string("supported"),

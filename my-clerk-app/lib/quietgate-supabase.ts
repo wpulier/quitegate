@@ -89,6 +89,8 @@ type QuietGateSupabaseClient = Awaited<
   ReturnType<typeof createClerkSupabaseClient>
 >;
 
+let lastPruneAt = 0;
+
 export function hasQuietGateDataConfig() {
   return hasSupabaseAdminConfig() || hasSupabasePublicConfig();
 }
@@ -150,6 +152,45 @@ function localDateKey(date = new Date()) {
     day: "2-digit",
   });
   return formatter.format(date);
+}
+
+function dateKeyDaysAgo(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return localDateKey(date);
+}
+
+function positiveIntEnv(name: string, fallback: number) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+}
+
+async function maybePruneQuietGateData(supabase: QuietGateSupabaseClient) {
+  if (!hasSupabaseAdminConfig()) {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - lastPruneAt < 60 * 60 * 1000) {
+    return;
+  }
+  lastPruneAt = now;
+
+  const usageRetentionDays = positiveIntEnv("QUIETGATE_USAGE_RETENTION_DAYS", 180);
+  const healthRetentionDays = positiveIntEnv("QUIETGATE_HEALTH_RETENTION_DAYS", 45);
+  const healthCutoff = new Date();
+  healthCutoff.setDate(healthCutoff.getDate() - healthRetentionDays);
+
+  await Promise.allSettled([
+    supabase
+      .from("quietgate_site_usage")
+      .delete()
+      .lt("usage_date", dateKeyDaysAgo(usageRetentionDays)),
+    supabase
+      .from("quietgate_device_health")
+      .delete()
+      .lt("reported_at", healthCutoff.toISOString()),
+  ]);
 }
 
 function usageSiteTitle(siteID: UsageSiteID) {
@@ -663,6 +704,8 @@ export async function recordQuietGateDeviceHealth(
     throw new Error(healthError.message);
   }
 
+  await maybePruneQuietGateData(supabase);
+
   return {
     device: device as Record<string, unknown>,
     health: health as Record<string, unknown>,
@@ -724,6 +767,8 @@ export async function recordQuietGateSiteUsageForDeviceContext(
     throw new Error(error.message);
   }
 
+  await maybePruneQuietGateData(supabase);
+
   await supabase
     .from("quietgate_devices")
     .update({ last_seen_at: now })
@@ -739,10 +784,12 @@ export async function getQuietGateSiteUsageSummaryForUser(
   userId: string,
   date = localDateKey(),
 ) {
+  const summaryDays = positiveIntEnv("QUIETGATE_USAGE_SUMMARY_DAYS", 30);
   const { data, error } = await supabase
     .from("quietgate_site_usage")
     .select("*")
     .eq("user_id", userId)
+    .gte("usage_date", dateKeyDaysAgo(summaryDays))
     .order("usage_date", { ascending: false })
     .order("updated_at", { ascending: false });
 

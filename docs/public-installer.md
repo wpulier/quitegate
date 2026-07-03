@@ -1,6 +1,7 @@
 # Public Installer
 
-QuietGate ships as a notarized Mac DMG.
+Tortoise ships as a notarized Mac DMG. The underlying macOS target and bundle
+identifier still use the legacy QuietGate name in this pass.
 
 The release script builds the app, verifies the bundle contents, creates a DMG
 with an Applications shortcut, and can submit the DMG to Apple notarization.
@@ -37,7 +38,7 @@ Recommended one-time setup:
 ```sh
 xcrun notarytool store-credentials quietgate-notary \
   --apple-id "APPLE_ID_EMAIL" \
-  --team-id "V558WV68AM" \
+  --team-id "SY7TABCD5M" \
   --password "APP_SPECIFIC_PASSWORD"
 ```
 
@@ -68,13 +69,13 @@ are not a consumer-grade public setup path.
 If you built the notarized DMG separately, publish it to GitHub Releases:
 
 ```sh
-script/publish_github_release.sh dist/QuietGate-1.0-1-notarize.dmg
+script/publish_github_release.sh dist/Tortoise-1.0-1-notarize.dmg
 ```
 
 The publish script refuses local preview DMGs, checks for a stapled notarization
 ticket, checks Gatekeeper acceptance, creates a versioned GitHub Release, uploads
-both the versioned DMG and a stable `QuietGate.dmg` asset, then prints the
-release page plus direct download URLs.
+the versioned DMG, a stable `Tortoise.dmg` asset, and a legacy `QuietGate.dmg`
+alias, then prints the release page plus direct download URLs.
 
 If GitHub Releases is not the final hosting choice, upload the notarized DMG to
 another HTTPS host and publish that URL. Do not upload `*-local.dmg` for public
@@ -104,7 +105,7 @@ Set those secrets with the helper:
 export DEVELOPER_ID_APPLICATION_CERTIFICATE_PASSWORD="P12_PASSWORD"
 export APPLE_ID="APPLE_ID_EMAIL"
 export APPLE_APP_SPECIFIC_PASSWORD="APP_SPECIFIC_PASSWORD"
-export APPLE_TEAM_ID="V558WV68AM"
+export APPLE_TEAM_ID="SY7TABCD5M"
 
 script/configure_github_release_secrets.sh path/to/DeveloperIDApplication.p12
 ```
@@ -122,13 +123,13 @@ git push origin v1.0.1
 The release page will expose a versioned asset URL like:
 
 ```text
-https://github.com/OWNER/REPO/releases/download/v1.0.1/QuietGate-1.0-1-notarize.dmg
+https://github.com/OWNER/REPO/releases/download/v1.0.1/Tortoise-1.0-1-notarize.dmg
 ```
 
 It also uploads a stable asset for the latest release:
 
 ```text
-https://github.com/OWNER/REPO/releases/latest/download/QuietGate.dmg
+https://github.com/OWNER/REPO/releases/latest/download/Tortoise.dmg
 ```
 
 Use the stable URL for the public website/download button.
@@ -146,5 +147,5 @@ identities only. A public Mac download needs:
 - GitHub Actions release secrets configured with
   `script/configure_github_release_secrets.sh` if using the hosted workflow.
 
-Until those are in place, `dist/QuietGate-1.0-1-local.dmg` is only an internal
+Until those are in place, `dist/Tortoise-1.0-1-local.dmg` is only an internal
 preview installer, not a public installer.

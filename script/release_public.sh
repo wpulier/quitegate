@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_NAME="QuietGate"
+PUBLIC_DMG_NAME="Tortoise"
 RUN_TESTS=1
 NOTARY_PROFILE="${QUIETGATE_NOTARY_PROFILE:-quietgate-notary}"
 
@@ -11,7 +12,7 @@ usage() {
   cat <<'USAGE'
 usage: script/release_public.sh [--skip-tests]
 
-Builds, notarizes, verifies, and publishes the public QuietGate DMG.
+Builds, notarizes, verifies, and publishes the public Tortoise DMG.
 
 Requires:
   - Developer ID Application certificate installed
@@ -20,8 +21,9 @@ Requires:
   - gh CLI installed and authenticated
 
 The published GitHub Release includes:
-  - versioned DMG: QuietGate-VERSION-BUILD-notarize.dmg
-  - stable DMG: QuietGate.dmg
+  - versioned DMG: Tortoise-VERSION-BUILD-notarize.dmg
+  - stable DMG: Tortoise.dmg
+  - legacy alias: QuietGate.dmg
 USAGE
 }
 
@@ -35,7 +37,7 @@ fail() {
 }
 
 latest_notarized_dmg() {
-  find "$DIST_DIR" -maxdepth 1 -type f -name "$APP_NAME-*-notarize.dmg" -print 2>/dev/null |
+  find "$DIST_DIR" -maxdepth 1 -type f \( -name "$PUBLIC_DMG_NAME-*-notarize.dmg" -o -name "$APP_NAME-*-notarize.dmg" \) -print 2>/dev/null |
     while IFS= read -r path; do
       printf '%s\t%s\n' "$(stat -f '%m' "$path")" "$path"
     done |
@@ -86,4 +88,4 @@ log "Publishing GitHub Release"
 "$ROOT_DIR/script/publish_github_release.sh" "$dmg_path"
 
 repo="$(gh repo view --json nameWithOwner --jq '.nameWithOwner')"
-log "Public download URL: https://github.com/$repo/releases/latest/download/QuietGate.dmg"
+log "Public download URL: https://github.com/$repo/releases/latest/download/Tortoise.dmg"

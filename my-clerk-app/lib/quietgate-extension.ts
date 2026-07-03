@@ -79,7 +79,7 @@ function assertAllowedExtensionID(extensionId: string) {
     throw new ExtensionAuthError(
       403,
       "forbidden",
-      "This Chrome extension ID is not allowed for QuietGate production sync.",
+      "This Chrome extension ID is not allowed for Tortoise production sync.",
     );
   }
 }
@@ -178,7 +178,7 @@ export async function exchangeExtensionLinkCode(input: ExtensionExchangeRequest)
         user_id: consumedLinkCode.user_id,
         installation_id: input.installationId,
         platform: "chrome_extension",
-        name: "QuietGate for Chrome",
+        name: "Tortoise for Chrome",
         app_version: input.extensionVersion,
         helper_version: null,
         platform_metadata: {
@@ -234,7 +234,7 @@ export async function authenticateExtensionDevice(authorization: string | null) 
     throw new ExtensionAuthError(
       401,
       "invalid_device_token",
-      "Missing or invalid QuietGate device token.",
+      "Missing or invalid Tortoise device token.",
     );
   }
 
@@ -255,7 +255,7 @@ export async function authenticateExtensionDevice(authorization: string | null) 
     throw new ExtensionAuthError(
       401,
       "invalid_device_token",
-      "QuietGate device token is revoked or unknown.",
+      "Tortoise device token is revoked or unknown.",
     );
   }
 
@@ -272,7 +272,7 @@ export async function authenticateExtensionDevice(authorization: string | null) 
   }
 
   if (!device) {
-    throw new ExtensionAuthError(404, "not_found", "QuietGate device is revoked or missing.");
+    throw new ExtensionAuthError(404, "not_found", "Tortoise device is revoked or missing.");
   }
 
   await supabase

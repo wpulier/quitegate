@@ -214,7 +214,7 @@ struct SafariExtensionPolicy: Codable, Equatable {
     "instagramSuggested": false,
     "instagramStories": false,
     "instagramMessages": false,
-    "redditPopular": false,
+    "redditPopularAll": false,
     "redditRecommendations": false,
     "redditNSFW": false,
     "redditMedia": false,
@@ -236,7 +236,7 @@ struct SafariExtensionPolicy: Codable, Equatable {
       "instagramReels",
       "instagramExplore",
       "instagramSuggested",
-      "redditPopular",
+      "redditPopularAll",
       "redditRecommendations",
       "redditNSFW"
     ].forEach { features[$0] = true }

@@ -96,7 +96,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
     PlatformControlItem(
       id: .appleScreenTimeWeb,
       title: "Apple Screen Time web limits",
-      detail: "Open Screen Time and set Web Content to Limit Adult Websites. QuietGate cannot reliably read this private setting directly.",
+      detail: "Open Screen Time and set Web Content to Limit Adult Websites. Tortoise cannot reliably read this private setting directly.",
       state: .manualCheck,
       actionTitle: "Open Screen Time",
       actionURLString: "x-apple.systempreferences:com.apple.Screen-Time-Settings.extension",
@@ -132,7 +132,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
     PlatformControlItem(
       id: .cleanBrowsingFamilyDNS,
       title: "CleanBrowsing filters",
-      detail: "CleanBrowsing Adult and Family filters can add DNS-level adult-site blocking for browsers and apps that QuietGate cannot tune directly.",
+      detail: "CleanBrowsing Adult and Family filters can add DNS-level adult-site blocking for browsers and apps that Tortoise cannot tune directly.",
       state: .manualCheck,
       actionTitle: "Open Filters",
       actionURLString: "https://cleanbrowsing.org/filters/",
@@ -213,7 +213,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
       return PlatformControlItem(
         id: .xSensitiveMedia,
         title: "X sensitive media setting",
-        detail: "Open X Content you see settings while connected so QuietGate can audit whether sensitive media display is off.",
+        detail: "Open X Content you see settings while connected so Tortoise can audit whether sensitive media display is off.",
         state: .checkInBrowser,
         actionTitle: "Open X Settings",
         actionURLString: "https://x.com/settings/content_you_see",
@@ -229,7 +229,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
         goodWhen: false,
         enabledText: "X is configured not to display media that it labels sensitive.",
         actionText: "X is currently allowed to display media that it labels sensitive.",
-        unknownText: "QuietGate saw X settings, but could not read the sensitive media toggle."
+        unknownText: "Tortoise saw X settings, but could not read the sensitive media toggle."
       ),
       state: state(known: display, goodWhen: false),
       actionTitle: "Open X Settings",
@@ -246,7 +246,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
       return PlatformControlItem(
         id: .xSensitiveSearch,
         title: "X sensitive search setting",
-        detail: "Open X Search settings while connected so QuietGate can audit whether sensitive search results are hidden.",
+        detail: "Open X Search settings while connected so Tortoise can audit whether sensitive search results are hidden.",
         state: .checkInBrowser,
         actionTitle: "Open X Search",
         actionURLString: "https://x.com/settings/search",
@@ -262,7 +262,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
         goodWhen: true,
         enabledText: "X is configured to hide sensitive content in search.",
         actionText: "X search may show sensitive results.",
-        unknownText: "QuietGate saw X settings, but could not read the search sensitive-content toggle."
+        unknownText: "Tortoise saw X settings, but could not read the search sensitive-content toggle."
       ),
       state: state(known: hide, goodWhen: true),
       actionTitle: "Open X Search",
@@ -279,7 +279,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
       return PlatformControlItem(
         id: .redditMatureContent,
         title: "Reddit mature content setting",
-        detail: "Open Reddit preferences while connected so QuietGate can audit whether mature content is hidden.",
+        detail: "Open Reddit preferences while connected so Tortoise can audit whether mature content is hidden.",
         state: .checkInBrowser,
         actionTitle: "Open Reddit Settings",
         actionURLString: "https://www.reddit.com/settings/preferences",
@@ -295,7 +295,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
         goodWhen: false,
         enabledText: "Reddit is configured not to show mature content.",
         actionText: "Reddit is currently allowed to show mature content.",
-        unknownText: "QuietGate saw Reddit settings, but could not read the mature-content toggle."
+        unknownText: "Tortoise saw Reddit settings, but could not read the mature-content toggle."
       ),
       state: state(known: show, goodWhen: false),
       actionTitle: "Open Reddit Settings",
@@ -312,7 +312,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
       return PlatformControlItem(
         id: .redditBlurMatureMedia,
         title: "Reddit mature media blur",
-        detail: "Open Reddit preferences while connected so QuietGate can audit whether mature media is blurred.",
+        detail: "Open Reddit preferences while connected so Tortoise can audit whether mature media is blurred.",
         state: .checkInBrowser,
         actionTitle: "Open Reddit Settings",
         actionURLString: "https://www.reddit.com/settings/preferences",
@@ -328,7 +328,7 @@ struct PlatformControlsChecker: PlatformControlsChecking {
         goodWhen: true,
         enabledText: "Reddit is configured to blur mature media.",
         actionText: "Reddit mature media blur is off.",
-        unknownText: "QuietGate saw Reddit settings, but could not read the mature media blur toggle."
+        unknownText: "Tortoise saw Reddit settings, but could not read the mature media blur toggle."
       ),
       state: state(known: blur, goodWhen: true),
       actionTitle: "Open Reddit Settings",
@@ -340,10 +340,10 @@ struct PlatformControlsChecker: PlatformControlsChecking {
   private func quietGateTunerStatus(quietGateTunersReady: Bool, now: Date) -> PlatformControlItem {
     PlatformControlItem(
       id: .quietGateTuners,
-      title: "QuietGate browser tuners",
+      title: "Tortoise browser tuners",
       detail: quietGateTunersReady
-        ? "QuietGate browser tuning is connected. Built-in controls are additive."
-        : "Connect a browser so QuietGate tuners can cover unlabeled and dynamic content.",
+        ? "Tortoise browser tuning is connected. Built-in controls are additive."
+        : "Connect a browser so Tortoise tuners can cover unlabeled and dynamic content.",
       state: quietGateTunersReady ? .enabled : .needsAction,
       actionTitle: nil,
       actionURLString: nil,

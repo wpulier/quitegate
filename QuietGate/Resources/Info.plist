@@ -2,24 +2,41 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleDevelopmentRegion</key>
-  <string>$(DEVELOPMENT_LANGUAGE)</string>
-  <key>CFBundleExecutable</key>
-  <string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Tortoise</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
   <key>CFBundleIdentifier</key>
   <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
-  <key>CFBundleName</key>
-  <string>$(PRODUCT_NAME)</string>
-  <key>CFBundlePackageType</key>
-  <string>APPL</string>
-  <key>CFBundleShortVersionString</key>
-  <string>$(MARKETING_VERSION)</string>
-  <key>CFBundleVersion</key>
-  <string>$(CURRENT_PROJECT_VERSION)</string>
-  <key>LSApplicationCategoryType</key>
-  <string>public.app-category.productivity</string>
+	<key>CFBundleName</key>
+	<string>Tortoise</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.yourtortoise.Tortoise.callback</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.yourtortoise.Tortoise</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CLERK_PUBLISHABLE_KEY</key>
+	<string>$(CLERK_PUBLISHABLE_KEY)</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
   <key>LSMinimumSystemVersion</key>
   <string>14.0</string>
   <key>NSHumanReadableCopyright</key>
@@ -28,9 +45,11 @@
   <string>NSApplication</string>
   <key>NSSupportsAutomaticGraphicsSwitching</key>
   <true/>
-  <key>QuietGateChromiumExtensionStoreURL</key>
-  <string></string>
-  <key>QuietGateFirefoxExtensionStoreURL</key>
-  <string></string>
+	<key>QuietGateChromiumExtensionStoreURL</key>
+	<string>https://chromewebstore.google.com/detail/fedpnejbgmllajjlfkahlnjbgfmjjmmf</string>
+	<key>QuietGateFirefoxExtensionStoreURL</key>
+	<string></string>
+	<key>TORTOISE_API_BASE_URL</key>
+	<string>$(TORTOISE_API_BASE_URL)</string>
 </dict>
 </plist>

@@ -29,9 +29,9 @@ struct LocalMacBlockingProvider: Equatable {
       case .enabled:
         return "\(activeText) will close when opened."
       case .needsApproval:
-        return "\(activeText) will close while QuietGate is open. Approve startup to keep it ready after restart."
+        return "\(activeText) will close while Tortoise is open. Approve startup to keep it ready after restart."
       case .off, .unavailable:
-        return "\(activeText) will close while QuietGate is open."
+        return "\(activeText) will close while Tortoise is open."
       }
     }
     let runningText =
@@ -39,7 +39,7 @@ struct LocalMacBlockingProvider: Equatable {
     if startupState == .enabled {
       return "Closing \(runningText) now."
     }
-    return "Closing \(runningText) now. Keep QuietGate open for app blocking."
+    return "Closing \(runningText) now. Keep Tortoise open for app blocking."
   }
 
   var startupDetail: String {
@@ -52,13 +52,13 @@ struct LocalMacBlockingProvider: Equatable {
       state = .ready(providerDetail)
     } else {
       state = .disabled(
-        "App closing is paused. Turn it on in Apps when you want QuietGate to close selected apps."
+        "App closing is paused. Turn it on in Apps when you want Tortoise to close selected apps."
       )
     }
 
     return BlockingProviderSnapshot(
       id: .localMac,
-      title: "QuietGate Mac Blocker",
+      title: "Tortoise Mac Blocker",
       kind: .localMac,
       state: state,
       activeRuleCount: activeBlockedApplications.count,
@@ -71,7 +71,7 @@ struct LocalMacBlockingProvider: Equatable {
   private var providerDetail: String {
     if activeBlockedApplications.isEmpty {
       return startupState == .enabled
-        ? "Ready on this Mac. QuietGate starts when you sign in."
+        ? "Ready on this Mac. Tortoise starts when you sign in."
         : "Ready on this Mac. Turn on startup so app blocking is ready after restart."
     }
     return statusSummary

@@ -17,6 +17,168 @@ enum ChromeTunerLaunchError: LocalizedError, Equatable {
   }
 }
 
+extension ProtectionStore {
+  static var accountSupportedBrowserFeatures: [BrowserTuningFeature] {
+    TortoisePolicy.browserFeatureKeys.compactMap(BrowserTuningFeature.init(rawValue:))
+  }
+
+  func accountPolicySnapshot(appBlockingStore: AppBlockingStore) -> TortoisePolicy {
+    let browserSettings = currentBrowserTuningSettings
+    let supportedFeatureIDs = Set(Self.accountSupportedBrowserFeatures.map(\.rawValue))
+    let features = Dictionary(
+      uniqueKeysWithValues: TortoisePolicy.browserFeatureKeys.map { key in
+        (key, supportedFeatureIDs.contains(key) ? (browserSettings.features[key] ?? false) : false)
+      }
+    )
+    let appPolicyRules = appBlockingStore.blockedApplications.map { rule in
+      ApplicationPolicyRule(
+        bundleIdentifier: rule.bundleIdentifier,
+        displayName: rule.displayName,
+        isEnabled: rule.isEnabled,
+        addedAt: Self.accountDateString(rule.addedAt)
+      )
+    }
+
+    return TortoisePolicy(
+      schemaVersion: 1,
+      mode: accessMode.rawValue,
+      adultBlockingEnabled: adultContentBlockingEnabled,
+      browser: BrowserPolicy(
+        features: features,
+        blockedDomains: enabledIndividualBlockedDomains,
+        blockedCategories: enabledBlockCategories.map { $0.id.rawValue },
+        options: BrowserPolicyOptions(
+          explicitHideStyle: tuningOptions.explicitHideStyle.rawValue,
+          youtubeDailyLimitMinutes: tuningOptions.youtubeDailyLimitMinutes
+        )
+      ),
+      schedules: SchedulePolicy(
+        enabled: focusWindowScheduleEnabled,
+        dailyFocusWindows: focusWindows.map { window in
+          FocusWindowPolicy(
+            id: window.id.uuidString,
+            title: window.title,
+            startMinute: window.startMinute,
+            endMinute: window.endMinute,
+            mode: window.mode.rawValue,
+            isEnabled: window.isEnabled
+          )
+        }
+      ),
+      applications: ApplicationsPolicy(
+        enforcementEnabled: appBlockingStore.enforcementEnabled,
+        blocked: appPolicyRules,
+        allowed: []
+      )
+    )
+  }
+
+  @discardableResult
+  func applyAccountPolicy(
+    _ policy: TortoisePolicy,
+    appBlockingStore: AppBlockingStore
+  ) async -> Bool {
+    guard !timedSessionLockedActive else {
+      return false
+    }
+
+    let nextMode = AccessMode(rawValue: policy.mode) ?? .focus
+    let browser = normalizedBrowserPolicy(from: policy, mode: nextMode)
+    blockedSites = browser.blockedDomains.map { BlockedSiteRule(domain: $0, isEnabled: true) }
+    blockCategories = BlockCategoryID.allCases.map { category in
+      BlockCategoryRule(
+        id: category,
+        isEnabled: browser.blockedCategories.contains(category.rawValue)
+      )
+    }
+    tuningOptions = BrowserTuningOptions(
+      explicitHideStyle: ExplicitHideStyle(rawValue: browser.options?.explicitHideStyle ?? "")
+        ?? .post,
+      youtubeDailyLimitMinutes: browser.options?.youtubeDailyLimitMinutes
+        ?? BrowserTuningOptions.defaultYouTubeDailyLimitMinutes
+    )
+
+    var nextOverrides = tuningOverrides
+    for feature in Self.accountSupportedBrowserFeatures {
+      let enabled = browser.features[feature.rawValue] ?? false
+      let presetEnabled = nextMode.tuningFeatures.contains(feature)
+      if enabled == presetEnabled {
+        nextOverrides.removeValue(forKey: feature.rawValue)
+      } else {
+        nextOverrides[feature.rawValue] = enabled
+      }
+    }
+    tuningOverrides = nextOverrides
+
+    if let schedules = policy.schedules {
+      focusWindowScheduleEnabled = schedules.enabled
+      defaults.set(schedules.enabled, forKey: DefaultsKey.focusWindowScheduleEnabled)
+      focusWindows = schedules.dailyFocusWindows.map { window in
+        FocusWindow(
+          id: UUID(uuidString: window.id) ?? UUID(),
+          title: window.title,
+          startMinute: window.startMinute,
+          endMinute: window.endMinute,
+          mode: AccessMode(rawValue: window.mode) ?? .focus,
+          isEnabled: window.isEnabled
+        )
+      }
+      .sorted { lhs, rhs in
+        if lhs.startMinute == rhs.startMinute {
+          return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+        }
+        return lhs.startMinute < rhs.startMinute
+      }
+    }
+
+    persistBlockedSites()
+    persistBlockCategories()
+    persistTuningOptions()
+    persistTuningOverrides()
+    persistFocusWindows()
+    scheduleFocusWindowTimer()
+    appBlockingStore.applyAccountPolicy(policy.applications)
+
+    let applied = await applyProtection(
+      nextMode.protectionEnabled,
+      accessMode: nextMode,
+      resetTuningOverrides: false,
+      requireCapabilityReady: false
+    )
+    syncBrowserExtensionSettings()
+    return applied
+  }
+
+  private func normalizedBrowserPolicy(from policy: TortoisePolicy, mode: AccessMode) -> BrowserPolicy {
+    let existing = policy.browser
+    let defaultFeatures = Dictionary(
+      uniqueKeysWithValues: TortoisePolicy.browserFeatureKeys.map { key in
+        (key, mode.tuningFeatures.contains(BrowserTuningFeature(rawValue: key) ?? .youtubeHome))
+      }
+    )
+
+    return BrowserPolicy(
+      features: Dictionary(
+        uniqueKeysWithValues: TortoisePolicy.browserFeatureKeys.map { key in
+          (key, existing?.features[key] ?? defaultFeatures[key] ?? false)
+        }
+      ),
+      blockedDomains: existing?.blockedDomains ?? [],
+      blockedCategories: existing?.blockedCategories
+        ?? (mode == .open ? [] : [BlockCategoryID.adultContent.rawValue]),
+      options: BrowserPolicyOptions(
+        explicitHideStyle: existing?.options?.explicitHideStyle ?? ExplicitHideStyle.post.rawValue,
+        youtubeDailyLimitMinutes: existing?.options?.youtubeDailyLimitMinutes
+          ?? BrowserTuningOptions.defaultYouTubeDailyLimitMinutes
+      )
+    )
+  }
+
+  private static func accountDateString(_ date: Date) -> String {
+    ISO8601DateFormatter().string(from: date)
+  }
+}
+
 @MainActor
 protocol BrowserStatusMonitoring: AnyObject {
   func start(
@@ -545,28 +707,28 @@ final class ProtectionStore: ObservableObject {
       return accessMode.summary
     }
     if !configured && hasActiveBlockRules {
-      return "Blocks are saved. Connect QuietGate to make them active on this Mac."
+      return "Blocks are saved. Connect Tortoise to make them active on this Mac."
     }
     if accessMode == .open && tunerEnabled {
       return "Blocker is off. Browser tuning is customized."
     }
     if !configured && accessMode.protectionEnabled {
-      return "Focus mode is selected. Connect QuietGate to make blocking active on this Mac."
+      return "Focus mode is selected. Connect Tortoise to make blocking active on this Mac."
     }
     if (hasActiveBlockRules || accessMode.protectionEnabled) && !systemBlockingCapabilityFresh {
-      return "Blocking settings are saved. QuietGate needs a fresh connection check before it can promise they work."
+      return "Blocking settings are saved. Tortoise needs a fresh connection check before it can promise they work."
     }
     if blockerProfileEnabled && !legacyMacConnectionReady {
       if resolverStatus == nil {
         return "Blocking is on. Check the connection to verify it applies on this Mac."
       }
       if legacyMacConnectionProfileMismatch {
-        return "This Mac is using a different blocking setup than the one QuietGate updates."
+        return "This Mac is using a different blocking setup than the one Tortoise updates."
       }
       if legacyMacConnectionUsesProvider {
-        return "A blocking setup is active, but QuietGate cannot confirm it belongs to QuietGate."
+        return "A blocking setup is active, but Tortoise cannot confirm it belongs to Tortoise."
       }
-      return "Blocking is on, but this Mac has not approved QuietGate yet."
+      return "Blocking is on, but this Mac has not approved Tortoise yet."
     }
     if !tuningOverrides.isEmpty {
       return "\(accessMode.summary) Browser tuning is customized."
@@ -577,11 +739,11 @@ final class ProtectionStore: ObservableObject {
   var settingsStatusSummary: String {
     if !legacyProviderConnectorEnabled {
       return browserBlockingConnected
-        ? "QuietGate is ready. \(connectedBrowserProfileScopeText ?? connectedBrowserNames.joined(separator: ", ")) connected for browser blocking and tuning."
+        ? "Tortoise is ready. \(connectedBrowserProfileScopeText ?? connectedBrowserNames.joined(separator: ", ")) connected for browser blocking and tuning."
         : "Connect a browser to finish setup for browser blocking and site tuning."
     }
     if legacyProviderHardBlockReady {
-      return "QuietGate is connected and verified on this Mac."
+      return "Tortoise is connected and verified on this Mac."
     }
     if configured && !legacyProviderControlConnected {
       return "Account details are saved. Check access before relying on blocking."
@@ -592,7 +754,7 @@ final class ProtectionStore: ObservableObject {
     if hasAPIKey || !profileID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
       return "Finish the account details to enable blocking."
     }
-    return "Connect QuietGate before relying on blocking."
+    return "Connect Tortoise before relying on blocking."
   }
 
   var currentModeTitle: String {
@@ -695,10 +857,10 @@ final class ProtectionStore: ObservableObject {
     if !legacyProviderConnectorEnabled {
       if hasActiveBlockRules {
         return browserBlockingConnected
-          ? "QuietGate browser rules are current in connected browsers."
-          : "QuietGate saved these rules. Connect a browser to apply them."
+          ? "Tortoise browser rules are current in connected browsers."
+          : "Tortoise saved these rules. Connect a browser to apply them."
       }
-      return "QuietGate website blocking is off."
+      return "Tortoise website blocking is off."
     }
     if !configured {
       return "Connect the account and allow this Mac before categories and sites can block."
@@ -706,9 +868,9 @@ final class ProtectionStore: ObservableObject {
     guard blockerProfileEnabled else {
       if !legacyProviderControlConnected && (hasActiveBlockRules || accessMode.protectionEnabled) {
         return
-          "Account details are saved, but QuietGate has not verified access yet."
+          "Account details are saved, but Tortoise has not verified access yet."
       }
-      return "QuietGate blocking is off."
+      return "Tortoise blocking is off."
     }
     if systemBlockingCapabilityFresh {
       if mode == .on {
@@ -717,25 +879,25 @@ final class ProtectionStore: ObservableObject {
       return "Enabled individual site rules are active on this Mac."
     }
     if legacyMacConnectionReady {
-      return "QuietGate needs a fresh readback before it can promise blocking is active."
+      return "Tortoise needs a fresh readback before it can promise blocking is active."
     }
     if legacyMacConnectionProfileMismatch {
       return
-        "This Mac is using a different blocking setup than the one QuietGate updates. Finish Mac approval in Setup."
+        "This Mac is using a different blocking setup than the one Tortoise updates. Finish Mac approval in Setup."
     }
     if legacyMacConnectionUsesProvider {
       return
-        "This Mac is using another blocking setup, so QuietGate's rules may not apply. Finish Mac approval in Setup."
+        "This Mac is using another blocking setup, so Tortoise's rules may not apply. Finish Mac approval in Setup."
     }
     if let resolverStatus {
       return
         "This Mac reports \(resolverStatus.status). Finish Mac approval in Setup before relying on blocking."
     }
     if mode == .on {
-      return "Rules are on. QuietGate is updating setup status before it promises blocking applies on this Mac."
+      return "Rules are on. Tortoise is updating setup status before it promises blocking applies on this Mac."
     }
     return
-      "Enabled individual site rules are saved. QuietGate is updating setup status before it promises blocking applies on this Mac."
+      "Enabled individual site rules are saved. Tortoise is updating setup status before it promises blocking applies on this Mac."
   }
 
   var blockerProfileEnabled: Bool {
@@ -761,7 +923,7 @@ final class ProtectionStore: ObservableObject {
       return nil
     }
     if isWorking {
-      return "QuietGate is updating setup status."
+      return "Tortoise is updating setup status."
     }
     if !legacyProviderConnectorEnabled {
       if firstInstalledSupportedBrowserConnector == nil {
@@ -780,7 +942,7 @@ final class ProtectionStore: ObservableObject {
       return "Finish setup before using blocking controls."
     }
     if legacyProviderKeyNeedsPermission {
-      return "Allow QuietGate to read the saved setup key before using blocking controls."
+      return "Allow Tortoise to read the saved setup key before using blocking controls."
     }
     if !legacyProviderControlConnected {
       return "Finish setup before using blocking controls."
@@ -789,10 +951,10 @@ final class ProtectionStore: ObservableObject {
       return "Finish Mac approval in Setup before using blocking controls."
     }
     if legacyProviderRulesSyncPending {
-      return "QuietGate is applying saved changes. Controls unlock when it finishes."
+      return "Tortoise is applying saved changes. Controls unlock when it finishes."
     }
     if !freshLegacyProviderControlReadback || !freshLegacyProviderRulesReadback || !freshMacConnectionReadback {
-      return "QuietGate is updating setup status. Controls unlock when it confirms setup is still working."
+      return "Tortoise is updating setup status. Controls unlock when it confirms setup is still working."
     }
     return "Finish setup before using blocking controls."
   }
@@ -869,7 +1031,7 @@ final class ProtectionStore: ObservableObject {
     let tuning = effectiveTuningFeatures.map(\.title).joined(separator: ", ")
 
     var lines = [
-      "QuietGate Status",
+      "Tortoise Status",
       "Mode: \(currentModeTitle)",
       "Timed session: \(timedSessionActive ? timedSessionStatusLine : "off")",
       "Timed session locked: \(timedSessionLockedActive ? "yes" : "no")",
@@ -899,7 +1061,7 @@ final class ProtectionStore: ObservableObject {
       "Primary browser extension loaded: \(chromeExtensionLoaded ? "yes" : "no")",
       "Primary browser current profile: \(chromeExtensionStatus.selectedProfileLabel ?? chromeExtensionStatus.selectedProfile ?? "unknown")",
       "Primary browser profiles found: \(chromeExtensionStatus.profileCount)",
-      "Primary browser profiles with QuietGate: \(chromeExtensionStatus.loadedProfileLabels.isEmpty ? "none" : chromeExtensionStatus.loadedProfileLabels.joined(separator: ", "))",
+      "Primary browser profiles with Tortoise: \(chromeExtensionStatus.loadedProfileLabels.isEmpty ? "none" : chromeExtensionStatus.loadedProfileLabels.joined(separator: ", "))",
       "Primary browser automatic updates installed: \(chromeBridgeInstalled ? "yes" : "no")",
       "Primary browser automatic updates connected: \(chromeBridgeResponding ? "yes" : "no")",
       "Extension settings: \(extensionSettingsURL.path)",
@@ -915,7 +1077,7 @@ final class ProtectionStore: ObservableObject {
         "macOS advanced blocking profile installed: \(macOSLegacyProviderProfileInstalled ? "yes" : "no")",
         "macOS configured advanced blocking profile installed: \(macOSConfiguredLegacyProviderProfileInstalled ? "yes" : "no")",
         "Advanced blocking profile detected: \(legacyMacConnectionProfileDetected ? "yes" : "no")",
-        "Advanced blocking profile matches QuietGate: \(legacyMacConnectionProfileMatchesConfiguredProfile ? "yes" : "no")",
+        "Advanced blocking profile matches Tortoise: \(legacyMacConnectionProfileMatchesConfiguredProfile ? "yes" : "no")",
         "Advanced blocking rules checked: \(legacyProviderRulesCheckedAt?.description ?? "never")",
         "Advanced parental controls checked: \(parentalControlCheckedAt?.description ?? "never")",
         "Mac connection checked: \(resolverStatusCheckedAt?.description ?? "never")",
@@ -1040,7 +1202,7 @@ final class ProtectionStore: ObservableObject {
           let scopeText = connectedBrowserProfileScopeText else {
       return nil
     }
-    return "Website blocks and site tuning apply in \(scopeText). Other browser profiles need their own QuietGate connection."
+    return "Website blocks and site tuning apply in \(scopeText). Other browser profiles need their own Tortoise connection."
   }
 
   private var firstInstalledSupportedBrowserConnector: BrowserConnectorSnapshot? {
@@ -1072,9 +1234,9 @@ final class ProtectionStore: ObservableObject {
   var browserSettingsApplyDetail: String {
     let browser = primaryBrowserConnector
     if browserRunningChecker(browser.id) {
-      return "QuietGate is trying to update \(browser.displayName). Use this if the browser has not refreshed yet."
+      return "Tortoise is trying to update \(browser.displayName). Use this if the browser has not refreshed yet."
     }
-    return "QuietGate saved new settings. They will apply next time \(browser.displayName) opens."
+    return "Tortoise saved new settings. They will apply next time \(browser.displayName) opens."
   }
 
   var appUpdateAvailable: Bool {
@@ -1082,7 +1244,7 @@ final class ProtectionStore: ObservableObject {
   }
 
   var appUpdateDetail: String {
-    appUpdateInfo?.detailText ?? "QuietGate is up to date."
+    appUpdateInfo?.detailText ?? "Tortoise is up to date."
   }
 
   var blockingProviders: [BlockingProviderSnapshot] {
@@ -1280,7 +1442,7 @@ final class ProtectionStore: ObservableObject {
       return nil
     }
     if legacyProviderRulesSyncPending && legacyProviderControlConnected {
-      return "QuietGate is checking these blocks"
+      return "Tortoise is checking these blocks"
     }
     guard hasActiveBlockRules, !blockApplicationAvailable else {
       return nil
@@ -1294,17 +1456,17 @@ final class ProtectionStore: ObservableObject {
     }
     if legacyProviderRulesSyncPending {
       if legacyProviderControlConnected {
-        return "QuietGate is applying the change. This can take about a minute, especially in a browser tab that was already open."
+        return "Tortoise is applying the change. This can take about a minute, especially in a browser tab that was already open."
       }
-      return "Finish setup before QuietGate can apply these saved blocks."
+      return "Finish setup before Tortoise can apply these saved blocks."
     }
     guard hasActiveBlockRules, !blockApplicationAvailable else {
       return nil
     }
     if legacyProviderControlConnected && !legacyMacConnectionReady {
-      return "Finish Mac approval in Setup so this computer uses QuietGate."
+      return "Finish Mac approval in Setup so this computer uses Tortoise."
     }
-    return "Finish setup so QuietGate has a place to apply these blocks."
+    return "Finish setup so Tortoise has a place to apply these blocks."
   }
 
   var blockBrowserAttentionTitle: String? {
@@ -1325,24 +1487,24 @@ final class ProtectionStore: ObservableObject {
     switch chromeHelperState {
     case .notInstalled:
       if !legacyProviderConnectorEnabled {
-        return "QuietGate saved your rules. Connect Chrome, Edge, Brave, Arc, or Firefox so website blocks and site tuning apply."
+        return "Tortoise saved your rules. Connect Chrome, Edge, Brave, Arc, or Firefox so website blocks and site tuning apply."
       }
       return "System blocking is active. New blocks can take about a minute to reach Chrome. Connect Chrome only if you want instant tab updates and site tuning."
     case .nativeHostMissing:
       if !legacyProviderConnectorEnabled {
-        return "QuietGate saved your rules. Update the browser connection so your browser can receive them."
+        return "Tortoise saved your rules. Update the browser connection so your browser can receive them."
       }
-      return "System blocking is active. New blocks can take about a minute to reach Chrome. Connect Chrome so it can receive QuietGate changes instantly."
+      return "System blocking is active. New blocks can take about a minute to reach Chrome. Connect Chrome so it can receive Tortoise changes instantly."
     case .needsChromeOpen, .needsSync, .stale:
       if !legacyProviderConnectorEnabled {
-        return "Open your connected browser once so QuietGate can confirm the latest rules."
+        return "Open your connected browser once so Tortoise can confirm the latest rules."
       }
       return "System blocking is active. New blocks can take about a minute to reach Chrome. Open Chrome to update the optional browser connection."
     case .extensionNeedsReload:
-      return "Chrome has an older QuietGate extension loaded. Reload the QuietGate extension in Chrome, or restart Chrome, so site tuning uses the latest code."
+      return "Chrome has an older Tortoise extension loaded. Reload the Tortoise extension in Chrome, or restart Chrome, so site tuning uses the latest code."
     case .error(let message):
       if !legacyProviderConnectorEnabled {
-        return "The browser connection needs attention before it can apply QuietGate rules: \(message)"
+        return "The browser connection needs attention before it can apply Tortoise rules: \(message)"
       }
       return "System blocking is active. New blocks can take about a minute to reach Chrome. Chrome needs attention: \(message)"
     case .current:
@@ -1383,8 +1545,8 @@ final class ProtectionStore: ObservableObject {
       return nil
     }
     return domains.count == 1
-      ? "A website is off in QuietGate"
-      : "Some websites are off in QuietGate"
+      ? "A website is off in Tortoise"
+      : "Some websites are off in Tortoise"
   }
 
   var disabledSiteStillBlockedWarningDetail: String? {
@@ -1395,7 +1557,7 @@ final class ProtectionStore: ObservableObject {
 
     let domainText = Self.formattedList(domains)
     return
-      "\(domainText) is not being blocked by QuietGate. If it still will not open, another setting on this Mac may be blocking it."
+      "\(domainText) is not being blocked by Tortoise. If it still will not open, another setting on this Mac may be blocking it."
   }
 
   var chromeCoverageStatus: String {
@@ -1467,7 +1629,7 @@ final class ProtectionStore: ObservableObject {
     }
 
     guard legacyProviderConnectorEnabled else {
-      return BlockApplicationStatus(text: "Off in QuietGate", tone: .secondary)
+      return BlockApplicationStatus(text: "Off in Tortoise", tone: .secondary)
     }
 
     if pendingLegacyProviderRuleRemovalContains(rule.domain) {
@@ -1706,7 +1868,7 @@ final class ProtectionStore: ObservableObject {
 
   private func plannedBrowserConnectorState(for id: BrowserConnectorID) -> BrowserConnectorState {
     if browserInstallationChecker(id) {
-      return .comingSoon("\(id.displayName) is installed. QuietGate support is planned.")
+      return .comingSoon("\(id.displayName) is installed. Tortoise support is planned.")
     }
     return .comingSoon("\(id.displayName) support is planned.")
   }
@@ -1725,38 +1887,38 @@ final class ProtectionStore: ObservableObject {
       if status.sessionReady, !status.persistentReady {
         let profile = status.selectedProfileLabel ?? status.sessionProfileLabels.first ?? "this profile"
         return .connected(
-          "Connected for this \(id.displayName) session in \(profile). Add QuietGate to \(id.displayName) later if you want it to stay connected after restart."
+          "Connected for this \(id.displayName) session in \(profile). Add Tortoise to \(id.displayName) later if you want it to stay connected after restart."
         )
       }
       if let selectedProfile = status.selectedProfileLabel {
         return .connected("Connected in the current \(id.displayName) profile (\(selectedProfile)).")
       }
-      return .connected("\(id.displayName) is connected to QuietGate.")
+      return .connected("\(id.displayName) is connected to Tortoise.")
     case .notInstalled:
       return .actionNeeded(
         "Connect \(id.displayName) so website blocks and site tuning apply there."
       )
     case .nativeHostMissing:
       return .actionNeeded(
-        "Finish the small \(id.displayName) connection file so \(id.displayName) can receive QuietGate settings."
+        "Finish the small \(id.displayName) connection file so \(id.displayName) can receive Tortoise settings."
       )
     case .needsChromeOpen:
       if let selectedProfile = status.selectedProfileLabel {
         return .connectedPending(
-          "\(id.displayName) is connected in \(selectedProfile). QuietGate changes apply next time it opens."
+          "\(id.displayName) is connected in \(selectedProfile). Tortoise changes apply next time it opens."
         )
       }
       return .connectedPending(
-        "\(id.displayName) is connected. QuietGate changes apply next time it opens."
+        "\(id.displayName) is connected. Tortoise changes apply next time it opens."
       )
     case .needsSync:
       if let selectedProfile = status.selectedProfileLabel {
         return .connectedPending(
-          "\(id.displayName) is connected in \(selectedProfile). QuietGate is updating it with the latest settings."
+          "\(id.displayName) is connected in \(selectedProfile). Tortoise is updating it with the latest settings."
         )
       }
       return .connectedPending(
-        "\(id.displayName) is connected. QuietGate is updating it with the latest settings."
+        "\(id.displayName) is connected. Tortoise is updating it with the latest settings."
       )
     case .stale:
       if let selectedProfile = status.selectedProfileLabel {
@@ -1769,7 +1931,7 @@ final class ProtectionStore: ObservableObject {
       )
     case .extensionNeedsReload:
       return .connectedPending(
-        "\(id.displayName) has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh the affected site."
+        "\(id.displayName) has an older Tortoise extension loaded. Open Extensions, reload Tortoise, then refresh the affected site."
       )
     case .error(let message):
       return .error("\(id.displayName) reported: \(message)")
@@ -2013,7 +2175,7 @@ final class ProtectionStore: ObservableObject {
 
   private var disabledCategoryBlockApplicationStatus: BlockApplicationStatus {
     if !legacyProviderConnectorEnabled {
-      return BlockApplicationStatus(text: "Off in QuietGate", tone: .secondary)
+      return BlockApplicationStatus(text: "Off in Tortoise", tone: .secondary)
     }
     if let hiddenRestrictions = hiddenLegacyProviderManagedRestrictionsText {
       return BlockApplicationStatus(
@@ -2035,14 +2197,14 @@ final class ProtectionStore: ObservableObject {
       return "No active blocks"
     }
     if !legacyProviderConnectorEnabled {
-      return browserBlockingConnected ? "On in browser" : "On in QuietGate"
+      return browserBlockingConnected ? "On in browser" : "On in Tortoise"
     }
     return "On - verified"
   }
 
   private var unappliedBlockStatusText: String {
     if !legacyProviderConnectorEnabled {
-      return "On in QuietGate - connect a browser"
+      return "On in Tortoise - connect a browser"
     }
     if legacyProviderRulesSyncPending {
       return legacyProviderControlConnected ? "On here - checking" : "On here - account access needed"
@@ -2053,7 +2215,7 @@ final class ProtectionStore: ObservableObject {
     if blockApplicationAvailable {
       return "On here - not confirmed yet"
     }
-    return "On here - connect QuietGate to apply"
+    return "On here - connect Tortoise to apply"
   }
 
   var extensionSettingsURL: URL {
@@ -2165,7 +2327,7 @@ final class ProtectionStore: ObservableObject {
     cachedAPIKey = apiKey
     hasAPIKey = true
     legacyProviderKeyNeedsPermission = false
-    setupMessage = "Great, QuietGate can read the saved setup key now."
+    setupMessage = "Great, Tortoise can read the saved setup key now."
     errorMessage = nil
     await refresh()
   }
@@ -2347,7 +2509,7 @@ final class ProtectionStore: ObservableObject {
       scheduleTimedSessionTimer()
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove the timed session started, so it put it back.",
+          reason: "Tortoise could not prove the timed session started, so it put it back.",
           nextAction: nil
         ),
         for: Self.timedSessionControlKey
@@ -2394,7 +2556,7 @@ final class ProtectionStore: ObservableObject {
       scheduleTimedSessionTimer()
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove the timed session ended, so it put it back.",
+          reason: "Tortoise could not prove the timed session ended, so it put it back.",
           nextAction: nil
         ),
         for: Self.timedSessionControlKey
@@ -2543,7 +2705,7 @@ final class ProtectionStore: ObservableObject {
         .verified(
           enabled
             ? "Blocking is on in connected browsers."
-            : "Blocking is off in QuietGate."
+            : "Blocking is off in Tortoise."
         ),
         for: controlKey
       )
@@ -2555,7 +2717,7 @@ final class ProtectionStore: ObservableObject {
       mode = .off
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove this changed, so it put the switch back.",
+          reason: "Tortoise could not prove this changed, so it put the switch back.",
           nextAction: "Open Setup"
         ),
         for: controlKey
@@ -2568,7 +2730,7 @@ final class ProtectionStore: ObservableObject {
       mode = .off
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove this changed, so it put the switch back.",
+          reason: "Tortoise could not prove this changed, so it put the switch back.",
           nextAction: "Open Setup"
         ),
         for: controlKey
@@ -2615,7 +2777,7 @@ final class ProtectionStore: ObservableObject {
         syncBrowserExtensionSettings()
         setBlockingTransaction(
           .reverted(
-            reason: "QuietGate could not prove this changed, so it put the switch back.",
+            reason: "Tortoise could not prove this changed, so it put the switch back.",
             nextAction: nil
           ),
           for: controlKey
@@ -2657,7 +2819,7 @@ final class ProtectionStore: ObservableObject {
       connectionState = .error(error.localizedDescription)
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove this changed, so it put the switch back.",
+          reason: "Tortoise could not prove this changed, so it put the switch back.",
           nextAction: nil
         ),
         for: controlKey
@@ -2741,7 +2903,7 @@ final class ProtectionStore: ObservableObject {
         await refreshDisabledSiteBlockStatus()
         setBlockingTransaction(
           .reverted(
-            reason: "QuietGate could not prove \(normalized) was added, so it put the switch back.",
+            reason: "Tortoise could not prove \(normalized) was added, so it put the switch back.",
             nextAction: nil
           ),
           for: controlKey
@@ -2770,7 +2932,7 @@ final class ProtectionStore: ObservableObject {
       connectionState = .error(error.localizedDescription)
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove \(normalized) was added, so it put the switch back.",
+          reason: "Tortoise could not prove \(normalized) was added, so it put the switch back.",
           nextAction: nil
         ),
         for: controlKey
@@ -2804,7 +2966,7 @@ final class ProtectionStore: ObservableObject {
         connectionState = .connected
         syncBrowserExtensionSettings()
         await refreshDisabledSiteBlockStatus()
-        setBlockingTransaction(.verified("\(normalized) was removed from QuietGate."), for: controlKey)
+        setBlockingTransaction(.verified("\(normalized) was removed from Tortoise."), for: controlKey)
         errorMessage = nil
         return
       }
@@ -2817,12 +2979,12 @@ final class ProtectionStore: ObservableObject {
           || disabledSiteProofInconclusive(normalized) {
           setBlockingTransaction(
             .reverted(
-              reason: "QuietGate cannot delete \(normalized) until it proves the site is unblocked.",
+              reason: "Tortoise cannot delete \(normalized) until it proves the site is unblocked.",
               nextAction: nil
             ),
             for: controlKey
           )
-          errorMessage = "QuietGate cannot delete \(normalized) until it proves the site is unblocked."
+          errorMessage = "Tortoise cannot delete \(normalized) until it proves the site is unblocked."
           return
         }
         blockedSites = candidateSites
@@ -2857,7 +3019,7 @@ final class ProtectionStore: ObservableObject {
         await refreshDisabledSiteBlockStatus()
         setBlockingTransaction(
           .reverted(
-            reason: "QuietGate could not prove \(normalized) was removed, so it kept the row.",
+            reason: "Tortoise could not prove \(normalized) was removed, so it kept the row.",
             nextAction: nil
           ),
           for: controlKey
@@ -2877,7 +3039,7 @@ final class ProtectionStore: ObservableObject {
         await refreshDisabledSiteBlockStatus()
         setBlockingTransaction(
           .reverted(
-            reason: "QuietGate could not prove \(normalized) was removed, so it kept the row.",
+            reason: "Tortoise could not prove \(normalized) was removed, so it kept the row.",
             nextAction: nil
           ),
           for: controlKey
@@ -2911,7 +3073,7 @@ final class ProtectionStore: ObservableObject {
       }
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove \(normalized) was removed, so it kept the row.",
+          reason: "Tortoise could not prove \(normalized) was removed, so it kept the row.",
           nextAction: nil
         ),
         for: Self.blockedSiteControlKey(normalized)
@@ -2962,7 +3124,7 @@ final class ProtectionStore: ObservableObject {
           .verified(
             enabled
               ? "\(normalized) is on in connected browsers."
-              : "\(normalized) is off in QuietGate."
+              : "\(normalized) is off in Tortoise."
           ),
           for: controlKey
         )
@@ -3002,7 +3164,7 @@ final class ProtectionStore: ObservableObject {
         setBlockingTransaction(
           .reverted(
             reason:
-              "QuietGate could not prove \(normalized) turned off, so it put the switch back.",
+              "Tortoise could not prove \(normalized) turned off, so it put the switch back.",
             nextAction: nil
           ),
           for: controlKey
@@ -3027,7 +3189,7 @@ final class ProtectionStore: ObservableObject {
         setBlockingTransaction(
           .reverted(
             reason:
-              "QuietGate could not prove this changed, so it put the switch back.",
+              "Tortoise could not prove this changed, so it put the switch back.",
             nextAction: nil
           ),
           for: controlKey
@@ -3078,7 +3240,7 @@ final class ProtectionStore: ObservableObject {
       let key = Self.blockedSiteControlKey(normalized)
       setBlockingTransaction(
         .reverted(
-          reason: "QuietGate could not prove this changed, so it put the switch back.",
+          reason: "Tortoise could not prove this changed, so it put the switch back.",
           nextAction: nil
         ),
         for: key
@@ -3274,7 +3436,7 @@ final class ProtectionStore: ObservableObject {
       if resolverStatus?.status.lowercased() == "ok" {
         if case .notConfigured = connectionState {
           connectionState = .misconfigured(
-            "This Mac looks partly connected, but QuietGate still needs the connection codes.")
+            "This Mac looks partly connected, but Tortoise still needs the connection codes.")
         }
       } else if let status = resolverStatus?.status {
         connectionState = .misconfigured("This Mac connection status is \(status).")
@@ -3290,7 +3452,7 @@ final class ProtectionStore: ObservableObject {
       generatedAppleProfileURL = profileURL
       defaults.set(profileURL.path, forKey: DefaultsKey.generatedAppleProfilePath)
       setupMessage =
-        "Mac approval is ready. Approve QuietGate in System Settings; QuietGate will finish automatically when you return."
+        "Mac approval is ready. Approve Tortoise in System Settings; Tortoise will finish automatically when you return."
       errorMessage = nil
       open(profileURL)
     } catch {
@@ -3377,10 +3539,10 @@ final class ProtectionStore: ObservableObject {
   private var systemProfilesSetupMessage: String {
     if legacyMacConnectionProfileMismatch {
       return
-        "Device Management is open. Approve QuietGate Blocking if needed, keep the QuietGate approval, then return here."
+        "Device Management is open. Approve Tortoise Blocking if needed, keep the Tortoise approval, then return here."
     }
     return
-      "Waiting for approval. Approve QuietGate Blocking in System Settings; QuietGate will finish automatically when you return."
+      "Waiting for approval. Approve Tortoise Blocking in System Settings; Tortoise will finish automatically when you return."
   }
 
   func openChromeExtensionsPage() {
@@ -3515,7 +3677,7 @@ final class ProtectionStore: ObservableObject {
         extensionBridgeMessage =
           automatic
             ? "Saved. Refresh \(browser.displayName) if the page has not updated yet."
-            : "Saved. Changes will apply next time \(browser.displayName) opens or reloads QuietGate."
+            : "Saved. Changes will apply next time \(browser.displayName) opens or reloads Tortoise."
       }
     } catch {
       refreshChromeExtensionStatus()
@@ -3527,7 +3689,7 @@ final class ProtectionStore: ObservableObject {
   private func launchBrowserTunerSessionAsync(_ browser: BrowserConnectorID) async {
     guard extensionBridge.extensionAvailable(for: browser) else {
       extensionBridgeMessage = nil
-      errorMessage = "QuietGate browser extension files were not found."
+      errorMessage = "Tortoise browser extension files were not found."
       return
     }
 
@@ -3544,26 +3706,26 @@ final class ProtectionStore: ObservableObject {
       if status.ready {
         try await openBrowserHelperPage(browser)
         extensionBridgeMessage =
-          "\(browser.displayName) opened. If it does not connect automatically, click QuietGate in \(browser.displayName), then return here."
+          "\(browser.displayName) opened. If it does not connect automatically, click Tortoise in \(browser.displayName), then return here."
       } else if let storeURL = browser.extensionStoreURL {
         open(storeURL)
         extensionBridgeMessage =
-          "Install QuietGate in \(browser.displayName), then return here. QuietGate checks the connection automatically."
+          "Install Tortoise in \(browser.displayName), then return here. Tortoise checks the connection automatically."
       } else if browser == .firefox {
         prepareBrowserExtensionInstall(browser)
         extensionBridgeMessage =
-          "Firefox is open. Click This Firefox, Load Temporary Add-on, then choose manifest.json in the copied QuietGate folder."
+          "Firefox is open. Click This Firefox, Load Temporary Add-on, then choose manifest.json in the copied Tortoise folder."
       } else if browserRunningChecker(browser) {
         copyBrowserExtensionFolderPath(browser)
         NSWorkspace.shared.activateFileViewerSelecting([browserExtensionDirectoryURL(for: browser)])
         openBrowserExtensionsPage(browser)
         extensionBridgeMessage =
-          "\(browser.displayName) is open. Turn on Developer mode, click Load unpacked, and choose the copied QuietGate folder."
+          "\(browser.displayName) is open. Turn on Developer mode, click Load unpacked, and choose the copied Tortoise folder."
       } else {
         let selectedProfile = status.selectedProfile ?? "Default"
         try await openBrowserWithTuner(browser, profile: selectedProfile)
         extensionBridgeMessage =
-          "\(browser.displayName) opened with QuietGate for this session. Add QuietGate from the Extensions page later if you want it to stay connected after restart."
+          "\(browser.displayName) opened with Tortoise for this session. Add Tortoise from the Extensions page later if you want it to stay connected after restart."
       }
 
       errorMessage = nil
@@ -3716,7 +3878,7 @@ final class ProtectionStore: ObservableObject {
 
     if nowProvider() >= session.deadline {
       finishBrowserProfileWatch(
-        message: "Still waiting for \(session.browser.displayName) to report the profile. Open the QuietGate extension in that profile or press Update Status."
+        message: "Still waiting for \(session.browser.displayName) to report the profile. Open the Tortoise extension in that profile or press Update Status."
       )
     }
   }
@@ -3802,7 +3964,7 @@ final class ProtectionStore: ObservableObject {
 
     do {
       try await appUpdateService.relaunch(using: update)
-      setupMessage = "Opened QuietGate \(update.installedVersion.displayText)."
+      setupMessage = "Opened Tortoise \(update.installedVersion.displayText)."
       errorMessage = nil
       refreshAppUpdateStatus()
     } catch {
@@ -4402,7 +4564,7 @@ final class ProtectionStore: ObservableObject {
     guard blockingControlsReady else {
       let reason =
         blockingCapabilityUnavailableReason
-        ?? "QuietGate needs a fresh connection check before using blocking controls."
+        ?? "Tortoise needs a fresh connection check before using blocking controls."
       let transaction = BlockingControlTransactionState.reverted(
         reason: reason,
         nextAction: "Open Setup"
@@ -5106,11 +5268,11 @@ final class ProtectionStore: ObservableObject {
           status.selectedProfileLabel ?? status.sessionProfileLabels.first
           ?? browser.displayName
         detail =
-          "Connected for this \(browser.displayName) session in \(selectedProfile). Add QuietGate to \(browser.displayName) later if you want it to stay connected after restart."
+          "Connected for this \(browser.displayName) session in \(selectedProfile). Add Tortoise to \(browser.displayName) later if you want it to stay connected after restart."
       } else if let selectedProfile = status.selectedProfileLabel {
         detail = "Connected in the current \(browser.displayName) profile (\(selectedProfile))."
       } else {
-        detail = "\(browser.displayName) is connected to QuietGate."
+        detail = "\(browser.displayName) is connected to Tortoise."
       }
     } else if status.loadedElsewhere {
       let selectedProfile = status.selectedProfileLabel ?? "the current profile"
@@ -5118,7 +5280,7 @@ final class ProtectionStore: ObservableObject {
         "\(browser.displayName) is connected in \(status.readyProfileLabels.joined(separator: ", ")), but not in \(selectedProfile). Add it there too if you use that profile."
     } else {
       detail =
-        "Connect \(browser.displayName) so QuietGate can apply website blocks and site tuning."
+        "Connect \(browser.displayName) so Tortoise can apply website blocks and site tuning."
     }
 
     return ReadinessCheck(
@@ -5139,25 +5301,25 @@ final class ProtectionStore: ObservableObject {
 
     switch helperState {
     case .current:
-      detail = "\(browser.displayName) confirmed the latest QuietGate settings."
+      detail = "\(browser.displayName) confirmed the latest Tortoise settings."
       action = nil
     case .notInstalled:
       detail = "Connect \(browser.displayName) first. It will confirm settings after it opens."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .nativeHostMissing:
-      detail = "Install the small connection file \(browser.displayName) uses to ask QuietGate for settings."
+      detail = "Install the small connection file \(browser.displayName) uses to ask Tortoise for settings."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .needsChromeOpen:
       detail = "Saved settings will apply next time \(browser.displayName) opens."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .needsSync:
-      detail = "QuietGate is updating \(browser.displayName) with the latest settings."
+      detail = "Tortoise is updating \(browser.displayName) with the latest settings."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .stale:
       detail = "\(browser.displayName) has not checked in recently. Refresh the connection if pages have not updated."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .extensionNeedsReload:
-      detail = "\(browser.displayName) has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh the affected site."
+      detail = "\(browser.displayName) has an older Tortoise extension loaded. Open Extensions, reload Tortoise, then refresh the affected site."
       action = supportedBrowserConnectorAction(for: browser.id)
     case .error(let message):
       detail = "\(browser.displayName) reported: \(message)"

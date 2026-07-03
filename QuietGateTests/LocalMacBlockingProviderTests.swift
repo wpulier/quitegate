@@ -30,7 +30,7 @@ final class LocalMacBlockingProviderTests: XCTestCase {
     XCTAssertEqual(provider.runningBlockedApplications.map(\.bundleIdentifier), ["com.example.Chat"])
     XCTAssertEqual(provider.statusSummary, "Closing 1 blocked app now.")
     XCTAssertEqual(provider.providerSnapshot.id, .localMac)
-    XCTAssertEqual(provider.providerSnapshot.title, "QuietGate Mac Blocker")
+    XCTAssertEqual(provider.providerSnapshot.title, "Tortoise Mac Blocker")
     XCTAssertEqual(provider.providerSnapshot.activeRuleCount, 1)
     XCTAssertEqual(provider.providerSnapshot.destinationNames, ["This Mac"])
     XCTAssertTrue(provider.providerSnapshot.isReady)

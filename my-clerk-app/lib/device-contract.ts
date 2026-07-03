@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { boundedJsonRecordSchema } from "@/lib/json-contract";
 
 export const devicePlatformSchema = z.enum([
   "macos",
@@ -9,8 +10,6 @@ export const devicePlatformSchema = z.enum([
   "firefox",
   "safari",
 ]);
-
-const jsonRecordSchema = z.record(z.string(), z.unknown());
 
 const nullableTrimmedString = (maxLength: number) =>
   z
@@ -30,11 +29,11 @@ export const deviceRegistrationRequestSchema = z
       .max(128)
       .regex(/^[A-Za-z0-9._:-]+$/),
     platform: devicePlatformSchema.default("web"),
-    name: z.string().trim().min(1).max(120).default("QuietGate device"),
+    name: z.string().trim().min(1).max(120).default("Tortoise device"),
     publicKey: nullableTrimmedString(5000),
     appVersion: nullableTrimmedString(80),
     helperVersion: nullableTrimmedString(80),
-    platformMetadata: jsonRecordSchema.default({}),
+    platformMetadata: boundedJsonRecordSchema.default({}),
   })
   .strict();
 
@@ -43,10 +42,10 @@ export const deviceHealthRequestSchema = z
     appVersion: nullableTrimmedString(80),
     helperVersion: nullableTrimmedString(80),
     rulesetVersion: nullableTrimmedString(80),
-    scriptVersions: jsonRecordSchema.default({}),
-    canaryStatus: jsonRecordSchema.default({}),
-    adultProtection: jsonRecordSchema.default({}),
-    platformMetadata: jsonRecordSchema.default({}),
+    scriptVersions: boundedJsonRecordSchema.default({}),
+    canaryStatus: boundedJsonRecordSchema.default({}),
+    adultProtection: boundedJsonRecordSchema.default({}),
+    platformMetadata: boundedJsonRecordSchema.default({}),
   })
   .strict();
 

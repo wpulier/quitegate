@@ -35,14 +35,14 @@ declare global {
 
 export function ExtensionConnectClient({ payload }: { payload: ConnectPayload }) {
   const [status, setStatus] = useState<"pending" | "connected" | "failed">("pending");
-  const [message, setMessage] = useState("Linking QuietGate for Chrome...");
+  const [message, setMessage] = useState("Linking Tortoise for Chrome...");
 
   useEffect(() => {
     const sendMessage = window.chrome?.runtime?.sendMessage;
     if (!sendMessage) {
       queueMicrotask(() => {
         setStatus("failed");
-        setMessage("Chrome extension messaging is unavailable. Open this page in Chrome with QuietGate installed.");
+        setMessage("Chrome extension messaging is unavailable. Open this page in Chrome with Tortoise installed.");
       });
       return;
     }
@@ -61,18 +61,18 @@ export function ExtensionConnectClient({ payload }: { payload: ConnectPayload })
         const error = window.chrome?.runtime?.lastError;
         if (error) {
           setStatus("failed");
-          setMessage(error.message || "QuietGate for Chrome did not respond.");
+          setMessage(error.message || "Tortoise for Chrome did not respond.");
           return;
         }
 
         if (response?.ok) {
           setStatus("connected");
-          setMessage("QuietGate for Chrome is connected. You can close this tab.");
+          setMessage("Tortoise for Chrome is connected. You can close this tab.");
           return;
         }
 
         setStatus("failed");
-        setMessage(response?.error || "QuietGate for Chrome could not complete setup.");
+        setMessage(response?.error || "Tortoise for Chrome could not complete setup.");
       },
     );
   }, [payload]);

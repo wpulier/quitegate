@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Support | QuietGate",
-  description: "Get support for QuietGate.",
+  title: "Support | Tortoise",
+  description: "Get support for Tortoise.",
 };
 
 export default function SupportPage() {
@@ -12,11 +12,11 @@ export default function SupportPage() {
             Support
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
-            QuietGate Support
+            Tortoise Support
           </h1>
           <p className="mt-4 text-lg leading-8 text-zinc-600">
             For setup help, false positives, missed adult sites, account
-            deletion, or billing questions, contact the QuietGate team.
+            deletion, or billing questions, contact the Tortoise team.
           </p>
         </div>
 

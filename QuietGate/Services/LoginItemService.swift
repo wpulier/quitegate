@@ -16,7 +16,7 @@ struct MacLoginItemService: LoginItemServicing {
     case .notRegistered:
       return .off
     case .notFound:
-      return .unavailable("QuietGate could not find the installed app yet. Move it to Applications, then turn this on.")
+      return .unavailable("Tortoise could not find the installed app yet. Move it to Applications, then turn this on.")
     @unknown default:
       return .unavailable("macOS could not read the startup setting.")
     }

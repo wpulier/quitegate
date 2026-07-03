@@ -30,6 +30,22 @@ struct TortoiseAPIClient {
     try await request(path: "/api/policy", token: token)
   }
 
+  func updatePolicy(
+    token: String,
+    policy: TortoisePolicy,
+    expectedSettingsVersion: Int
+  ) async throws -> PolicyEnvelope {
+    try await request(
+      path: "/api/policy",
+      method: "PUT",
+      token: token,
+      body: PolicyUpdateRequest(
+        expectedSettingsVersion: expectedSettingsVersion,
+        policy: policy
+      )
+    )
+  }
+
   func fetchDevices(token: String) async throws -> DevicesEnvelope {
     try await request(path: "/api/devices", token: token)
   }

@@ -1,4 +1,5 @@
 import AppKit
+import ClerkKit
 import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -25,17 +26,23 @@ struct QuietGateApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @StateObject private var store: ProtectionStore
   @StateObject private var appBlockingStore: AppBlockingStore
+  @StateObject private var accountStore: MacAccountStore
+  private let clerk: Clerk
 
   init() {
+    clerk = Clerk.configure(publishableKey: AppConfig.clerkPublishableKey)
     _store = StateObject(wrappedValue: Self.makeStore())
     _appBlockingStore = StateObject(wrappedValue: AppBlockingStore())
+    _accountStore = StateObject(wrappedValue: MacAccountStore())
   }
 
   var body: some Scene {
-    WindowGroup("QuietGate", id: "main") {
+    WindowGroup("Tortoise", id: "main") {
       ContentView()
+        .environment(clerk)
         .environmentObject(store)
         .environmentObject(appBlockingStore)
+        .environmentObject(accountStore)
         .task {
           guard !ProcessInfo.processInfo.isRunningUnitTests else {
             return
@@ -50,7 +57,7 @@ struct QuietGateApp: App {
     .commands {
       CommandGroup(replacing: .newItem) {}
       CommandGroup(replacing: .appTermination) {
-        Button("Quit QuietGate") {
+        Button("Quit Tortoise") {
           NSApp.terminate(nil)
         }
         .keyboardShortcut("q")
@@ -60,8 +67,10 @@ struct QuietGateApp: App {
 
     MenuBarExtra {
       MenuBarContentView()
+        .environment(clerk)
         .environmentObject(store)
         .environmentObject(appBlockingStore)
+        .environmentObject(accountStore)
     } label: {
       Image(systemName: store.mode.systemImage)
     }

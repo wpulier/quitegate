@@ -49,6 +49,13 @@ function bearerTokenFromRequest(request?: Request) {
   return match?.[1]?.trim() || null;
 }
 
+function csvEnv(name: string) {
+  return (process.env[name] ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 async function identityFromBearer(token: string) {
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey?.trim()) {
@@ -56,7 +63,13 @@ async function identityFromBearer(token: string) {
   }
 
   try {
-    const payload = await verifyToken(token, { secretKey });
+    const audiences = csvEnv("CLERK_JWT_AUDIENCE");
+    const authorizedParties = csvEnv("CLERK_AUTHORIZED_PARTIES");
+    const payload = await verifyToken(token, {
+      secretKey,
+      ...(audiences.length > 0 ? { audience: audiences } : {}),
+      ...(authorizedParties.length > 0 ? { authorizedParties } : {}),
+    });
     const claims = payload as Record<string, unknown>;
     const userId = claims.sub;
 

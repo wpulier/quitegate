@@ -151,7 +151,7 @@ final class AppBlockingStoreTests: XCTestCase {
     )
 
     XCTAssertEqual(store.providerSnapshot.id, .localMac)
-    XCTAssertEqual(store.providerSnapshot.title, "QuietGate Mac Blocker")
+    XCTAssertEqual(store.providerSnapshot.title, "Tortoise Mac Blocker")
     XCTAssertEqual(store.providerSnapshot.kind, .localMac)
     XCTAssertTrue(store.providerSnapshot.isReady)
     XCTAssertFalse(store.providerSnapshot.isLegacy)
@@ -204,7 +204,7 @@ final class AppBlockingStoreTests: XCTestCase {
 
     XCTAssertEqual(loginItemService.requests, [true])
     XCTAssertEqual(store.startupState, .enabled)
-    XCTAssertEqual(store.startupMessage, "QuietGate will start when you sign in.")
+    XCTAssertEqual(store.startupMessage, "Tortoise will start when you sign in.")
     XCTAssertNil(store.startupErrorMessage)
   }
 
@@ -222,7 +222,7 @@ final class AppBlockingStoreTests: XCTestCase {
     XCTAssertEqual(store.startupState, .needsApproval)
     XCTAssertEqual(
       store.startupMessage,
-      "Approve QuietGate in System Settings > General > Login Items."
+      "Approve Tortoise in System Settings > General > Login Items."
     )
   }
 

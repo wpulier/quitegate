@@ -1,16 +1,19 @@
+import ClerkKit
 import SwiftUI
 
 struct ProtectionView: View {
+  @Environment(Clerk.self) private var clerk
   @Environment(\.scenePhase) private var scenePhase
   @EnvironmentObject private var store: ProtectionStore
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
+  @EnvironmentObject private var accountStore: MacAccountStore
   @State private var refreshInFlight = false
 
   var body: some View {
     QGPage(maxWidth: 820) {
       QGScreenHeader(
         title: "Devices & profiles",
-        subtitle: "One QuietGate profile. Connect every browser profile and device so your usage and rules stay in sync."
+        subtitle: "One Tortoise profile. Connect every browser profile and device so your usage and rules stay in sync."
       )
 
       accountSummary
@@ -18,26 +21,7 @@ struct ProtectionView: View {
       VStack(alignment: .leading, spacing: 12) {
         QGSectionLabel(text: "This account's devices")
         QGCard {
-          VStack(spacing: 0) {
-            DeviceConnectionRow(
-              systemImage: "desktopcomputer",
-              title: "This Mac · MacBook Pro",
-              subtitle: macSubtitle,
-              status: "Connected",
-              tint: QGDesign.green
-            )
-
-            ProductDivider()
-              .padding(.vertical, 14)
-
-            DeviceConnectionRow(
-              systemImage: "iphone",
-              title: "iPhone 15 Pro · iOS",
-              subtitle: "Site usage syncing · 1h 14m today",
-              status: "Connected",
-              tint: QGDesign.green
-            )
-          }
+          deviceList
         }
       }
 
@@ -98,14 +82,15 @@ struct ProtectionView: View {
   private var accountSummary: some View {
     QGCard {
       HStack(spacing: 14) {
-        QGAvatar(text: "W", size: 48, background: QGDesign.accent.opacity(0.25), foreground: QGDesign.primaryText)
+        QGAvatar(text: accountStore.accountInitials, size: 48, background: QGDesign.accent.opacity(0.25), foreground: QGDesign.primaryText)
         VStack(alignment: .leading, spacing: 4) {
-          Text("Will Pulier")
+          Text(accountStore.accountDisplayName)
             .font(.system(size: 17, weight: .bold))
             .foregroundStyle(QGDesign.primaryText)
-          Text("willpulier1999@gmail.com · QuietGate Pro")
+          Text("\(accountStore.accountEmail) · \(accountStore.syncMessage)")
             .font(.system(size: 13))
             .foregroundStyle(QGDesign.secondaryText)
+            .lineLimit(2)
         }
         Spacer()
         VStack(alignment: .trailing, spacing: 2) {
@@ -120,28 +105,69 @@ struct ProtectionView: View {
     }
   }
 
+  @ViewBuilder
+  private var deviceList: some View {
+    let devices = accountDevices
+    if devices.isEmpty {
+      DeviceConnectionRow(
+        systemImage: "desktopcomputer",
+        title: "This Mac",
+        subtitle: accountStore.isSignedIn ? "Waiting for device registration." : "Sign in to connect this Mac.",
+        status: accountStore.macConnectionStatus,
+        tint: accountStore.isSignedIn ? QGDesign.accent : QGDesign.secondaryText
+      )
+    } else {
+      VStack(spacing: 0) {
+        ForEach(Array(devices.enumerated()), id: \.element.id) { index, device in
+          if index > 0 {
+            ProductDivider()
+              .padding(.vertical, 14)
+          }
+          DeviceConnectionRow(
+            systemImage: deviceSystemImage(device),
+            title: deviceTitle(device),
+            subtitle: deviceSubtitle(device),
+            status: deviceStatus(device),
+            tint: deviceTint(device)
+          )
+        }
+      }
+    }
+  }
+
+  private var accountDevices: [TortoiseDevice] {
+    var devicesByID = Dictionary(uniqueKeysWithValues: accountStore.snapshot.devices.map { ($0.id, $0) })
+    if let current = accountStore.snapshot.device {
+      devicesByID[current.id] = current
+    }
+    return devicesByID.values.sorted { lhs, rhs in
+      let lhsDate = lhs.lastSeenAt.flatMap(Self.date(from:)) ?? .distantPast
+      let rhsDate = rhs.lastSeenAt.flatMap(Self.date(from:)) ?? .distantPast
+      return lhsDate > rhsDate
+    }
+  }
+
   private var macSubtitle: String {
     if appBlockingStore.enforcementEnabled {
-      return "QuietGate running · app blocking active"
+      return "Tortoise running · app blocking active"
     }
-    return "QuietGate running · app blocking paused"
+    return "Tortoise running · app blocking paused"
   }
 
   private var connectionCount: Int {
-    max(browserRows.filter(\.isConnected).count, 3)
+    accountDevices.count + browserRows.filter(\.isConnected).count
   }
 
   private var browserRows: [BrowserProfileDisplayRow] {
-    let connected = store.browserConnectors.flatMap { connector -> [BrowserProfileDisplayRow] in
+    let connected = store.supportedBrowserConnectors.flatMap { connector -> [BrowserProfileDisplayRow] in
       if connector.connectedProfileLabels.isEmpty {
-        guard connector.isConnected else { return [] }
         return [
           BrowserProfileDisplayRow(
             avatar: String(connector.displayName.prefix(1)),
             title: connector.profileScopeText ?? "\(connector.displayName) profile",
             subtitle: connector.state.detail,
-            status: connector.isCurrent ? "Connected" : "Pending",
-            statusTint: connector.isCurrent ? QGDesign.green : QGDesign.accent,
+            status: connector.isConnected ? (connector.isCurrent ? "Connected" : "Pending") : "Not connected",
+            statusTint: connector.isConnected ? (connector.isCurrent ? QGDesign.green : QGDesign.accent) : QGDesign.secondaryText,
             isConnected: connector.isConnected
           )
         ]
@@ -163,12 +189,7 @@ struct ProtectionView: View {
       return connected + [safariRow]
     }
 
-    return [
-      BrowserProfileDisplayRow(avatar: "W", title: "Chrome · Will", subtitle: "willpulier1999@gmail.com", status: "Connected", statusTint: QGDesign.green, isConnected: true),
-      BrowserProfileDisplayRow(avatar: "WA", title: "Chrome · wildstudio.ai", subtitle: "will@wildstudio.ai", status: "Connected", statusTint: QGDesign.green, isConnected: true),
-      BrowserProfileDisplayRow(avatar: "W", title: "Chrome · will", subtitle: "willpulier8@gmail.com", status: "Connected", statusTint: QGDesign.green, isConnected: true),
-      safariRow
-    ]
+    return [safariRow]
   }
 
   private var safariRow: BrowserProfileDisplayRow {
@@ -196,6 +217,57 @@ struct ProtectionView: View {
     return value.isEmpty ? "W" : value
   }
 
+  private func deviceSystemImage(_ device: TortoiseDevice) -> String {
+    switch device.platform {
+    case "ios":
+      return "iphone"
+    case "macos":
+      return "desktopcomputer"
+    case "chrome", "chrome_extension":
+      return "globe"
+    case "firefox":
+      return "flame"
+    default:
+      return "macbook.and.iphone"
+    }
+  }
+
+  private func deviceTitle(_ device: TortoiseDevice) -> String {
+    let name = device.name?.trimmingCharacters(in: .whitespacesAndNewlines)
+    let platform = device.platform?.uppercased() ?? "DEVICE"
+    return "\(name?.isEmpty == false ? name! : "Tortoise device") · \(platform)"
+  }
+
+  private func deviceSubtitle(_ device: TortoiseDevice) -> String {
+    let version = device.appVersion?.trimmingCharacters(in: .whitespacesAndNewlines)
+    let seen = device.lastSeenAt.flatMap(Self.date(from:)).map(Self.relativeDate) ?? "No health check yet"
+    if let version, !version.isEmpty {
+      return "App \(version) · \(seen)"
+    }
+    return seen
+  }
+
+  private func deviceStatus(_ device: TortoiseDevice) -> String {
+    guard let date = device.lastSeenAt.flatMap(Self.date(from:)) else {
+      return "Setup needed"
+    }
+    return Date().timeIntervalSince(date) < 24 * 3600 ? "Connected" : "Stale"
+  }
+
+  private func deviceTint(_ device: TortoiseDevice) -> Color {
+    deviceStatus(device) == "Connected" ? QGDesign.green : QGDesign.orange
+  }
+
+  private static func date(from value: String) -> Date? {
+    ISO8601DateFormatter().date(from: value)
+  }
+
+  private static func relativeDate(_ date: Date) -> String {
+    let formatter = RelativeDateTimeFormatter()
+    formatter.unitsStyle = .full
+    return "Seen \(formatter.localizedString(for: date, relativeTo: Date()))"
+  }
+
   @MainActor
   private func refreshStatus() async {
     guard !refreshInFlight else {
@@ -205,6 +277,11 @@ struct ProtectionView: View {
     refreshInFlight = true
     await store.refreshProtectionStatus()
     appBlockingStore.refreshAvailableApplications()
+    await accountStore.refresh(
+      using: clerk,
+      protectionStore: store,
+      appBlockingStore: appBlockingStore
+    )
     refreshInFlight = false
   }
 

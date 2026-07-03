@@ -1,8 +1,11 @@
+import ClerkKit
 import SwiftUI
 
 struct ControlView: View {
+  @Environment(Clerk.self) private var clerk
   @EnvironmentObject private var store: ProtectionStore
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
+  @EnvironmentObject private var accountStore: MacAccountStore
   @State private var localAppStates: [String: Bool] = [
     "Slack": true,
     "Discord": true,
@@ -55,7 +58,14 @@ struct ControlView: View {
         ForEach(AccessMode.allCases) { mode in
           Button {
             guard !store.timedSessionLockedActive else { return }
-            Task { await store.setAccessMode(mode) }
+            Task {
+              await accountStore.setAccessMode(
+                mode,
+                using: clerk,
+                protectionStore: store,
+                appBlockingStore: appBlockingStore
+              )
+            }
           } label: {
             ModeChoiceCard(mode: mode, isSelected: store.accessMode == mode)
           }
@@ -193,7 +203,16 @@ struct ControlView: View {
           Spacer()
           QGSwitch(isOn: Binding(
             get: { appBlockingStore.enforcementEnabled },
-            set: { appBlockingStore.enforcementEnabled = $0 }
+            set: { enabled in
+              appBlockingStore.enforcementEnabled = enabled
+              Task {
+                await accountStore.pushLocalPolicy(
+                  using: clerk,
+                  protectionStore: store,
+                  appBlockingStore: appBlockingStore
+                )
+              }
+            }
           ))
         }
 
@@ -289,26 +308,21 @@ struct ControlView: View {
   }
 
   private var coverageChips: [CoverageChipModel] {
-    let connected = store.browserConnectors.flatMap { connector in
+    let connectedBrowsers = store.browserConnectors.flatMap { connector in
       connector.connectedProfileLabels.map { label in
         CoverageChipModel(avatar: avatar(for: label), title: "\(connector.displayName) · \(label)", isOn: true)
       }
     }
 
-    if !connected.isEmpty {
-      return connected + [
-        CoverageChipModel(avatar: "M", title: "This Mac", isOn: true),
-        CoverageChipModel(avatar: "iP", title: "iPhone 15 Pro", isOn: true)
-      ]
+    let connectedDevices = accountStore.snapshot.devices.map { device in
+      CoverageChipModel(
+        avatar: avatar(for: device.name ?? device.platform ?? "Device"),
+        title: device.name ?? device.platform ?? "Tortoise device",
+        isOn: device.lastSeenAt != nil
+      )
     }
 
-    return [
-      CoverageChipModel(avatar: "W", title: "Chrome · Will", isOn: true),
-      CoverageChipModel(avatar: "WA", title: "Chrome · wildstudio.ai", isOn: true),
-      CoverageChipModel(avatar: "W", title: "Chrome · will", isOn: true),
-      CoverageChipModel(avatar: "M", title: "This Mac", isOn: true),
-      CoverageChipModel(avatar: "iP", title: "iPhone 15 Pro", isOn: true)
-    ]
+    return connectedBrowsers + connectedDevices
   }
 
   private var connectAction: ReadinessAction? {
@@ -392,6 +406,11 @@ struct ControlView: View {
     pendingCategoryIDs.insert(id)
     Task {
       await store.setBlockCategory(id, enabled: enabled)
+      await accountStore.pushLocalPolicy(
+        using: clerk,
+        protectionStore: store,
+        appBlockingStore: appBlockingStore
+      )
       await MainActor.run {
         _ = pendingCategoryIDs.remove(id)
       }
@@ -405,6 +424,11 @@ struct ControlView: View {
     addingCustomDomain = true
     Task {
       await store.addCustomDomain()
+      await accountStore.pushLocalPolicy(
+        using: clerk,
+        protectionStore: store,
+        appBlockingStore: appBlockingStore
+      )
       await MainActor.run {
         addingCustomDomain = false
       }
@@ -418,6 +442,11 @@ struct ControlView: View {
     pendingSiteDomains.insert(domain)
     Task {
       await store.deleteBlockedSite(domain)
+      await accountStore.pushLocalPolicy(
+        using: clerk,
+        protectionStore: store,
+        appBlockingStore: appBlockingStore
+      )
       await MainActor.run {
         _ = pendingSiteDomains.remove(domain)
       }
@@ -434,6 +463,13 @@ struct ControlView: View {
         appBlockingStore.addBlockedApplication(available)
       } else {
         localAppStates[app.name] = enabled
+      }
+      Task {
+        await accountStore.pushLocalPolicy(
+          using: clerk,
+          protectionStore: store,
+          appBlockingStore: appBlockingStore
+        )
       }
     }
   }
@@ -499,7 +535,7 @@ private struct ModeChoiceCard: View {
   private var detail: String {
     switch mode {
     case .open:
-      return "No QuietGate rules applied. Everything is available."
+      return "No Tortoise rules applied. Everything is available."
     case .focus:
       return "Adult blocking on. Feeds, Shorts, Reels & recommendations hidden."
     case .strict:

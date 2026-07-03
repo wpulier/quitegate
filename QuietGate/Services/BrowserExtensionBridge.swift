@@ -265,7 +265,7 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
     if browser == .firefox {
       let manifest = FirefoxNativeMessagingManifest(
         name: Self.hostName,
-        description: "QuietGate Firefox settings bridge",
+        description: "Tortoise Firefox settings bridge",
         path: installedNativeHostURL.path,
         type: "stdio",
         allowedExtensions: [Self.firefoxExtensionID]
@@ -274,7 +274,7 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
     } else {
       let manifest = NativeMessagingManifest(
         name: Self.hostName,
-        description: "QuietGate \(browser.displayName) settings bridge",
+        description: "Tortoise \(browser.displayName) settings bridge",
         path: installedNativeHostURL.path,
         type: "stdio",
         allowedOrigins: ["chrome-extension://\(Self.chromiumExtensionID)/"]
@@ -369,7 +369,7 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
       return extensionStatus.ready ? .needsChromeOpen : .notInstalled
     }
     guard snapshot.extensionID == Self.extensionID(for: browser) else {
-      return .error("\(browser.displayName) reported the wrong QuietGate extension.")
+      return .error("\(browser.displayName) reported the wrong Tortoise extension.")
     }
     if let selectedProfile = extensionStatus.selectedProfile?
       .trimmingCharacters(in: .whitespacesAndNewlines),
@@ -978,9 +978,9 @@ enum BrowserExtensionBridgeError: LocalizedError, Equatable {
   var errorDescription: String? {
     switch self {
     case .missingNativeHost(let path):
-      return "QuietGate native messaging host was not found at \(path)."
+      return "Tortoise native messaging host was not found at \(path)."
     case .unsupportedBrowser(let name):
-      return "\(name) is not supported by this QuietGate helper yet."
+      return "\(name) is not supported by this Tortoise helper yet."
     }
   }
 }

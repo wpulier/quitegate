@@ -9,7 +9,7 @@ struct FocusWindowScheduleControl: View {
   var body: some View {
     ProductPanel(
       title: "Daily schedule",
-      subtitle: "Let QuietGate switch protection on at the same time each day while the app is running."
+      subtitle: "Let Tortoise switch protection on at the same time each day while the app is running."
     ) {
       HStack(alignment: .center, spacing: 12) {
         Toggle("Schedule", isOn: scheduleEnabledBinding)

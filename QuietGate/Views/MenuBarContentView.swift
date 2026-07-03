@@ -86,7 +86,7 @@ struct MenuBarContentView: View {
       } else {
         Divider()
 
-        Text(store.blockingCapabilityUnavailableReason ?? "Connect QuietGate before using blocking controls.")
+        Text(store.blockingCapabilityUnavailableReason ?? "Connect Tortoise before using blocking controls.")
           .font(.caption)
           .foregroundStyle(.orange)
           .fixedSize(horizontal: false, vertical: true)

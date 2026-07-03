@@ -62,7 +62,7 @@ final class ProtectionStoreTests: XCTestCase {
     store.refreshAppUpdateStatus()
 
     XCTAssertFalse(store.appUpdateAvailable)
-    XCTAssertEqual(store.appUpdateDetail, "QuietGate is up to date.")
+    XCTAssertEqual(store.appUpdateDetail, "Tortoise is up to date.")
 
     let update = AppUpdateInfo(
       currentVersion: AppVersionIdentifier(version: "1.0", build: "1"),
@@ -73,7 +73,7 @@ final class ProtectionStoreTests: XCTestCase {
     store.refreshAppUpdateStatus()
 
     XCTAssertTrue(store.appUpdateAvailable)
-    XCTAssertEqual(store.appUpdateDetail, "QuietGate 1.0 (2) is installed. Relaunch to use it.")
+    XCTAssertEqual(store.appUpdateDetail, "Tortoise 1.0 (2) is installed. Relaunch to use it.")
 
     await store.performInstalledAppUpdate()
 
@@ -162,7 +162,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertNil(store.blockingCapabilityUnavailableReason)
     XCTAssertEqual(
       store.settingsStatusSummary,
-      "QuietGate is ready. Chrome profile: Default connected for browser blocking and tuning."
+      "Tortoise is ready. Chrome profile: Default connected for browser blocking and tuning."
     )
   }
 
@@ -193,7 +193,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertTrue(store.primaryBrowserConnector.isConnected)
     XCTAssertEqual(
       store.settingsStatusSummary,
-      "QuietGate is ready. Chrome connected for browser blocking and tuning."
+      "Tortoise is ready. Chrome connected for browser blocking and tuning."
     )
   }
 
@@ -225,7 +225,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(
       store.primaryBrowserConnector.state,
       .connectedPending(
-        "Chrome is connected in Default. QuietGate is updating it with the latest settings."
+        "Chrome is connected in Default. Tortoise is updating it with the latest settings."
       )
     )
     XCTAssertEqual(store.primaryBrowserConnector.nextAction, .applyBrowserChanges(.chrome))
@@ -257,7 +257,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(
       store.primaryBrowserConnector.state,
       .connectedPending(
-        "Chrome has an older QuietGate extension loaded. Open Extensions, reload QuietGate, then refresh the affected site."
+        "Chrome has an older Tortoise extension loaded. Open Extensions, reload Tortoise, then refresh the affected site."
       )
     )
     XCTAssertEqual(store.primaryBrowserConnector.nextAction, .openBrowserExtensionsPage(.chrome))
@@ -295,7 +295,7 @@ final class ProtectionStoreTests: XCTestCase {
 
     XCTAssertEqual(bridge.writtenSettings.last?.mode, .strict)
     XCTAssertEqual(store.primaryBrowserConnector.state, .connectedPending(
-      "Chrome is connected in Default. QuietGate is updating it with the latest settings."
+      "Chrome is connected in Default. Tortoise is updating it with the latest settings."
     ))
     XCTAssertEqual(store.primaryBrowserConnector.nextAction, .applyBrowserChanges(.chrome))
     XCTAssertTrue(store.browserSettingsApplyNeeded)
@@ -332,7 +332,7 @@ final class ProtectionStoreTests: XCTestCase {
     )
     XCTAssertEqual(
       store.browserRuleProfileScopeDetail,
-      "Website blocks and site tuning apply in Chrome profile: Work (Profile 1). Other browser profiles need their own QuietGate connection."
+      "Website blocks and site tuning apply in Chrome profile: Work (Profile 1). Other browser profiles need their own Tortoise connection."
     )
   }
 
@@ -363,7 +363,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(
       store.primaryBrowserConnector.state,
       .actionNeeded(
-        "Finish the small Chrome connection file so Chrome can receive QuietGate settings."
+        "Finish the small Chrome connection file so Chrome can receive Tortoise settings."
       )
     )
     XCTAssertEqual(store.primaryBrowserConnector.nextAction, .installChromeSync)
@@ -464,7 +464,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(
       store.primaryBrowserConnector.state,
       .connected(
-        "Connected for this Chrome session in Profile 1. Add QuietGate to Chrome later if you want it to stay connected after restart."
+        "Connected for this Chrome session in Profile 1. Add Tortoise to Chrome later if you want it to stay connected after restart."
       )
     )
   }
@@ -533,7 +533,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertNil(store.browserProfileWatchBrowser)
     XCTAssertEqual(
       store.browserProfileWatchMessage,
-      "Still waiting for Chrome to report the profile. Open the QuietGate extension in that profile or press Update Status."
+      "Still waiting for Chrome to report the profile. Open the Tortoise extension in that profile or press Update Status."
     )
   }
 
@@ -609,7 +609,7 @@ final class ProtectionStoreTests: XCTestCase {
 
     XCTAssertEqual(providers.map(\.id), [.browserHelpers, .localMac])
     XCTAssertEqual(providers.first?.id, .browserHelpers)
-    XCTAssertEqual(providers.last?.title, "QuietGate Mac Blocker")
+    XCTAssertEqual(providers.last?.title, "Tortoise Mac Blocker")
     XCTAssertEqual(providers.last?.activeRuleCount, 1)
     XCTAssertEqual(providers.last?.destinationNames, ["This Mac"])
     XCTAssertEqual(
@@ -638,7 +638,7 @@ final class ProtectionStoreTests: XCTestCase {
 
     let site = try XCTUnwrap(store.blockedSites.first)
     XCTAssertEqual(resolver.checkedDomains, [])
-    XCTAssertEqual(store.blockedSiteApplicationStatus(site).text, "Off in QuietGate")
+    XCTAssertEqual(store.blockedSiteApplicationStatus(site).text, "Off in Tortoise")
     XCTAssertEqual(store.disabledSiteStillBlockedDomains, [])
     XCTAssertNil(store.disabledSiteStillBlockedWarningTitle)
     XCTAssertNil(store.disabledSiteStillBlockedWarningDetail)
@@ -682,7 +682,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(connectors[.firefox]?.nextAction, .launchBrowserTunerSession(.firefox))
     XCTAssertEqual(
       connectors[.safari]?.state,
-      .comingSoon("Safari is installed. QuietGate support is planned.")
+      .comingSoon("Safari is installed. Tortoise support is planned.")
     )
   }
 
@@ -746,7 +746,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.defaultBlockingProvider.destinationNames, ["Edge"])
     XCTAssertEqual(
       store.settingsStatusSummary,
-      "QuietGate is ready. Edge profile: Default connected for browser blocking and tuning."
+      "Tortoise is ready. Edge profile: Default connected for browser blocking and tuning."
     )
   }
 
@@ -768,7 +768,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.defaultBlockingProvider.destinationNames, ["Arc"])
     XCTAssertEqual(
       store.settingsStatusSummary,
-      "QuietGate is ready. Arc profile: Default connected for browser blocking and tuning."
+      "Tortoise is ready. Arc profile: Default connected for browser blocking and tuning."
     )
   }
 
@@ -790,7 +790,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.defaultBlockingProvider.destinationNames, ["Firefox"])
     XCTAssertEqual(
       store.settingsStatusSummary,
-      "QuietGate is ready. Firefox profile: Default connected for browser blocking and tuning."
+      "Tortoise is ready. Firefox profile: Default connected for browser blocking and tuning."
     )
   }
 
@@ -827,8 +827,8 @@ final class ProtectionStoreTests: XCTestCase {
 
     XCTAssertFalse(store.legacyProviderControlConnected)
     XCTAssertFalse(store.blockingControlsReady)
-    XCTAssertEqual(store.connectionState, .error("This setup path is not available in this QuietGate build."))
-    XCTAssertEqual(store.errorMessage, "This setup path is not available in this QuietGate build.")
+    XCTAssertEqual(store.connectionState, .error("This setup path is not available in this Tortoise build."))
+    XCTAssertEqual(store.errorMessage, "This setup path is not available in this Tortoise build.")
   }
 
   func testBrowserFirstStartupMigrationClearsLegacyProviderConnectorDefaults() {
@@ -1865,7 +1865,7 @@ final class ProtectionStoreTests: XCTestCase {
       resolverService: FakeResolverStatusService(),
       extensionBridge: FakeBrowserExtensionBridge()
     )
-    XCTAssertEqual(emptyStore.settingsStatusSummary, "Connect QuietGate before relying on blocking.")
+    XCTAssertEqual(emptyStore.settingsStatusSummary, "Connect Tortoise before relying on blocking.")
 
     emptyStore.profileID = "abc123"
     XCTAssertEqual(
@@ -1916,7 +1916,7 @@ final class ProtectionStoreTests: XCTestCase {
 
     XCTAssertEqual(
       verifiedStore.settingsStatusSummary,
-      "QuietGate is connected and verified on this Mac."
+      "Tortoise is connected and verified on this Mac."
     )
   }
 
@@ -1958,7 +1958,7 @@ final class ProtectionStoreTests: XCTestCase {
     let captivePortalDomains = try XCTUnwrap(captivePortalRule["Domains"] as? [String])
 
     XCTAssertEqual(plist["PayloadType"] as? String, "Configuration")
-    XCTAssertEqual(plist["PayloadDisplayName"] as? String, "QuietGate Blocking")
+    XCTAssertEqual(plist["PayloadDisplayName"] as? String, "Tortoise Blocking")
     XCTAssertEqual(plist["PayloadScope"] as? String, "System")
     XCTAssertEqual(payload["PayloadType"] as? String, "com.apple.dnsSettings.managed")
     XCTAssertEqual(dnsSettings["DNSProtocol"] as? String, "HTTPS")
@@ -2019,14 +2019,14 @@ final class ProtectionStoreTests: XCTestCase {
     ])
     let script = try String(contentsOf: url, encoding: .utf8)
 
-    XCTAssertEqual(url.lastPathComponent, "QuietGate Local Hosts Blocker.command")
+    XCTAssertEqual(url.lastPathComponent, "Tortoise Local Hosts Blocker.command")
     XCTAssertTrue(FileManager.default.isExecutableFile(atPath: url.path))
     XCTAssertTrue(script.contains("# QuietGate blocklist begin"))
     XCTAssertTrue(script.contains("# QuietGate blocklist end"))
     XCTAssertTrue(script.contains("0.0.0.0 example.com"))
     XCTAssertTrue(script.contains("::1 www.example.com"))
     XCTAssertTrue(script.contains("0.0.0.0 m.onlyfans.com"))
-    XCTAssertTrue(script.contains("Remove QuietGate local blocks"))
+    XCTAssertTrue(script.contains("Remove Tortoise local blocks"))
     XCTAssertTrue(script.contains("sudo install -m 644"))
   }
 
@@ -2541,7 +2541,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.blockerStatusLabel, "Verify")
     XCTAssertEqual(
       store.blockerStatusDetail,
-      "Rules are on. QuietGate is updating setup status before it promises blocking applies on this Mac.")
+      "Rules are on. Tortoise is updating setup status before it promises blocking applies on this Mac.")
     XCTAssertEqual(store.compactStatusLine, "Blocking on; check connection")
     XCTAssertFalse(store.blockerVisualEnabled)
     XCTAssertTrue(store.blockerVisualNeedsAttention)
@@ -3097,7 +3097,7 @@ final class ProtectionStoreTests: XCTestCase {
 
     XCTAssertEqual(checks[.legacyMacPermission]?.state, .ready)
     XCTAssertNil(checks[.legacyMacPermission]?.action)
-    XCTAssertTrue(checks[.legacyMacPermission]?.detail.contains("approved QuietGate profile") == true)
+    XCTAssertTrue(checks[.legacyMacPermission]?.detail.contains("approved Tortoise profile") == true)
   }
 
   func testAppleProfileFingerprintWithConfiguredSystemProfileVerifiesMacDNS() {
@@ -3556,7 +3556,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.blockerStatusLabel, "Connect")
     XCTAssertEqual(
       store.settingsStatusSummary,
-      "Connect QuietGate before relying on blocking.")
+      "Connect Tortoise before relying on blocking.")
     XCTAssertEqual(checks[.websiteBlocking]?.state, .actionNeeded)
     XCTAssertEqual(checks[.websiteBlocking]?.action, .openLegacyProviderAccount)
     XCTAssertEqual(store.nextReadinessCheck?.id, .websiteBlocking)
@@ -3715,7 +3715,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(bridge.writtenSettings.last?.blockedDomains, [])
     XCTAssertEqual(
       store.errorMessage,
-      "QuietGate could not confirm x.com, so the site was left off."
+      "Tortoise could not confirm x.com, so the site was left off."
     )
   }
 
@@ -3746,7 +3746,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(bridge.writtenSettings.last?.blockedDomains, ["x.com"])
     XCTAssertEqual(
       store.errorMessage,
-      "QuietGate could not confirm x.com was removed, so the site was left on."
+      "Tortoise could not confirm x.com was removed, so the site was left on."
     )
   }
 
@@ -3816,7 +3816,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertNil(store.disabledSiteStillBlockedWarningTitle)
     XCTAssertEqual(
       store.errorMessage,
-      "QuietGate turned x.com off, but this Mac still appears to block it somewhere else."
+      "Tortoise turned x.com off, but this Mac still appears to block it somewhere else."
     )
   }
 
@@ -3867,7 +3867,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.blockedSiteApplicationStatus(try XCTUnwrap(store.blockedSites.first)).text, "On - verified")
     XCTAssertEqual(
       store.errorMessage,
-      "QuietGate could not finish turning off x.com, so it put the switch back."
+      "Tortoise could not finish turning off x.com, so it put the switch back."
     )
   }
 
@@ -4011,7 +4011,7 @@ final class ProtectionStoreTests: XCTestCase {
 
     XCTAssertTrue(store.legacyProviderRulesSyncPending)
     XCTAssertTrue(store.localHostsFallbackMaintenanceNeeded)
-    XCTAssertEqual(store.blockApplicationAttentionTitle, "QuietGate is checking these blocks")
+    XCTAssertEqual(store.blockApplicationAttentionTitle, "Tortoise is checking these blocks")
     XCTAssertTrue(store.blockApplicationAttentionDetail?.contains("about a minute") == true)
     XCTAssertFalse(store.blockApplicationAttentionDetail?.contains("Backup Blocking") == true)
     XCTAssertEqual(
@@ -4167,7 +4167,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertTrue(service.removedDomains.isEmpty)
     XCTAssertEqual(
       store.errorMessage,
-      "Allow QuietGate to read the saved setup key before using blocking controls."
+      "Allow Tortoise to read the saved setup key before using blocking controls."
     )
   }
 
@@ -4434,7 +4434,7 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.connectionState, .connected)
     XCTAssertEqual(
       store.errorMessage,
-      "Allow QuietGate to read the saved setup key before using blocking controls."
+      "Allow Tortoise to read the saved setup key before using blocking controls."
     )
     XCTAssertEqual(store.legacyProviderCoverageStatus, "Needs permission")
   }

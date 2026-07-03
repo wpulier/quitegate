@@ -115,11 +115,11 @@ final class AppBlockingStore: ObservableObject {
       refreshStartupState()
       startupErrorMessage = nil
       if case .needsApproval = startupState {
-        startupMessage = "Approve QuietGate in System Settings > General > Login Items."
+        startupMessage = "Approve Tortoise in System Settings > General > Login Items."
       } else {
         startupMessage = enabled
-          ? "QuietGate will start when you sign in."
-          : "QuietGate will not start automatically."
+          ? "Tortoise will start when you sign in."
+          : "Tortoise will not start automatically."
       }
     } catch {
       refreshStartupState()
@@ -164,6 +164,31 @@ final class AppBlockingStore: ObservableObject {
     blockedApplications.removeAll { $0.bundleIdentifier == bundleIdentifier }
     persistBlockedApplications()
     refreshRunningApplications()
+    updateLaunchMonitoring()
+  }
+
+  func applyAccountPolicy(_ policy: ApplicationsPolicy?) {
+    guard let policy else {
+      return
+    }
+
+    enforcementEnabled = policy.enforcementEnabled
+    blockedApplications = policy.blocked
+      .map { rule in
+        BlockedApplicationRule(
+          bundleIdentifier: rule.bundleIdentifier,
+          displayName: rule.displayName,
+          isEnabled: rule.isEnabled,
+          addedAt: Self.isoDate(rule.addedAt) ?? nowProvider()
+        )
+      }
+      .sorted {
+        $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+      }
+    persistBlockedApplications()
+    if enforcementEnabled {
+      enforceNow()
+    }
     updateLaunchMonitoring()
   }
 
@@ -259,5 +284,9 @@ final class AppBlockingStore: ObservableObject {
     return unique.sorted {
       $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
     }
+  }
+
+  private static func isoDate(_ value: String) -> Date? {
+    ISO8601DateFormatter().date(from: value)
   }
 }

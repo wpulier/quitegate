@@ -75,12 +75,12 @@ enum ResolverStatusError: LocalizedError, Equatable {
   var errorDescription: String? {
     switch self {
     case .unreadableResponse:
-      return "QuietGate could not read the connection check."
+      return "Tortoise could not read the connection check."
     case .browserProbeRequired(let url):
-      return "QuietGate could not finish the connection check at \(url)."
+      return "Tortoise could not finish the connection check at \(url)."
     case .unexpectedResponsePreview(let value):
       let preview = String(value.prefix(180))
-      return "QuietGate received an unexpected connection response: \(preview)"
+      return "Tortoise received an unexpected connection response: \(preview)"
     }
   }
 }

@@ -1,7 +1,11 @@
+import ClerkKit
 import SwiftUI
 
 struct TuningView: View {
+  @Environment(Clerk.self) private var clerk
   @EnvironmentObject private var store: ProtectionStore
+  @EnvironmentObject private var appBlockingStore: AppBlockingStore
+  @EnvironmentObject private var accountStore: MacAccountStore
   @State private var selectedSite = DesignTuningSite.youtube
   @State private var localTikTokFeatures: [String: Bool] = [
     "tt_foryou": true,
@@ -191,15 +195,7 @@ struct TuningView: View {
       }
     }
 
-    if !connected.isEmpty {
-      return connected
-    }
-
-    return [
-      TuningScopeChipModel(avatar: "W", title: "Chrome · Will", isOn: true),
-      TuningScopeChipModel(avatar: "WA", title: "Chrome · wildstudio.ai", isOn: true),
-      TuningScopeChipModel(avatar: "W", title: "Chrome · will", isOn: true)
-    ]
+    return connected
   }
 
   private var connectAction: ReadinessAction? {
@@ -223,7 +219,15 @@ struct TuningView: View {
     }
 
     let features = siteFeatures.compactMap(\.storeFeature)
-    store.setTuningFeatures(features, enabled: nextValue)
+    Task {
+      await accountStore.setTuningFeatures(
+        features,
+        enabled: nextValue,
+        using: clerk,
+        protectionStore: store,
+        appBlockingStore: appBlockingStore
+      )
+    }
   }
 
   private func binding(for feature: TuningFeatureDisplay) -> Binding<Bool> {
@@ -231,7 +235,15 @@ struct TuningView: View {
       return Binding {
         store.tuningFeatureEnabled(storeFeature)
       } set: { enabled in
-        store.setTuningFeature(storeFeature, enabled: enabled)
+        Task {
+          await accountStore.setTuningFeature(
+            storeFeature,
+            enabled: enabled,
+            using: clerk,
+            protectionStore: store,
+            appBlockingStore: appBlockingStore
+          )
+        }
       }
     }
 

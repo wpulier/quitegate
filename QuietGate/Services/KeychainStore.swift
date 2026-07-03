@@ -31,7 +31,7 @@ enum KeychainError: LocalizedError {
     case .invalidData:
       return "The saved Keychain item could not be read."
     case .unavailableWithoutUserInteraction:
-      return "QuietGate needs permission to read a saved setup key. Click Allow Access and approve the Mac prompt, or connect again."
+      return "Tortoise needs permission to read a saved setup key. Click Allow Access and approve the Mac prompt, or connect again."
     }
   }
 }
@@ -158,8 +158,8 @@ final class KeychainStore: SecretStoring {
     var item = baseQuery(service: service, account: account)
     item[kSecValueData as String] = Data(value.utf8)
     item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-    item[kSecAttrLabel as String] = "QuietGate saved setup key"
-    item[kSecAttrDescription as String] = "Lets QuietGate save your blocking choices."
+    item[kSecAttrLabel as String] = "Tortoise saved setup key"
+    item[kSecAttrDescription as String] = "Lets Tortoise save your blocking choices."
 
     let status = SecItemAdd(item as CFDictionary, nil)
     guard status == errSecSuccess else {

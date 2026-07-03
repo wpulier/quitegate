@@ -29,7 +29,10 @@ final class TortoiseShieldActionExtension: ShieldActionDelegate {
     switch action {
     case .primaryButtonPressed:
       return .close
-    case .secondaryButtonPressed:
+    case .secondaryButtonPressed,
+        .firstSecondarySubmenuItemPressed,
+        .secondSecondarySubmenuItemPressed,
+        .thirdSecondarySubmenuItemPressed:
       return .defer
     @unknown default:
       return .close

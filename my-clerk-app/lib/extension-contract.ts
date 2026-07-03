@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { boundedJsonRecordSchema } from "@/lib/json-contract";
 
 const extensionIdSchema = z
   .string()
@@ -23,8 +24,6 @@ const nullableTrimmedString = (maxLength: number) =>
     .nullable()
     .transform((value) => (value ? value : null));
 
-const jsonRecordSchema = z.record(z.string(), z.unknown());
-
 export const extensionLinkRequestSchema = z
   .object({
     extensionId: extensionIdSchema,
@@ -44,12 +43,12 @@ export const extensionHealthRequestSchema = z
   .object({
     extensionVersion: nullableTrimmedString(80),
     rulesetVersion: nullableTrimmedString(80),
-    scriptVersions: jsonRecordSchema.default({}),
-    canaryStatus: jsonRecordSchema.default({}),
-    adultProtection: jsonRecordSchema.default({}),
-    platformMetadata: jsonRecordSchema.default({}),
-    enabledPermissions: jsonRecordSchema.default({}),
-    recentBlockCounters: jsonRecordSchema.default({}),
+    scriptVersions: boundedJsonRecordSchema.default({}),
+    canaryStatus: boundedJsonRecordSchema.default({}),
+    adultProtection: boundedJsonRecordSchema.default({}),
+    platformMetadata: boundedJsonRecordSchema.default({}),
+    enabledPermissions: boundedJsonRecordSchema.default({}),
+    recentBlockCounters: boundedJsonRecordSchema.default({}),
     lastSyncAt: nullableTrimmedString(80),
   })
   .strict();

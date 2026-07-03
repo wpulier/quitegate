@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { boundedJsonRecordSchema } from "@/lib/json-contract";
 
 export const supportedUsageSiteIDs = ["youtube", "x", "instagram", "reddit"] as const;
 
@@ -23,8 +24,6 @@ const optionalNonNegativeInt = z
   .optional()
   .nullable()
   .transform((value) => (value == null ? null : value));
-
-const jsonRecordSchema = z.record(z.string(), z.unknown());
 
 export const siteUsageValueSchema = z
   .object({
@@ -57,7 +56,7 @@ export const siteUsageSourceSchema = z
     profileID: nullableTrimmedString(120),
     profileName: nullableTrimmedString(120),
     deviceName: nullableTrimmedString(120),
-    platformMetadata: jsonRecordSchema.default({}),
+    platformMetadata: boundedJsonRecordSchema.default({}),
   })
   .strict()
   .default({

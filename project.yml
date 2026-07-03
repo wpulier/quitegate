@@ -6,13 +6,11 @@ options:
     macOS: "14.0"
 settings:
   base:
-    DEVELOPMENT_TEAM: V558WV68AM
+    DEVELOPMENT_TEAM: SY7TABCD5M
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-    CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: "-"
 packages:
   Clerk:
     url: https://github.com/clerk/clerk-ios
@@ -31,6 +29,12 @@ targets:
         showEnvVars: false
     sources:
       - QuietGate
+      - path: Tortoise/AppConfig.swift
+        type: file
+      - path: Tortoise/InstallationStore.swift
+        type: file
+      - path: Tortoise/TortoiseModels.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
@@ -42,13 +46,21 @@ targets:
         type: file
     dependencies:
       - sdk: Security.framework
+      - package: Clerk
+        product: ClerkKit
+      - package: Clerk
+        product: ClerkKitUI
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.willpulier.QuietGate
         PRODUCT_NAME: QuietGate
         INFOPLIST_FILE: QuietGate/Resources/Info.plist
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
         ENABLE_HARDENED_RUNTIME: YES
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+        CLERK_PUBLISHABLE_KEY: ""
+        TORTOISE_API_BASE_URL: "https://www.yourtortoise.com"
   Tortoise:
     type: application
     platform: iOS
@@ -59,6 +71,18 @@ targets:
         product: ClerkKit
       - package: Clerk
         product: ClerkKitUI
+      - target: TortoiseDeviceActivityMonitor
+        embed: true
+        codeSign: true
+      - target: TortoiseShieldConfiguration
+        embed: true
+        codeSign: true
+      - target: TortoiseShieldAction
+        embed: true
+        codeSign: true
+      - target: TortoiseSafariExtension
+        embed: true
+        codeSign: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.yourtortoise.Tortoise
@@ -66,12 +90,85 @@ targets:
         INFOPLIST_FILE: Tortoise/Resources/Info.plist
         CODE_SIGN_ENTITLEMENTS: Tortoise/Resources/Tortoise.entitlements
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: Apple Development
         DEVELOPMENT_TEAM: SY7TABCD5M
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
         CLERK_PUBLISHABLE_KEY: ""
         TORTOISE_API_BASE_URL: "https://www.yourtortoise.com"
+  TortoiseDeviceActivityMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - TortoiseDeviceActivityMonitor
+      - path: Tortoise/IOSEnforcementShared.swift
+        type: file
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourtortoise.Tortoise.DeviceActivityMonitor
+        PRODUCT_NAME: TortoiseDeviceActivityMonitor
+        INFOPLIST_FILE: TortoiseDeviceActivityMonitor/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TortoiseDeviceActivityMonitor/TortoiseDeviceActivityMonitor.entitlements
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: SY7TABCD5M
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+  TortoiseShieldConfiguration:
+    type: app-extension
+    platform: iOS
+    sources:
+      - TortoiseShieldConfiguration
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourtortoise.Tortoise.ShieldConfiguration
+        PRODUCT_NAME: TortoiseShieldConfiguration
+        INFOPLIST_FILE: TortoiseShieldConfiguration/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TortoiseShieldConfiguration/TortoiseShieldConfiguration.entitlements
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: SY7TABCD5M
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+  TortoiseShieldAction:
+    type: app-extension
+    platform: iOS
+    sources:
+      - TortoiseShieldAction
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourtortoise.Tortoise.ShieldAction
+        PRODUCT_NAME: TortoiseShieldAction
+        INFOPLIST_FILE: TortoiseShieldAction/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TortoiseShieldAction/TortoiseShieldAction.entitlements
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: SY7TABCD5M
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+  TortoiseSafariExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - TortoiseSafariExtension
+      - path: Tortoise/IOSEnforcementShared.swift
+        type: file
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourtortoise.Tortoise.SafariExtension
+        PRODUCT_NAME: TortoiseSafariExtension
+        INFOPLIST_FILE: TortoiseSafariExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TortoiseSafariExtension/TortoiseSafariExtension.entitlements
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: SY7TABCD5M
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
   QuietGateTests:
     type: bundle.unit-test
     platform: macOS

@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Privacy Policy | QuietGate",
-  description: "QuietGate privacy policy for account sync and browser protection.",
+  title: "Privacy Policy | Tortoise",
+  description: "Tortoise privacy policy for account sync and browser protection.",
 };
 
 export default function PrivacyPage() {
@@ -12,7 +12,7 @@ export default function PrivacyPage() {
             Privacy
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
-            QuietGate Privacy Policy
+            Tortoise Privacy Policy
           </h1>
           <p className="mt-4 text-sm text-zinc-500">Effective June 16, 2026</p>
         </div>
@@ -20,10 +20,10 @@ export default function PrivacyPage() {
         <div className="space-y-6 rounded-lg border border-zinc-200 bg-white p-6 text-sm leading-7 text-zinc-700 shadow-sm">
           <section>
             <h2 className="text-xl font-semibold text-zinc-950">
-              What QuietGate does
+              What Tortoise does
             </h2>
             <p className="mt-2">
-              QuietGate blocks distracting and adult content according to the
+              Tortoise blocks distracting and adult content according to the
               policy you configure. The Chrome extension enforces packaged site
               tuners, packaged adult-domain rules, and optional local page
               classification when you grant broad site access.
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
               Data we store
             </h2>
             <p className="mt-2">
-              QuietGate stores your account identifier, email address, policy
+              Tortoise stores your account identifier, email address, policy
               settings, registered device records, device health reports,
               extension version, script versions, ruleset status, sync times,
               enabled permission state, and recent block counters.
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
               Browser data
             </h2>
             <p className="mt-2">
-              QuietGate does not sell browsing data. Site content is inspected
+              Tortoise does not sell browsing data. Site content is inspected
               locally only to enforce blocking rules. Device health may report
               aggregate protection status, such as whether adult blocking is
               enabled or how many rules are active. User-reported missed adult
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
               Account and sync
             </h2>
             <p className="mt-2">
-              Clerk provides account authentication. Supabase stores QuietGate
+              Clerk provides account authentication. Supabase stores Tortoise
               user records, policies, devices, and device health snapshots. The
               Chrome extension stores a device-scoped token locally so it can
               read policy and post health without storing your Clerk session in

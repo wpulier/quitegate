@@ -77,7 +77,7 @@ struct AppUpdateInfo: Equatable {
   let installedAppURL: URL
 
   var detailText: String {
-    "QuietGate \(installedVersion.displayText) is installed. Relaunch to use it."
+    "Tortoise \(installedVersion.displayText) is installed. Relaunch to use it."
   }
 }
 
@@ -168,6 +168,10 @@ final class AppUpdateService: AppUpdateServicing {
 
   private static func defaultCandidateAppURLs(fileManager: FileManager) -> [URL] {
     var urls: [URL] = [
+      URL(fileURLWithPath: "/Applications/Tortoise.app"),
+      fileManager.homeDirectoryForCurrentUser
+        .appendingPathComponent("Applications", isDirectory: true)
+        .appendingPathComponent("Tortoise.app", isDirectory: true),
       URL(fileURLWithPath: "/Applications/QuietGate.app"),
       fileManager.homeDirectoryForCurrentUser
         .appendingPathComponent("Applications", isDirectory: true)

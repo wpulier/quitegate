@@ -10,12 +10,22 @@ struct ContentView: View {
 
   var body: some View {
     Group {
-      if clerk.session == nil {
+      if TortoiseScreenshot.isEnabled {
+        TortoiseMobileShell(
+          accountLabel: "Tortoise account",
+          model: model,
+          clerk: clerk,
+          initialSection: TortoiseScreenshot.initialSection,
+          showsGuidedSetup: TortoiseScreenshot.initialSection == .blocking,
+          refresh: {}
+        )
+      } else if clerk.session == nil {
         SignedOutLanding(syncMessage: model.syncMessage, onSignIn: presentAuth)
       } else {
         TortoiseMobileShell(
           accountLabel: accountLabel,
           model: model,
+          clerk: clerk,
           refresh: refresh
         )
       }
@@ -55,7 +65,7 @@ struct ContentView: View {
     clerk.user?.primaryEmailAddress?.emailAddress
       ?? clerk.user?.username
       ?? clerk.user?.id
-      ?? "willpulier1999@gmail.com"
+      ?? "Signed in"
   }
 
   private func presentAuth() {
@@ -86,6 +96,31 @@ private enum TortoiseDesign {
   static let purple = Color(red: 0.435, green: 0.337, blue: 0.812)
 }
 
+private enum TortoiseScreenshot {
+  static var isEnabled: Bool {
+    ProcessInfo.processInfo.environment["TORTOISE_SCREENSHOT_MODE"] == "1"
+      || ProcessInfo.processInfo.arguments.contains("--tortoise-screenshot")
+  }
+
+  static var initialSection: MobileSection {
+    let environmentSection = ProcessInfo.processInfo.environment["TORTOISE_SCREENSHOT_SECTION"]
+    let argumentSection = value(after: "--tortoise-screenshot-section")
+    guard let section = environmentSection ?? argumentSection else {
+      return .usage
+    }
+    return MobileSection(rawValue: section) ?? .usage
+  }
+
+  private static func value(after flag: String) -> String? {
+    let arguments = ProcessInfo.processInfo.arguments
+    guard let index = arguments.firstIndex(of: flag),
+          arguments.indices.contains(index + 1) else {
+      return nil
+    }
+    return arguments[index + 1]
+  }
+}
+
 private struct SignedOutLanding: View {
   let syncMessage: String
   let onSignIn: () -> Void
@@ -99,7 +134,7 @@ private struct SignedOutLanding: View {
             .foregroundStyle(.white)
             .frame(width: 36, height: 36)
             .background(TortoiseDesign.accent, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-          Text("QuietGate")
+          Text("Tortoise")
             .font(.title3.bold())
         }
         Spacer()
@@ -115,12 +150,12 @@ private struct SignedOutLanding: View {
           .font(.caption.bold())
           .foregroundStyle(TortoiseDesign.tertiaryText)
 
-        Text("Sync this iPhone into QuietGate.")
+        Text("Sync this iPhone into Tortoise.")
           .font(.largeTitle.bold())
           .foregroundStyle(TortoiseDesign.primaryText)
           .fixedSize(horizontal: false, vertical: true)
 
-        Text("Use the same QuietGate profile for Mac, iPhone, browser helpers, usage summaries, and shared protection policy.")
+        Text("Use the same Tortoise profile for Mac, iPhone, browser helpers, usage summaries, and shared protection policy.")
           .font(.body)
           .foregroundStyle(TortoiseDesign.secondaryText)
           .fixedSize(horizontal: false, vertical: true)
@@ -151,15 +186,31 @@ private struct SignedOutLanding: View {
 private struct TortoiseMobileShell: View {
   let accountLabel: String
   @ObservedObject var model: AccountHubModel
+  let clerk: Clerk
+  let showsGuidedSetup: Bool
   let refresh: () async -> Void
 
-  @State private var section = MobileSection.usage
+  @State private var section: MobileSection
   @State private var usageTab = MobileUsageTab.all
-  @State private var accessMode = MobileAccessMode.focus
   @State private var selectedSite = MobileTuningSite.youtube
   @State private var conceptStates: [String: Bool] = ["porn": true, "gambling": false, "news": false]
-  @State private var featureStates: [String: Bool] = MobileTuningSite.defaultFeatureStates
   @StateObject private var screenTime = IOSYouTubeScreenTimeController()
+
+  init(
+    accountLabel: String,
+    model: AccountHubModel,
+    clerk: Clerk,
+    initialSection: MobileSection = .usage,
+    showsGuidedSetup: Bool = true,
+    refresh: @escaping () async -> Void
+  ) {
+    self.accountLabel = accountLabel
+    self.model = model
+    self.clerk = clerk
+    self.showsGuidedSetup = showsGuidedSetup
+    self.refresh = refresh
+    _section = State(initialValue: initialSection)
+  }
 
   var body: some View {
     ZStack(alignment: .bottom) {
@@ -174,7 +225,7 @@ private struct TortoiseMobileShell: View {
             retrySync: refresh,
             fixSetup: { section = .blocking }
           )
-          if screenTime.connectionState != .connected {
+          if showsGuidedSetup && screenTime.connectionState != .connected {
             MobileIOSGuidedSetupCard(screenTime: screenTime)
           }
           screenContent
@@ -190,6 +241,11 @@ private struct TortoiseMobileShell: View {
       .task {
         screenTime.refreshSetupStatus()
       }
+      .onChange(of: model.snapshot.policy?.policy.browser?.options?.youtubeDailyLimitMinutes, initial: true) { _, minutes in
+        if let minutes {
+          screenTime.dailyLimitMinutes = minutes
+        }
+      }
 
       bottomTabBar
     }
@@ -199,17 +255,120 @@ private struct TortoiseMobileShell: View {
   private var screenContent: some View {
     switch section {
     case .usage:
-      MobileUsageScreen(selectedTab: $usageTab, model: model, screenTime: screenTime)
+      MobileUsageScreen(
+        selectedTab: $usageTab,
+        model: model,
+        screenTime: screenTime,
+        setDailyLimit: setDailyLimit
+      )
     case .blocking:
-      MobileBlockingScreen(accessMode: $accessMode, conceptStates: $conceptStates, screenTime: screenTime)
+      MobileBlockingScreen(
+        accessMode: currentAccessMode,
+        conceptStates: $conceptStates,
+        isSyncing: model.isSyncing,
+        screenTime: screenTime,
+        selectMode: setAccessMode,
+        setDailyLimit: setDailyLimit
+      )
     case .tuning:
       MobileTuningScreen(
         selectedSite: $selectedSite,
-        featureStates: $featureStates,
-        screenTime: screenTime
+        model: model,
+        screenTime: screenTime,
+        browserProfiles: browserProfiles,
+        featureEnabled: featureEnabled,
+        setFeature: setTuningFeature,
+        toggleSite: toggleSiteTuning,
+        setYoutubeProtection: setYoutubeProtection,
+        setDailyLimit: setDailyLimit
       )
     case .devices:
       MobileDevicesScreen(accountLabel: accountLabel, model: model, screenTime: screenTime)
+    }
+  }
+
+  private var currentAccessMode: MobileAccessMode {
+    if let mode = model.snapshot.policy?.policy.mode,
+       let accessMode = MobileAccessMode(rawValue: mode) {
+      return accessMode
+    }
+    return MobileAccessMode(iosMode: screenTime.enforcementMode) ?? .focus
+  }
+
+  private var browserProfiles: [MobileBrowserProfile] {
+    model.snapshot.devices
+      .filter(\.isBrowserProfile)
+      .map(MobileBrowserProfile.init(device:))
+  }
+
+  private func featureEnabled(_ feature: MobileFeature) -> Bool {
+    guard feature.isPolicyBacked else {
+      return false
+    }
+    return model.snapshot.policy?.policy.browser?.features[feature.id] ?? feature.defaultOn
+  }
+
+  private func setAccessMode(_ mode: MobileAccessMode) {
+    if mode != .open && !screenTime.canTurnOn {
+      section = .blocking
+      screenTime.refreshSetupStatus()
+      return
+    }
+
+    Task {
+      if await model.setPolicyMode(mode.iosMode, using: clerk) != nil {
+        screenTime.setMode(mode.iosMode)
+      }
+    }
+  }
+
+  private func setTuningFeature(_ feature: MobileFeature, enabled: Bool) {
+    guard feature.isPolicyBacked else {
+      return
+    }
+
+    Task {
+      _ = await model.setBrowserFeature(feature.id, enabled: enabled, using: clerk)
+    }
+  }
+
+  private func toggleSiteTuning(_ site: MobileTuningSite, enabled: Bool) {
+    let featureIDs = site.policyFeatureIDs
+    guard !featureIDs.isEmpty else {
+      return
+    }
+
+    Task {
+      _ = await model.setBrowserFeatures(featureIDs, enabled: enabled, using: clerk)
+    }
+  }
+
+  private func setYoutubeProtection(_ enabled: Bool) {
+    if enabled && !screenTime.canTurnOn {
+      section = .blocking
+      screenTime.refreshSetupStatus()
+      return
+    }
+
+    Task {
+      let updatedPolicy = await model.updatePolicy(using: clerk) { policy in
+        let basePolicy = enabled && policy.mode == "open" ? policy.settingMode("focus") : policy
+        return basePolicy.settingBrowserFeatures(MobileTuningSite.youtube.policyFeatureIDs, enabled: enabled)
+      }
+      guard updatedPolicy != nil else {
+        return
+      }
+      if enabled {
+        screenTime.turnOn()
+      } else {
+        screenTime.turnOff()
+      }
+    }
+  }
+
+  private func setDailyLimit(_ minutes: Int) {
+    Task {
+      _ = await model.setYouTubeDailyLimit(minutes: minutes, using: clerk)
     }
   }
 
@@ -252,6 +411,7 @@ private struct MobileUsageScreen: View {
   @Binding var selectedTab: MobileUsageTab
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  let setDailyLimit: (Int) -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -260,7 +420,7 @@ private struct MobileUsageScreen: View {
       usageHero
 
       if selectedTab == .youtube {
-        MobileIOSYouTubeStatusCard(screenTime: screenTime)
+        MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
       }
 
       if selectedTab == .all {
@@ -353,7 +513,7 @@ private struct MobileUsageScreen: View {
         if display.accounts.isEmpty {
           MobileEmptyState(
             title: "No account activity",
-            detail: "QuietGate will show real synced browser and iOS entries here once they report usage."
+            detail: "Tortoise will show real synced browser and iOS entries here once they report usage."
           )
         } else {
           ForEach(display.accounts) { account in
@@ -379,9 +539,12 @@ private struct MobileUsageScreen: View {
 }
 
 private struct MobileBlockingScreen: View {
-  @Binding var accessMode: MobileAccessMode
+  let accessMode: MobileAccessMode
   @Binding var conceptStates: [String: Bool]
+  let isSyncing: Bool
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  let selectMode: (MobileAccessMode) -> Void
+  let setDailyLimit: (Int) -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -399,10 +562,11 @@ private struct MobileBlockingScreen: View {
             MobileModeRow(mode: mode, isSelected: accessMode == mode)
           }
           .buttonStyle(.plain)
+          .disabled(isSyncing)
         }
       }
 
-      MobileIOSYouTubeStatusCard(screenTime: screenTime)
+      MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
 
       MobileCard {
         VStack(alignment: .leading, spacing: 14) {
@@ -449,7 +613,7 @@ private struct MobileBlockingScreen: View {
         HStack(alignment: .top, spacing: 12) {
           Image(systemName: "iphone.gen3")
             .foregroundStyle(TortoiseDesign.accent)
-          Text("On iPhone, blocks run through the QuietGate app and Screen Time. Keep QuietGate allowed in Settings > Screen Time for full enforcement.")
+          Text("On iPhone, blocks run through the Tortoise app and Screen Time. Keep Tortoise allowed in Settings > Screen Time for full enforcement.")
             .font(.system(size: 13))
             .foregroundStyle(TortoiseDesign.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
@@ -457,17 +621,18 @@ private struct MobileBlockingScreen: View {
       }
     }
   }
-
-  private func selectMode(_ mode: MobileAccessMode) {
-    accessMode = mode
-    screenTime.setMode(mode.iosMode)
-  }
 }
 
 private struct MobileTuningScreen: View {
   @Binding var selectedSite: MobileTuningSite
-  @Binding var featureStates: [String: Bool]
+  @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  let browserProfiles: [MobileBrowserProfile]
+  let featureEnabled: (MobileFeature) -> Bool
+  let setFeature: (MobileFeature, Bool) -> Void
+  let toggleSite: (MobileTuningSite, Bool) -> Void
+  let setYoutubeProtection: (Bool) -> Void
+  let setDailyLimit: (Int) -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -513,12 +678,12 @@ private struct MobileTuningScreen: View {
             performTuningAction()
           }
           .buttonStyle(.bordered)
-          .disabled(selectedSite == .youtube && !screenTime.canApplyShielding)
+          .disabled(model.isSyncing)
         }
       }
 
       if selectedSite == .youtube {
-        MobileIOSYouTubeStatusCard(screenTime: screenTime)
+        MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
       }
 
       if selectedSite == .youtube {
@@ -559,9 +724,16 @@ private struct MobileTuningScreen: View {
                 .foregroundStyle(TortoiseDesign.secondaryText)
             }
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
-              MobileScopeChip(avatar: "W", title: "Chrome · Will")
-              MobileScopeChip(avatar: "WA", title: "Chrome · wildstudio.ai")
-              MobileScopeChip(avatar: "W", title: "Chrome · will")
+              if browserProfiles.isEmpty {
+                MobileEmptyState(
+                  title: "No browser profiles yet",
+                  detail: "Install a browser helper, connect it to this Tortoise account, then Safari/browser tuning status will appear here."
+                )
+              } else {
+                ForEach(browserProfiles) { profile in
+                  MobileScopeChip(avatar: profile.avatar, title: profile.title)
+                }
+              }
             }
           }
         }
@@ -576,9 +748,10 @@ private struct MobileTuningScreen: View {
               MobileTuningFeatureRow(
                 feature: feature,
                 isOn: Binding(
-                  get: { featureStates[feature.id, default: feature.defaultOn] },
-                  set: { featureStates[feature.id] = $0 }
-                )
+                  get: { featureEnabled(feature) },
+                  set: { setFeature(feature, $0) }
+                ),
+                isEnabled: feature.isPolicyBacked && !model.isSyncing
               )
             }
           }
@@ -588,40 +761,49 @@ private struct MobileTuningScreen: View {
   }
 
   private func enabledCount(for site: MobileTuningSite) -> Int {
-    site.features.filter { featureStates[$0.id, default: $0.defaultOn] }.count
+    site.policyFeatures.filter(featureEnabled).count
   }
 
   private func countText(for site: MobileTuningSite) -> String {
     if site == .youtube {
       return screenTime.shieldingEnabled ? "iOS on" : (screenTime.hasSelection ? "iOS ready" : "Setup")
     }
-    return "\(enabledCount(for: site))/\(site.features.count)"
+    let countableFeatures = site.policyFeatures.count
+    guard countableFeatures > 0 else {
+      return "Soon"
+    }
+    return "\(enabledCount(for: site))/\(countableFeatures)"
   }
 
   private var tuningActionTitle: String {
     if selectedSite == .youtube {
+      if !screenTime.shieldingEnabled && !screenTime.canTurnOn {
+        return "Finish setup"
+      }
       return screenTime.shieldingEnabled ? "Turn off" : "Turn on"
     }
-    return enabledCount(for: selectedSite) == selectedSite.features.count ? "Reset all" : "Hide all"
+    let countableFeatures = selectedSite.policyFeatures.count
+    guard countableFeatures > 0 else {
+      return "Connect"
+    }
+    return enabledCount(for: selectedSite) == countableFeatures ? "Reset all" : "Hide all"
   }
 
   private func performTuningAction() {
     if selectedSite == .youtube {
-      if screenTime.shieldingEnabled {
-        screenTime.turnOff()
-      } else {
-        screenTime.turnOn()
-      }
+      setYoutubeProtection(!screenTime.shieldingEnabled)
       return
     }
     toggleAll()
   }
 
   private func toggleAll() {
-    let next = enabledCount(for: selectedSite) != selectedSite.features.count
-    for feature in selectedSite.features {
-      featureStates[feature.id] = next
+    let countableFeatures = selectedSite.policyFeatures.count
+    guard countableFeatures > 0 else {
+      return
     }
+    let next = enabledCount(for: selectedSite) != countableFeatures
+    toggleSite(selectedSite, next)
   }
 }
 
@@ -635,16 +817,16 @@ private struct MobileDevicesScreen: View {
       MobileHeader(
         kicker: nil,
         title: "Devices",
-        subtitle: "One QuietGate profile. This iPhone plus every browser profile, kept in sync."
+        subtitle: "One Tortoise profile. This iPhone plus every browser profile, kept in sync."
       )
 
       MobileCard {
         HStack(spacing: 12) {
-          MobileAvatar(text: "W", size: 48, background: TortoiseDesign.accent.opacity(0.28))
+          MobileAvatar(text: accountInitials, size: 48, background: TortoiseDesign.accent.opacity(0.28))
           VStack(alignment: .leading, spacing: 3) {
-            Text("Will Pulier")
+            Text(accountTitle)
               .font(.system(size: 17, weight: .bold))
-            Text("\(accountLabel) · Pro")
+            Text(accountLabel)
               .font(.system(size: 13))
               .foregroundStyle(TortoiseDesign.secondaryText)
               .lineLimit(1)
@@ -664,21 +846,44 @@ private struct MobileDevicesScreen: View {
       MobileCard {
         VStack(spacing: 0) {
           MobileIOSDeviceStatusRow(screenTime: screenTime, syncMessage: model.syncMessage)
-          MobileDivider()
-            .padding(.vertical, 13)
-          MobileDeviceRow(systemImage: "desktopcomputer", title: "MacBook Pro", badge: nil, subtitle: "QuietGate running · app blocking active")
+          if otherDevices.isEmpty {
+            MobileDivider()
+              .padding(.vertical, 13)
+            MobileEmptyState(
+              title: "No other devices yet",
+              detail: "Install Tortoise on the Mac or connect a browser helper with this account."
+            )
+          } else {
+            ForEach(otherDevices) { device in
+              MobileDivider()
+                .padding(.vertical, 13)
+              MobileDeviceRow(
+                systemImage: device.systemImage,
+                title: device.displayName,
+                badge: nil,
+                subtitle: device.statusSubtitle
+              )
+            }
+          }
         }
       }
 
       MobileSectionLabel("Browser profiles")
       MobileCard {
         VStack(spacing: 0) {
-          ForEach(Array(browserRows.enumerated()), id: \.element.id) { index, row in
-            if index > 0 {
-              MobileDivider()
-                .padding(.vertical, 13)
+          if browserRows.isEmpty {
+            MobileEmptyState(
+              title: "No browser profiles yet",
+              detail: "Connect the browser helper from the web setup page to sync usage and tuning status."
+            )
+          } else {
+            ForEach(Array(browserRows.enumerated()), id: \.element.id) { index, row in
+              if index > 0 {
+                MobileDivider()
+                  .padding(.vertical, 13)
+              }
+              MobileBrowserProfileRow(row: row)
             }
-            MobileBrowserProfileRow(row: row)
           }
           Button {
           } label: {
@@ -694,15 +899,31 @@ private struct MobileDevicesScreen: View {
   }
 
   private var connectionCount: Int {
-    max(browserRows.count, 3)
+    max(model.snapshot.devices.count, 1)
+  }
+
+  private var accountTitle: String {
+    let base = accountLabel.components(separatedBy: "@").first ?? accountLabel
+    let cleaned = base
+      .replacingOccurrences(of: ".", with: " ")
+      .replacingOccurrences(of: "_", with: " ")
+      .replacingOccurrences(of: "-", with: " ")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return cleaned.isEmpty ? "Tortoise account" : cleaned.capitalized
+  }
+
+  private var accountInitials: String {
+    String(accountTitle.split(separator: " ").prefix(2).compactMap(\.first)).uppercased()
+  }
+
+  private var otherDevices: [TortoiseDevice] {
+    model.snapshot.devices.filter { device in
+      device.id != model.snapshot.device?.id && !device.isBrowserProfile
+    }
   }
 
   private var browserRows: [MobileBrowserProfile] {
-    [
-      MobileBrowserProfile(avatar: "W", title: "Chrome · Will", subtitle: "willpulier1999@gmail.com"),
-      MobileBrowserProfile(avatar: "WA", title: "Chrome · wildstudio.ai", subtitle: "will@wildstudio.ai"),
-      MobileBrowserProfile(avatar: "W", title: "Chrome · will", subtitle: "willpulier8@gmail.com")
-    ]
+    model.snapshot.devices.filter(\.isBrowserProfile).map(MobileBrowserProfile.init(device:))
   }
 }
 
@@ -785,7 +1006,7 @@ private struct MobileIOSGuidedSetupCard: View {
             Text("Turn on iOS")
               .font(.system(size: 18, weight: .bold))
               .foregroundStyle(TortoiseDesign.primaryText)
-            Text("Finish each setup item once. QuietGate will keep showing exactly what is connected and what still needs attention.")
+            Text("Finish each setup item once. Tortoise will keep showing exactly what is connected and what still needs attention.")
               .font(.system(size: 13))
               .foregroundStyle(TortoiseDesign.secondaryText)
               .fixedSize(horizontal: false, vertical: true)
@@ -997,6 +1218,7 @@ private struct MobileIOSStatusBadge: View {
 
 private struct MobileIOSYouTubeStatusCard: View {
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  var setDailyLimit: ((Int) -> Void)? = nil
   @State private var pickerPresented = false
 
   var body: some View {
@@ -1146,13 +1368,13 @@ private struct MobileIOSYouTubeStatusCard: View {
           Spacer()
           HStack(spacing: 8) {
             MobileStepperButton(systemImage: "minus") {
-              screenTime.dailyLimitMinutes -= 5
+              adjustDailyLimit(by: -5)
             }
             Text("\(screenTime.dailyLimitMinutes)m")
               .font(.system(size: 13, weight: .bold))
               .frame(width: 48)
             MobileStepperButton(systemImage: "plus") {
-              screenTime.dailyLimitMinutes += 5
+              adjustDailyLimit(by: 5)
             }
           }
         }
@@ -1218,18 +1440,24 @@ private struct MobileIOSYouTubeStatusCard: View {
   private var safariExtensionDetail: String {
     switch screenTime.safariExtensionState {
     case .connected:
-      return "QuietGate has seen the Safari extension recently."
+      return "Tortoise has seen the Safari extension recently."
     case .enabledWaitingForHeartbeat:
-      return "Open YouTube in Safari once so QuietGate can verify the extension heartbeat."
+      return "Open YouTube in Safari once so Tortoise can verify the extension heartbeat."
     case .disabled:
-      return "Turn on QuietGate Safari in Settings, then return and recheck."
+      return "Turn on Tortoise Safari in Settings, then return and recheck."
     case .unavailable:
       return "Use the manual path below on this iOS version, then open YouTube in Safari."
     case .failed:
-      return screenTime.safariExtensionStatusError ?? "QuietGate could not read Safari extension status."
+      return screenTime.safariExtensionStatusError ?? "Tortoise could not read Safari extension status."
     case .unknown:
-      return "QuietGate is checking Safari extension status."
+      return "Tortoise is checking Safari extension status."
     }
+  }
+
+  private func adjustDailyLimit(by delta: Int) {
+    let nextMinutes = min(max(screenTime.dailyLimitMinutes + delta, 5), 480)
+    screenTime.dailyLimitMinutes = nextMinutes
+    setDailyLimit?(nextMinutes)
   }
 }
 
@@ -1703,6 +1931,7 @@ private struct MobileScopeChip: View {
 private struct MobileTuningFeatureRow: View {
   let feature: MobileFeature
   @Binding var isOn: Bool
+  var isEnabled = true
 
   var body: some View {
     HStack(spacing: 12) {
@@ -1714,8 +1943,9 @@ private struct MobileTuningFeatureRow: View {
           .foregroundStyle(TortoiseDesign.secondaryText)
       }
       Spacer()
-      MobileSwitch(isOn: $isOn)
+      MobileSwitch(isOn: $isOn, isEnabled: isEnabled)
     }
+    .opacity(isEnabled ? 1 : 0.55)
   }
 }
 
@@ -1826,6 +2056,17 @@ private enum MobileAccessMode: String, CaseIterable, Identifiable {
       return .focus
     case .strict:
       return .strict
+    }
+  }
+
+  init?(iosMode: IOSEnforcementMode) {
+    switch iosMode {
+    case .open:
+      self = .open
+    case .focus:
+      self = .focus
+    case .strict:
+      self = .strict
     }
   }
 }
@@ -2090,36 +2331,36 @@ private enum MobileTuningSite: String, CaseIterable, Identifiable {
     switch self {
     case .youtube:
       return [
-        MobileFeature(id: "yt_home", title: "Hide Home Feed", detail: "Open straight to search and subscriptions - no recommendation wall.", defaultOn: true),
-        MobileFeature(id: "yt_shorts", title: "Hide Shorts", detail: "Remove Shorts shelves, links, and the Shorts player.", defaultOn: true),
-        MobileFeature(id: "yt_recs", title: "Hide Recommended", detail: "Strip recommended videos from the watch sidebar.", defaultOn: true),
-        MobileFeature(id: "yt_autoplay", title: "Disable Autoplay", detail: "Stop the next video from rolling automatically.", defaultOn: true),
-        MobileFeature(id: "yt_comments", title: "Hide Comments", detail: "Remove the comment section from watch pages.", defaultOn: false),
-        MobileFeature(id: "yt_track", title: "Track Time & Videos", detail: "Count active time and unique videos.", defaultOn: true)
+        MobileFeature(id: "youtubeHome", title: "Hide Home Feed", detail: "Open straight to search and subscriptions - no recommendation wall.", defaultOn: true),
+        MobileFeature(id: "youtubeShorts", title: "Hide Shorts", detail: "Remove Shorts shelves, links, and the Shorts player.", defaultOn: true),
+        MobileFeature(id: "youtubeRecommendations", title: "Hide Recommended", detail: "Strip recommended videos from the watch sidebar.", defaultOn: true),
+        MobileFeature(id: "youtubeAutoplay", title: "Disable Autoplay", detail: "Stop the next video from rolling automatically.", defaultOn: true),
+        MobileFeature(id: "youtubeComments", title: "Hide Comments", detail: "Remove the comment section from watch pages.", defaultOn: false),
+        MobileFeature(id: "youtubeUsageTracking", title: "Track Time & Videos", detail: "Count active time and unique videos.", defaultOn: true),
+        MobileFeature(id: "youtubeDailyLimit", title: "Daily Time Limit", detail: "Block YouTube after your selected daily limit.", defaultOn: false)
       ]
     case .x:
       return [
-        MobileFeature(id: "x_sensitive", title: "Hide Sensitive Media", detail: "Hide flagged sensitive and high-confidence explicit posts.", defaultOn: true),
-        MobileFeature(id: "x_video", title: "Hide Videos & GIFs", detail: "Remove autoplaying video and GIF players.", defaultOn: true),
-        MobileFeature(id: "x_explore", title: "Hide Explore & Trends", detail: "Remove trend modules and Explore entry points.", defaultOn: true),
-        MobileFeature(id: "x_photos", title: "Hide Tweet Photos", detail: "Remove inline photos while keeping text.", defaultOn: false),
-        MobileFeature(id: "x_cards", title: "Hide Media Cards", detail: "Remove rich link cards with large previews.", defaultOn: false)
+        MobileFeature(id: "xSensitiveMedia", title: "Hide Sensitive Media", detail: "Hide flagged sensitive and high-confidence explicit posts.", defaultOn: true),
+        MobileFeature(id: "xVideos", title: "Hide Videos & GIFs", detail: "Remove autoplaying video and GIF players.", defaultOn: true),
+        MobileFeature(id: "xExploreTrends", title: "Hide Explore & Trends", detail: "Remove trend modules and Explore entry points.", defaultOn: true),
+        MobileFeature(id: "xPhotos", title: "Hide Tweet Photos", detail: "Remove inline photos while keeping text.", defaultOn: false),
+        MobileFeature(id: "xMediaCards", title: "Hide Media Cards", detail: "Remove rich link cards with large previews.", defaultOn: false)
       ]
     case .instagram:
       return [
-        MobileFeature(id: "ig_reels", title: "Hide Reels", detail: "Remove Reels trays, links, and the Reels player.", defaultOn: true),
-        MobileFeature(id: "ig_explore", title: "Hide Explore", detail: "Remove Explore and redirect it back to your feed.", defaultOn: true),
-        MobileFeature(id: "ig_suggested", title: "Hide Suggested Posts", detail: "Remove recommended and promoted posts.", defaultOn: true),
-        MobileFeature(id: "ig_stories", title: "Hide Stories", detail: "Remove the stories tray at the top of the feed.", defaultOn: false),
-        MobileFeature(id: "ig_dms", title: "Hide DMs", detail: "Remove direct-message entry points.", defaultOn: false)
+        MobileFeature(id: "instagramReels", title: "Hide Reels", detail: "Remove Reels trays, links, and the Reels player.", defaultOn: true),
+        MobileFeature(id: "instagramExplore", title: "Hide Explore", detail: "Remove Explore and redirect it back to your feed.", defaultOn: true),
+        MobileFeature(id: "instagramSuggested", title: "Hide Suggested Posts", detail: "Remove recommended and promoted posts.", defaultOn: true),
+        MobileFeature(id: "instagramStories", title: "Hide Stories", detail: "Remove the stories tray at the top of the feed.", defaultOn: false)
       ]
     case .reddit:
       return [
-        MobileFeature(id: "rd_popular", title: "Hide Popular & All", detail: "Remove r/popular and r/all and redirect home.", defaultOn: true),
-        MobileFeature(id: "rd_recs", title: "Hide Recommendations", detail: "Remove recommended community modules.", defaultOn: true),
-        MobileFeature(id: "rd_nsfw", title: "Hide NSFW Posts & Communities", detail: "Remove mature posts and adult media.", defaultOn: true),
-        MobileFeature(id: "rd_media", title: "Hide Media Posts", detail: "Remove image and video posts, keep text.", defaultOn: false),
-        MobileFeature(id: "rd_sidebars", title: "Hide Sidebars", detail: "Remove right-rail sidebars and panels.", defaultOn: false)
+        MobileFeature(id: "redditPopularAll", title: "Hide Popular & All", detail: "Remove r/popular and r/all and redirect home.", defaultOn: true),
+        MobileFeature(id: "redditRecommendations", title: "Hide Recommendations", detail: "Remove recommended community modules.", defaultOn: true),
+        MobileFeature(id: "redditNSFW", title: "Hide NSFW Posts & Communities", detail: "Remove mature posts and adult media.", defaultOn: true),
+        MobileFeature(id: "redditMedia", title: "Hide Media Posts", detail: "Remove image and video posts, keep text.", defaultOn: false),
+        MobileFeature(id: "redditSidebars", title: "Hide Sidebars", detail: "Remove right-rail sidebars and panels.", defaultOn: false)
       ]
     case .tiktok:
       return [
@@ -2132,8 +2373,12 @@ private enum MobileTuningSite: String, CaseIterable, Identifiable {
     }
   }
 
-  static var defaultFeatureStates: [String: Bool] {
-    Dictionary(uniqueKeysWithValues: Self.allCases.flatMap(\.features).map { ($0.id, $0.defaultOn) })
+  var policyFeatures: [MobileFeature] {
+    features.filter(\.isPolicyBacked)
+  }
+
+  var policyFeatureIDs: [String] {
+    policyFeatures.map(\.id)
   }
 }
 
@@ -2142,13 +2387,141 @@ private struct MobileFeature: Identifiable {
   let title: String
   let detail: String
   let defaultOn: Bool
+
+  var isPolicyBacked: Bool {
+    TortoisePolicy.browserFeatureKeys.contains(id)
+  }
 }
 
 private struct MobileBrowserProfile: Identifiable {
-  let id = UUID()
+  let id: String
   let avatar: String
   let title: String
   let subtitle: String
+
+  init(id: String, avatar: String, title: String, subtitle: String) {
+    self.id = id
+    self.avatar = avatar
+    self.title = title
+    self.subtitle = subtitle
+  }
+
+  init(device: TortoiseDevice) {
+    let name = device.displayName
+    self.init(
+      id: device.id,
+      avatar: device.initials,
+      title: "\(device.platformLabel) · \(name)",
+      subtitle: device.statusSubtitle
+    )
+  }
+}
+
+private extension TortoiseDevice {
+  var displayName: String {
+    let trimmed = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    if !trimmed.isEmpty {
+      return trimmed
+    }
+    return platformLabel
+  }
+
+  var platformLabel: String {
+    switch normalizedPlatform {
+    case "ios":
+      return "iPhone"
+    case "macos", "mac":
+      return "Mac"
+    case "chrome_extension", "chrome":
+      return "Chrome"
+    case "firefox_extension", "firefox":
+      return "Firefox"
+    case "safari_extension", "safari":
+      return "Safari"
+    default:
+      return platform?.isEmpty == false ? platform!.replacingOccurrences(of: "_", with: " ").capitalized : "Device"
+    }
+  }
+
+  var isBrowserProfile: Bool {
+    normalizedPlatform.contains("chrome") ||
+      normalizedPlatform.contains("firefox") ||
+      normalizedPlatform.contains("safari") ||
+      normalizedPlatform.contains("extension")
+  }
+
+  var systemImage: String {
+    switch normalizedPlatform {
+    case "ios":
+      return "iphone"
+    case "macos", "mac":
+      return "desktopcomputer"
+    case "chrome_extension", "chrome", "firefox_extension", "firefox", "safari_extension", "safari":
+      return "globe"
+    default:
+      return "laptopcomputer"
+    }
+  }
+
+  var statusSubtitle: String {
+    let version = helperVersion ?? appVersion
+    let versionText = version.map { " · \($0)" } ?? ""
+    return "\(platformLabel)\(versionText) · \(lastSeenText)"
+  }
+
+  var initials: String {
+    let words = displayName.split(separator: " ")
+    let letters = words.prefix(2).compactMap(\.first)
+    if letters.isEmpty {
+      return String(platformLabel.prefix(2)).uppercased()
+    }
+    return String(letters).uppercased()
+  }
+
+  private var normalizedPlatform: String {
+    (platform ?? "").lowercased()
+  }
+
+  private var lastSeenText: String {
+    guard let lastSeenAt,
+          let date = ISO8601DateFormatter.tortoise.date(from: lastSeenAt) ?? ISO8601DateFormatter.tortoiseNoFractions.date(from: lastSeenAt) else {
+      return "not seen yet"
+    }
+    return "seen \(date.relativeDisplay)"
+  }
+}
+
+private extension ISO8601DateFormatter {
+  static let tortoise: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+  }()
+
+  static let tortoiseNoFractions: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+  }()
+}
+
+private extension Date {
+  var relativeDisplay: String {
+    let seconds = max(0, Int(Date().timeIntervalSince(self)))
+    if seconds < 60 {
+      return "just now"
+    }
+    let minutes = seconds / 60
+    if minutes < 60 {
+      return "\(minutes)m ago"
+    }
+    let hours = minutes / 60
+    if hours < 24 {
+      return "\(hours)h ago"
+    }
+    let days = hours / 24
+    return "\(days)d ago"
+  }
 }
 
 private struct MobileUsageDisplay {
@@ -2191,51 +2564,6 @@ private struct MobileUsageDisplay {
     )
   }
 
-  static func mock(tab: MobileUsageTab) -> MobileUsageDisplay {
-    switch tab {
-    case .all:
-      return MobileUsageDisplay(
-        hero: "Today",
-        total: "9h 33m",
-        subtitle: "Across 5 apps and 3 accounts",
-        activity: "3 accounts",
-        web: "8h 19m",
-        ios: "1h 14m",
-        apps: [
-          MobileUsageApp(letter: "YT", name: "YouTube", time: "6h 39m", percent: 70, color: .red, foreground: .white),
-          MobileUsageApp(letter: "X", name: "X", time: "1h 12m", percent: 13, color: .black, foreground: .white),
-          MobileUsageApp(letter: "IG", name: "Instagram", time: "48m", percent: 8, color: .pink, foreground: .white),
-          MobileUsageApp(letter: "RD", name: "Reddit", time: "33m", percent: 6, color: .orange, foreground: .white),
-          MobileUsageApp(letter: "TT", name: "TikTok", time: "21m", percent: 4, color: .black, foreground: .cyan)
-        ],
-        accounts: mockAccounts
-      )
-    case .youtube:
-      return MobileUsageDisplay(hero: "YouTube today", total: "6h 39m", subtitle: "Today · 62 videos watched", activity: "62 videos", web: "6h 39m", ios: "32m", apps: [], accounts: [
-        MobileUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "2h 46m", activity: "28 vids"),
-        MobileUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "2h 46m", activity: "28 vids"),
-        MobileUsageAccount(avatar: "W", name: "will", subtitle: "willpulier8@gmail.com · Chrome", time: "1h 05m", activity: "6 vids")
-      ])
-    case .x:
-      return MobileUsageDisplay(hero: "X today", total: "1h 12m", subtitle: "Today", activity: "2 accounts", web: "1h 12m", ios: "No data", apps: [], accounts: [
-        MobileUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "52m", activity: ""),
-        MobileUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "20m", activity: "")
-      ])
-    case .instagram:
-      return MobileUsageDisplay(hero: "Instagram today", total: "48m", subtitle: "Today", activity: "1 account", web: "34m", ios: "14m", apps: [], accounts: [
-        MobileUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "48m", activity: "")
-      ])
-    case .reddit:
-      return MobileUsageDisplay(hero: "Reddit today", total: "33m", subtitle: "Today", activity: "1 account", web: "33m", ios: "No data", apps: [], accounts: [
-        MobileUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "33m", activity: "")
-      ])
-    case .tiktok:
-      return MobileUsageDisplay(hero: "TikTok today", total: "21m", subtitle: "Today", activity: "1 account", web: "7m", ios: "14m", apps: [], accounts: [
-        MobileUsageAccount(avatar: "W", name: "will", subtitle: "willpulier8@gmail.com · Chrome", time: "21m", activity: "")
-      ])
-    }
-  }
-
   private init(
     hero: String,
     total: String,
@@ -2255,12 +2583,6 @@ private struct MobileUsageDisplay {
     self.apps = apps
     self.accounts = accounts
   }
-
-  private static let mockAccounts = [
-    MobileUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "4h 41m", activity: "YouTube, X"),
-    MobileUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "3h 12m", activity: "YT, IG"),
-    MobileUsageAccount(avatar: "W", name: "will", subtitle: "willpulier8@gmail.com · Chrome", time: "1h 40m", activity: "YT, TikTok")
-  ]
 
   private static func apps(from summary: SiteUsageSummarySnapshot) -> [MobileUsageApp] {
     let total = max(summary.totalSeconds, 1)

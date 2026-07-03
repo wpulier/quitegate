@@ -1,3 +1,5 @@
+import ClerkKit
+import ClerkKitUI
 import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
@@ -28,11 +30,14 @@ enum AppSection: String, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
+  @Environment(Clerk.self) private var clerk
   @Environment(\.scenePhase) private var scenePhase
   @EnvironmentObject private var store: ProtectionStore
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
+  @EnvironmentObject private var accountStore: MacAccountStore
   @SceneStorage("quietgate.selectedSection") private var selectedSectionID =
     AppSection.devices.rawValue
+  @State private var authViewIsPresented = false
 
   private var selectedSection: Binding<AppSection> {
     Binding {
@@ -43,6 +48,49 @@ struct ContentView: View {
   }
 
   var body: some View {
+    Group {
+      if clerk.session == nil {
+        MacSignedOutLanding(syncMessage: accountStore.syncMessage) {
+          authViewIsPresented = true
+        }
+      } else {
+        appShell
+      }
+    }
+    .onOpenURL { url in
+      Task {
+        try? await clerk.handle(url)
+      }
+    }
+    .task(id: clerk.session?.id) {
+      await accountStore.refresh(
+        using: clerk,
+        protectionStore: store,
+        appBlockingStore: appBlockingStore
+      )
+    }
+    .task {
+      for await event in clerk.auth.events {
+        switch event {
+        case .signInNeedsContinuation, .signUpNeedsContinuation:
+          authViewIsPresented = true
+        default:
+          break
+        }
+      }
+    }
+    .onChange(of: clerk.session?.tasks, initial: true) { _, newValue in
+      if newValue?.isEmpty == false {
+        authViewIsPresented = true
+      }
+    }
+    .sheet(isPresented: $authViewIsPresented) {
+      AuthView(mode: .signInOrUp)
+        .frame(minWidth: 440, minHeight: 620)
+    }
+  }
+
+  private var appShell: some View {
     VStack(spacing: 0) {
       QGWindowBar(modeText: modeText)
 
@@ -63,6 +111,13 @@ struct ContentView: View {
     .onChange(of: scenePhase) { _, newPhase in
       if newPhase == .active {
         store.refreshAppUpdateStatus()
+        Task {
+          await accountStore.refresh(
+            using: clerk,
+            protectionStore: store,
+            appBlockingStore: appBlockingStore
+          )
+        }
       }
     }
   }
@@ -93,12 +148,101 @@ struct ContentView: View {
   }
 }
 
+private struct MacSignedOutLanding: View {
+  let syncMessage: String
+  let onSignIn: () -> Void
+
+  var body: some View {
+    VStack(spacing: 0) {
+      QGWindowBar(modeText: "Account required")
+
+      VStack(spacing: 28) {
+        Spacer(minLength: 30)
+
+        VStack(spacing: 16) {
+          Image(systemName: "shield.checkered")
+            .font(.system(size: 30, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 64, height: 64)
+            .background(
+              LinearGradient(
+                colors: [QGDesign.accent, QGDesign.purple],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+              ),
+              in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+
+          VStack(spacing: 8) {
+            Text("Sign in to Tortoise")
+              .font(.system(size: 34, weight: .bold))
+              .foregroundStyle(QGDesign.primaryText)
+            Text("Use one account to sync your Mac, iPhone, browser tuning, and blocking rules.")
+              .font(.system(size: 15))
+              .foregroundStyle(QGDesign.secondaryText)
+              .multilineTextAlignment(.center)
+              .frame(maxWidth: 460)
+          }
+        }
+
+        QGCard {
+          VStack(alignment: .leading, spacing: 14) {
+            setupRow(icon: "person.crop.circle.badge.checkmark", title: "Create or use your account", detail: "Your settings follow you across devices.")
+            ProductDivider()
+            setupRow(icon: "macbook.and.iphone", title: "Register this Mac", detail: "Tortoise will show this Mac as connected in the dashboard.")
+            ProductDivider()
+            setupRow(icon: "slider.horizontal.3", title: "Sync tuning", detail: "YouTube, Reddit, Instagram, X, blocking, and app rules stay aligned.")
+          }
+        }
+        .frame(maxWidth: 520)
+
+        Button(action: onSignIn) {
+          Text("Sign in to Tortoise")
+            .frame(minWidth: 210)
+        }
+        .buttonStyle(QGPrimaryButtonStyle())
+
+        Text(syncMessage)
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.tertiaryText)
+
+        Spacer(minLength: 30)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .padding(40)
+      .background(QGDesign.background)
+    }
+    .frame(minWidth: 780, minHeight: 620)
+    .background(QGDesign.background)
+    .foregroundStyle(QGDesign.primaryText)
+  }
+
+  private func setupRow(icon: String, title: String, detail: String) -> some View {
+    HStack(spacing: 12) {
+      Image(systemName: icon)
+        .font(.system(size: 16, weight: .semibold))
+        .foregroundStyle(QGDesign.accent)
+        .frame(width: 34, height: 34)
+        .background(QGDesign.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+      VStack(alignment: .leading, spacing: 3) {
+        Text(title)
+          .font(.system(size: 14, weight: .bold))
+          .foregroundStyle(QGDesign.primaryText)
+        Text(detail)
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.secondaryText)
+      }
+      Spacer()
+    }
+  }
+}
+
 private struct QGWindowBar: View {
   let modeText: String
 
   var body: some View {
     ZStack {
-      Text("QuietGate")
+      Text("Tortoise")
         .font(.system(size: 13, weight: .semibold))
         .foregroundStyle(QGDesign.secondaryText)
 
@@ -127,6 +271,10 @@ private struct QGWindowBar: View {
 }
 
 private struct QGSidebar: View {
+  @Environment(Clerk.self) private var clerk
+  @EnvironmentObject private var store: ProtectionStore
+  @EnvironmentObject private var appBlockingStore: AppBlockingStore
+  @EnvironmentObject private var accountStore: MacAccountStore
   @Binding var selection: AppSection
 
   var body: some View {
@@ -145,7 +293,7 @@ private struct QGSidebar: View {
             in: RoundedRectangle(cornerRadius: 9, style: .continuous)
           )
 
-        Text("QuietGate")
+        Text("Tortoise")
           .font(.system(size: 16, weight: .bold))
           .foregroundStyle(QGDesign.primaryText)
       }
@@ -189,16 +337,33 @@ private struct QGSidebar: View {
       Spacer()
 
       HStack(spacing: 11) {
-        QGAvatar(text: "W", size: 31)
+        QGAvatar(text: accountStore.accountInitials, size: 31)
         VStack(alignment: .leading, spacing: 2) {
-          Text("Will Pulier")
+          Text(accountStore.accountDisplayName)
             .font(.system(size: 13, weight: .bold))
             .foregroundStyle(QGDesign.primaryText)
-          Text("Pro · 3 connections")
+            .lineLimit(1)
+          Text(accountStore.accountFooterText)
             .font(.system(size: 12))
             .foregroundStyle(QGDesign.secondaryText)
+            .lineLimit(1)
         }
         Spacer()
+        Button {
+          Task {
+            try? await clerk.auth.signOut()
+            await accountStore.refresh(
+              using: clerk,
+              protectionStore: store,
+              appBlockingStore: appBlockingStore
+            )
+          }
+        } label: {
+          Image(systemName: "rectangle.portrait.and.arrow.right")
+            .font(.system(size: 12, weight: .semibold))
+        }
+        .buttonStyle(.plain)
+        .help("Sign out")
       }
       .padding(10)
       .background(QGDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 10, style: .continuous))

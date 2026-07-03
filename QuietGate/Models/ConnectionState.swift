@@ -20,11 +20,11 @@ enum ConnectionState: Equatable {
   var detail: String {
     switch self {
     case .notConfigured:
-      return "Connect QuietGate."
+      return "Connect Tortoise."
     case .checking:
-      return "Checking your QuietGate connection."
+      return "Checking your Tortoise connection."
     case .connected:
-      return "QuietGate is connected."
+      return "Tortoise is connected."
     case .misconfigured(let message), .error(let message):
       return message
     }

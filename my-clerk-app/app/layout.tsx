@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
-import {
-  ClerkProvider,
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+import { SiteAuthNav } from "./_components/site-auth-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,9 +15,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const clerkLocalization = {
+  signIn: {
+    start: {
+      title: "Sign in to Tortoise",
+      subtitle: "Welcome back. Sign in to continue setup.",
+    },
+  },
+  signUp: {
+    start: {
+      title: "Create your Tortoise account",
+      subtitle: "One account for Mac, iPhone, browser tuning, and usage status.",
+    },
+  },
+};
+
 export const metadata: Metadata = {
   title: "Tortoise",
-  description: "Tortoise account, device, and protection dashboard.",
+  description: "Tortoise keeps the useful parts of your digital life and quiets the rest.",
 };
 
 export default function RootLayout({
@@ -35,30 +45,14 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-white text-zinc-950">
-        <ClerkProvider>
-          <header className="border-b border-zinc-200 bg-white">
-            <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
-              <Link href="/" className="text-lg font-semibold tracking-tight">
+      <body className="min-h-full overflow-x-hidden bg-[#fbfbef] text-zinc-950">
+        <ClerkProvider localization={clerkLocalization}>
+          <header className="bg-[#fbfbef] px-4 pt-4">
+            <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between rounded-xl border border-zinc-200/80 bg-white/75 px-5 shadow-sm backdrop-blur">
+              <Link href="/" className="text-lg font-semibold">
                 Tortoise
               </Link>
-              <div className="flex items-center gap-3">
-                <Show when="signed-out">
-                  <SignInButton>
-                    <button className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">
-                      Sign in
-                    </button>
-                  </SignInButton>
-                  <SignUpButton>
-                    <button className="rounded-md bg-zinc-950 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-800">
-                      Sign up
-                    </button>
-                  </SignUpButton>
-                </Show>
-                <Show when="signed-in">
-                  <UserButton />
-                </Show>
-              </div>
+              <SiteAuthNav />
             </div>
           </header>
           {children}

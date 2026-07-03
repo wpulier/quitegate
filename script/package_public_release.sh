@@ -2,6 +2,7 @@
 set -euo pipefail
 
 APP_NAME="QuietGate"
+PUBLIC_APP_NAME="${QUIETGATE_PUBLIC_APP_NAME:-Tortoise}"
 SCHEME="QuietGate"
 BUNDLE_ID="com.willpulier.QuietGate"
 
@@ -43,8 +44,13 @@ RUN_TESTS=1
 APP_SIGN_IDENTITY="${QUIETGATE_APP_SIGN_IDENTITY:-}"
 NOTARY_PROFILE="${QUIETGATE_NOTARY_PROFILE:-}"
 APPLE_ID="${APPLE_ID:-}"
-APPLE_TEAM_ID="${APPLE_TEAM_ID:-${QUIETGATE_APPLE_TEAM_ID:-V558WV68AM}}"
+APPLE_TEAM_ID="${APPLE_TEAM_ID:-${QUIETGATE_APPLE_TEAM_ID:-SY7TABCD5M}}"
 APPLE_PASSWORD="${APPLE_APP_SPECIFIC_PASSWORD:-}"
+BUILD_NUMBER_OVERRIDE="${QUIETGATE_BUILD_NUMBER:-}"
+TORTOISE_API_BASE_URL="${TORTOISE_API_BASE_URL:-https://www.yourtortoise.com}"
+CLERK_PUBLISHABLE_KEY="${CLERK_PUBLISHABLE_KEY:-${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}}"
+CLERK_KEY_SOURCE="environment"
+TORTOISE_ALLOW_TEST_CLERK="${TORTOISE_ALLOW_TEST_CLERK:-0}"
 
 usage() {
   cat <<'USAGE'
@@ -60,7 +66,11 @@ Environment:
   QUIETGATE_NOTARY_PROFILE          notarytool keychain profile, preferred for --notarize.
   APPLE_ID                          Apple ID for notarytool when no profile is supplied.
   APPLE_APP_SPECIFIC_PASSWORD       App-specific password for notarytool.
-  QUIETGATE_APPLE_TEAM_ID           Apple team ID. Defaults to V558WV68AM.
+  QUIETGATE_APPLE_TEAM_ID           Apple team ID. Defaults to SY7TABCD5M.
+  QUIETGATE_BUILD_NUMBER            Optional CFBundleVersion override for this build.
+  CLERK_PUBLISHABLE_KEY             Clerk publishable key embedded in the Mac app.
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY Fallback Clerk publishable key.
+  TORTOISE_API_BASE_URL             Tortoise API base URL. Defaults to https://www.yourtortoise.com.
 USAGE
 }
 
@@ -155,6 +165,40 @@ if [[ "$MODE" == "signed" || "$MODE" == "notarize" ]]; then
   require_public_signing
 fi
 
+if [[ -z "$CLERK_PUBLISHABLE_KEY" && -f "$ROOT_DIR/my-clerk-app/.env.local" ]]; then
+  CLERK_KEY_SOURCE="my-clerk-app/.env.local"
+  CLERK_PUBLISHABLE_KEY="$(
+    awk -F= '/^NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=/{print substr($0, index($0, "=") + 1); exit}' "$ROOT_DIR/my-clerk-app/.env.local" |
+      sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+  )"
+fi
+
+[[ -n "$CLERK_PUBLISHABLE_KEY" ]] || fail "CLERK_PUBLISHABLE_KEY or NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required for the Mac app."
+[[ "$TORTOISE_ALLOW_TEST_CLERK" =~ ^(0|1)$ ]] || fail "TORTOISE_ALLOW_TEST_CLERK must be 0 or 1."
+
+case "$CLERK_PUBLISHABLE_KEY" in
+  pk_live_*)
+    log "Using production Clerk publishable key from $CLERK_KEY_SOURCE."
+    ;;
+  pk_test_*)
+    if [[ "$MODE" != "local" && "$TORTOISE_ALLOW_TEST_CLERK" != "1" ]]; then
+      fail "Refusing to package a signed public Mac build with a Clerk test publishable key from $CLERK_KEY_SOURCE. Export CLERK_PUBLISHABLE_KEY=pk_live_... before publishing."
+    fi
+    log "Using Clerk test publishable key for local preview."
+    ;;
+  *)
+    fail "CLERK_PUBLISHABLE_KEY must look like a Clerk publishable key starting with pk_live_."
+    ;;
+esac
+
+case "$TORTOISE_API_BASE_URL" in
+  https://*)
+    ;;
+  *)
+    fail "TORTOISE_API_BASE_URL must be an https URL for public Mac builds."
+    ;;
+esac
+
 if [[ "$MODE" == "notarize" && -z "$NOTARY_PROFILE" ]]; then
   if [[ -z "$APPLE_ID" || -z "$APPLE_PASSWORD" || -z "$APPLE_TEAM_ID" ]]; then
     fail "Notarization needs QUIETGATE_NOTARY_PROFILE or APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, and QUIETGATE_APPLE_TEAM_ID."
@@ -191,7 +235,13 @@ BUILD_ARGS=(
   -derivedDataPath "$DERIVED_DATA"
   clean build
   DEVELOPMENT_TEAM="$APPLE_TEAM_ID"
+  CLERK_PUBLISHABLE_KEY="$CLERK_PUBLISHABLE_KEY"
+  TORTOISE_API_BASE_URL="$TORTOISE_API_BASE_URL"
 )
+
+if [[ -n "$BUILD_NUMBER_OVERRIDE" ]]; then
+  BUILD_ARGS+=(CURRENT_PROJECT_VERSION="$BUILD_NUMBER_OVERRIDE")
+fi
 
 if [[ "$MODE" == "local" ]]; then
   BUILD_ARGS+=(CODE_SIGN_IDENTITY="-")
@@ -281,20 +331,20 @@ verify_public_onboarding_strings
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_BUNDLE/Contents/Info.plist")"
 BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_BUNDLE/Contents/Info.plist")"
 DMG_SUFFIX="$MODE"
-DMG_PATH="$DIST_DIR/$APP_NAME-$VERSION-$BUILD_NUMBER-$DMG_SUFFIX.dmg"
+DMG_PATH="$DIST_DIR/$PUBLIC_APP_NAME-$VERSION-$BUILD_NUMBER-$DMG_SUFFIX.dmg"
 
 rm -rf "$DMG_ROOT"
 mkdir -p "$DMG_ROOT"
-ditto "$APP_BUNDLE" "$DMG_ROOT/$APP_NAME.app"
+ditto "$APP_BUNDLE" "$DMG_ROOT/$PUBLIC_APP_NAME.app"
 ln -s /Applications "$DMG_ROOT/Applications"
 
 cat > "$DMG_ROOT/Start Here.txt" <<TXT
-QuietGate
+Tortoise
 
-1. Drag QuietGate into Applications.
-2. Open QuietGate.
-3. Connect one supported browser when QuietGate asks.
-4. Home unlocks after QuietGate confirms the browser connection.
+1. Drag Tortoise into Applications.
+2. Open Tortoise.
+3. Sign in with your Tortoise account.
+4. Follow Setup until Tortoise says this Mac is connected.
 
 Browser Helper powers website blocking and YouTube cleanup in Chrome, Edge, Brave, Arc, and Firefox.
 TXT
@@ -304,7 +354,7 @@ verify_public_installer_text
 rm -f "$DMG_PATH"
 log "Creating DMG at $DMG_PATH"
 hdiutil create \
-  -volname "$APP_NAME $VERSION" \
+  -volname "$PUBLIC_APP_NAME $VERSION" \
   -srcfolder "$DMG_ROOT" \
   -format UDZO \
   -ov \

@@ -7,6 +7,8 @@ export type ApiErrorCode =
   | "forbidden"
   | "supabase_not_configured"
   | "extension_not_configured"
+  | "payload_too_large"
+  | "rate_limited"
   | "validation_error"
   | "invalid_link_code"
   | "invalid_device_token"
