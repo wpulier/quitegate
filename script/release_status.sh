@@ -137,10 +137,10 @@ if [[ -n "$NOTARIZED_DMG" && -f "$NOTARIZED_DMG" ]]; then
   else
     fail "Stapled notarization ticket is missing or invalid"
   fi
-  if spctl -a -vv --type open "$NOTARIZED_DMG" >/dev/null 2>&1; then
-    ok "Gatekeeper accepts notarized DMG"
+  if "$ROOT_DIR/script/verify_installer_dmg.sh" --public "$NOTARIZED_DMG" >/dev/null 2>&1; then
+    ok "Gatekeeper accepts mounted app from notarized DMG"
   else
-    fail "Gatekeeper does not accept notarized DMG"
+    fail "Public DMG verifier failed"
   fi
 else
   warn "No notarized DMG found. Run: QUIETGATE_NOTARY_PROFILE=$NOTARY_PROFILE script/package_public_release.sh --notarize"

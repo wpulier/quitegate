@@ -381,7 +381,6 @@ if [[ "$MODE" == "notarize" ]]; then
   log "Stapling notarization ticket"
   xcrun stapler staple "$DMG_PATH"
   xcrun stapler validate "$DMG_PATH"
-  spctl -a -vv --type open "$DMG_PATH"
   log "Verifying public installer contents"
   "$ROOT_DIR/script/verify_installer_dmg.sh" --public "$DMG_PATH"
 else
