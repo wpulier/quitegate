@@ -52,11 +52,21 @@ final class DevicesHubModelTests: XCTestCase {
   }
 
   func testConnectedCountCountsOnLeaves() {
+    // Two Chrome profiles, both on, nested under a single Chrome browser row.
+    // Real (leaf) count = Mac(1) + c1(1) + c2(1) = 3 (stale iPhone not counted).
+    // A naive container-counting bug (counting the Chrome row once) would give
+    // Mac(1) + Chrome-row(1) = 2, so this discriminates the two implementations.
     let rows = DevicesHub.rows(devices: [
-      device(id: "m", platform: "macos", minutesAgo: 1),          // on
-      device(id: "p", platform: "ios", minutesAgo: 30),           // stale
-      device(id: "c1", platform: "chrome_extension", minutesAgo: 1), // on (nested)
+      device(id: "m", platform: "macos", minutesAgo: 1),              // on
+      device(id: "p", platform: "ios", minutesAgo: 30),                // stale, attention
+      device(id: "c1", platform: "chrome_extension", minutesAgo: 1),   // on (nested)
+      device(id: "c2", platform: "chrome_extension", minutesAgo: 1),   // on (nested)
     ], currentDeviceID: nil, now: now)
-    XCTAssertEqual(DevicesHub.connectedCount(rows), 2)
+
+    let browserRows = rows.filter { if case .browser = $0.kind { return true } else { return false } }
+    XCTAssertEqual(browserRows.count, 1, "both Chrome profiles nest under one Chrome row")
+    XCTAssertEqual(browserRows[0].profiles.count, 2)
+
+    XCTAssertEqual(DevicesHub.connectedCount(rows), 3, "counts on-profiles (leaves), not container rows")
   }
 }

@@ -15,7 +15,7 @@ struct DeviceHubRow: Identifiable, Equatable {
 /// both the macOS and iOS Devices screens.
 enum DevicesHub {
   static func rows(devices: [TortoiseDevice], currentDeviceID: String?, now: Date) -> [DeviceHubRow] {
-    // Dedup by id, newest first.
+    // Dedup by id (last occurrence wins), then sort newest-first below.
     let unique = Dictionary(devices.map { ($0.id, $0) }, uniquingKeysWith: { _, new in new }).values
     let sorted = unique.sorted { ($0.lastSeenDate ?? .distantPast) > ($1.lastSeenDate ?? .distantPast) }
 
