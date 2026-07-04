@@ -379,10 +379,13 @@ final class IOSEnforcementController: ObservableObject {
     guard IOSSession.canEndEarly(session, now: Date()) else { return }
     shieldingEnabled = false
     enforcementMode = .open
+    session = nil
+    sessionExpiryTimer?.invalidate()
     applyCurrentMode()
   }
 
   func clearSelection() {
+    guard !sessionLockedActive else { return }
     selection = FamilyActivitySelection()
     shieldingEnabled = false
   }

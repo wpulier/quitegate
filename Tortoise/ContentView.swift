@@ -196,6 +196,7 @@ private struct TortoiseMobileShell: View {
   @State private var selectedSite = TuningCatalog.youtubeSiteID
   @State private var conceptStates: [String: Bool] = ["porn": true, "gambling": false, "news": false]
   @StateObject private var screenTime = IOSYouTubeScreenTimeController()
+  @Environment(\.scenePhase) private var scenePhase
 
   init(
     accountLabel: String,
@@ -250,6 +251,11 @@ private struct TortoiseMobileShell: View {
       .onChange(of: model.snapshot.policy?.policy.browser?.features, initial: true) { _, _ in
         if let policy = model.snapshot.policy?.policy {
           screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: policy))
+        }
+      }
+      .onChange(of: scenePhase) { _, newPhase in
+        if newPhase == .active {
+          screenTime.expireSessionIfNeeded()
         }
       }
 
@@ -556,7 +562,7 @@ private struct MobileBlockingScreen: View {
             MobileModeRow(mode: mode, isSelected: accessMode == mode)
           }
           .buttonStyle(.plain)
-          .disabled(isSyncing)
+          .disabled(isSyncing || screenTime.sessionLockedActive)
         }
       }
 
@@ -570,16 +576,40 @@ private struct MobileBlockingScreen: View {
           Text("A locked Strict session can't be ended or weakened early - that's the point.")
             .font(.system(size: 13))
             .foregroundStyle(TortoiseDesign.secondaryText)
+
+          if screenTime.sessionActive {
+            HStack(spacing: 10) {
+              Text(screenTime.sessionStatusLine)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(TortoiseDesign.primaryText)
+              Spacer(minLength: 8)
+              if screenTime.sessionLockedActive {
+                Label("Locked until it ends", systemImage: "lock.fill")
+                  .font(.system(size: 12, weight: .bold))
+                  .foregroundStyle(TortoiseDesign.secondaryText)
+              } else {
+                Button("End session") {
+                  screenTime.endSession()
+                }
+                .font(.system(size: 12, weight: .bold))
+                .buttonStyle(.bordered)
+              }
+            }
+          }
+
           HStack(spacing: 8) {
             MobileSessionButton("Focus · 25m") {
-              selectMode(.focus)
+              screenTime.startSession(mode: .focus, duration: 25 * 60, locked: false)
             }
+            .disabled(screenTime.sessionLockedActive)
             MobileSessionButton("Focus · 1h") {
-              selectMode(.focus)
+              screenTime.startSession(mode: .focus, duration: 60 * 60, locked: false)
             }
+            .disabled(screenTime.sessionLockedActive)
             MobileSessionButton("Lock Strict · 2h", systemImage: "lock") {
-              selectMode(.strict)
+              screenTime.startSession(mode: .strict, duration: 2 * 3600, locked: true)
             }
+            .disabled(screenTime.sessionLockedActive)
           }
         }
       }
@@ -1144,6 +1174,7 @@ private struct MobileIOSGuidedSetupCard: View {
               status: screenTime.setupStatus(for: step),
               detail: detail(for: step),
               actionTitle: actionTitle(for: step),
+              isDisabled: step == .targets && screenTime.sessionLockedActive,
               action: { perform(step) }
             )
           }
@@ -1213,6 +1244,7 @@ private struct MobileIOSGuidedSetupCard: View {
         await screenTime.requestAuthorization()
       }
     case .targets:
+      guard !screenTime.sessionLockedActive else { return }
       pickerPresented = true
     case .safariExtension:
       if screenTime.safariExtensionState == .enabledWaitingForHeartbeat {
@@ -1233,6 +1265,7 @@ private struct MobileIOSSetupStepRow: View {
   let status: IOSEnforcementSetupStatus
   let detail: String
   let actionTitle: String?
+  var isDisabled: Bool = false
   let action: () -> Void
 
   var body: some View {
@@ -1262,6 +1295,7 @@ private struct MobileIOSSetupStepRow: View {
           .font(.system(size: 12, weight: .bold))
           .buttonStyle(.bordered)
           .controlSize(.small)
+          .disabled(isDisabled)
       }
     }
   }
@@ -1384,13 +1418,14 @@ private struct MobileIOSYouTubeStatusCard: View {
           }
 
           Button {
+            guard !screenTime.sessionLockedActive else { return }
             pickerPresented = true
           } label: {
             Label(screenTime.hasSelection ? "Edit targets" : "Select targets", systemImage: "plus")
               .frame(maxWidth: .infinity)
           }
           .buttonStyle(.borderedProminent)
-          .disabled(screenTime.authorizationState != .approved)
+          .disabled(screenTime.authorizationState != .approved || screenTime.sessionLockedActive)
         }
 
         HStack(spacing: 9) {
@@ -1405,7 +1440,7 @@ private struct MobileIOSYouTubeStatusCard: View {
               .frame(maxWidth: .infinity)
           }
           .buttonStyle(.borderedProminent)
-          .disabled(!screenTime.canTurnOn && !screenTime.shieldingEnabled)
+          .disabled((!screenTime.canTurnOn && !screenTime.shieldingEnabled) || screenTime.sessionLockedActive)
 
           Button {
             screenTime.refreshSetupStatus()
@@ -1532,6 +1567,7 @@ private struct MobileIOSYouTubeStatusCard: View {
               .font(.system(size: 12.5, weight: .bold))
           }
           .buttonStyle(.bordered)
+          .disabled(screenTime.sessionLockedActive)
         }
       }
     }
