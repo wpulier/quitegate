@@ -122,3 +122,9 @@ git commit -m "Remove dead performReadinessAction (superseded by the Add flow)"
 ## Risk to confirm before execution
 
 None blocking. One judgment call for the parent to confirm: **Task 1 makes native-messaging-only browser connections (never account-linked) stop appearing in the Devices screen.** This is intended (the going-forward path is the account-based Add flow), but if you want those legacy connections to remain visible during a transition, Task 1 should instead keep the card but de-duplicate against account profiles. The evidence says clean removal is correct; confirm you're happy losing the legacy-only display.
+
+## Whole-branch review outcome (Phase 2c)
+
+Verdict: **Ready to merge — Yes.** No Critical/Important. Grep-verified zero over-removal; every mandated keeper (`browserConnectors`, `primaryBrowserConnector`, `BrowserConnectorSnapshot.nextAction`, `ReadinessAction`, `BrowserExtensionBridge`/`NativeHost`) survives and stays wired; the hub is genuinely the single browser source with no empty-screen / lost-account-browser path; the only behavior change is the intended convergence.
+
+**Phase 5 follow-up (Minor):** removing `performReadinessAction` newly-orphaned two internal native-messaging helpers — `ProtectionStore.prepareChromeExtensionInstall()` and `installChromeBridge()` (their only callers were inside `performReadinessAction`). Non-blocking; sweep them up with the native-messaging subsystem (`BrowserExtensionBridge`/`NativeHost`) retirement in Phase 5.
