@@ -43,11 +43,10 @@ final class TuneScreenModelTests: XCTestCase {
     // Browser (chrome) enforces every feature.
     let browser = TuneScreen.features(forSiteID: "instagram", policy: nil, surface: .chromeExtension)
     XCTAssertTrue(browser.allSatisfy(\.isEnforceable))
-    // iOS Safari cannot hook two Instagram surfaces.
+    // iOS Safari content scripts handle every Instagram feature too (verified in
+    // TortoiseSafariExtension/content/instagram.js + instagram.css), so all are enforceable there.
     let safari = TuneScreen.features(forSiteID: "instagram", policy: nil, surface: .iosSafari)
-    XCTAssertFalse(safari.first { $0.id == "instagramProfileSuggestions" }!.isEnforceable)
-    XCTAssertFalse(safari.first { $0.id == "instagramNotifications" }!.isEnforceable)
-    XCTAssertTrue(safari.first { $0.id == "instagramReels" }!.isEnforceable)
+    XCTAssertTrue(safari.allSatisfy(\.isEnforceable))
   }
 
   func testEveryCatalogFeatureResolvesToABrowserTuningFeature() {
@@ -57,14 +56,14 @@ final class TuneScreenModelTests: XCTestCase {
     }
   }
 
-  func testIosSafariEnforcedFeaturesReflectsPolicyAndDropsUnhookable() {
+  func testIosSafariEnforcedFeaturesReflectRealPolicy() {
     let safari = TuneScreen.iosSafariEnforcedFeatures(
       policy: policy(featuresOn: ["youtubeShorts", "instagramReels", "instagramNotifications"])
     )
     XCTAssertEqual(Set(safari.keys), Set(TuningCatalog.allFeatureIDs))
-    XCTAssertTrue(safari["youtubeShorts"]!)            // enforceable on iOS Safari + on
-    XCTAssertTrue(safari["instagramReels"]!)           // enforceable + on
-    XCTAssertFalse(safari["instagramNotifications"]!)  // on in policy but NOT hookable on iOS Safari
-    XCTAssertFalse(safari["youtubeHome"]!)             // enforceable but off
+    XCTAssertTrue(safari["youtubeShorts"]!)          // enforceable + on
+    XCTAssertTrue(safari["instagramReels"]!)         // enforceable + on
+    XCTAssertTrue(safari["instagramNotifications"]!) // now enforceable on iOS Safari + on
+    XCTAssertFalse(safari["youtubeHome"]!)           // enforceable but off
   }
 }

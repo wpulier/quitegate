@@ -46,10 +46,11 @@ enum TuningCatalog {
 
   static let allFeatureIDs: [String] = sites.flatMap(\.featureIDs)
 
-  /// Features the iOS Safari web extension can currently apply (all except two
-  /// Instagram surfaces it has no hook for). Used for Phase 3 enforcement honesty.
+  /// Features the iOS Safari web extension applies via its content scripts. The
+  /// scripts handle every catalog feature (incl. the two Instagram surfaces — see
+  /// TortoiseSafariExtension/content/instagram.js + instagram.css), so Safari
+  /// enforces all of them.
   private static let iosSafariFeatureIDs: Set<String> = Set(allFeatureIDs)
-    .subtracting(["instagramProfileSuggestions", "instagramNotifications"])
 
   /// Features enforced by iOS Screen Time rather than a content script.
   private static let iosScreenTimeFeatureIDs: Set<String> = ["youtubeDailyLimit"]
