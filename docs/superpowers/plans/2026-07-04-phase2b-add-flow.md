@@ -449,3 +449,19 @@ git commit -m "Add iOS Add sheet; wire Connect-another-device button to it"
 **Type consistency:** `AddDestination.{title,systemImage,caption,url(base:)}`, `QRCode.cgImage(for:scale:)`, `AddSheetView`, `MobileAddSheet` used consistently. Both sheets render `QRCode.cgImage(...)` via `Image(decorative:scale:)` (available on macOS + iOS).
 
 **Out of scope (deferred):** browser-connect transport convergence + folding local `browserConnectors` (2c); real per-device enforcement signal (Phase 3); Tune screen (Phase 3).
+
+## Whole-branch review outcome (Phase 2b)
+
+Verdict: **merge-ready with small fixes** (applied). No Critical. Core Add flow coherent + honest — one shared model (`AddDestination`/`QRCode`) behind two platform sheets, all four entry points rerouted (zero `performReadinessAction` callers remain), no fake state, no pairing codes.
+
+Applied in the fix pass (commit `b84707b`): Mac Add-sheet icon-chip contrast (`Color.white.opacity(0.06)`); `TODO(2c)` markers on the now-dead `ProtectionView.primaryConnectAction` + `ProtectionStore.performReadinessAction(_:)`.
+
+Carry forward:
+
+**Important (tracked, not code for this slice):**
+1. **Browser tile → `/download/chrome` is Chromium-only.** Firefox users (Tortoise ships a first-class `FirefoxExtension`) land on a Chrome page; spec §5.2 envisioned a browser-neutral `tortoise.com/add`. **Follow-up (web):** a neutral `/download/browser` (or `/add`) with server-side user-agent detection, or a per-UA redirect on `/download/chrome`. Don't let the Browser tile point at a Chrome-only page permanently.
+2. **Release gate:** the whole payoff depends on `/download/{ios,mac,chrome}` (under `AppConfig.apiBaseURL`) existing and funneling to install + same-account sign-in. Verify all three resolve before this is user-facing. Not a code change.
+
+**Cleanup for 2c:** remove the now-dead `primaryConnectAction` (`ProtectionView`) + `performReadinessAction(_:)` (`ProtectionStore`) together with the local native-messaging browser-connect path.
+
+**Minor (defer):** harmonize the entry-point button verbs toward "Add" ("Connect another browser or device" / "Expand to another device" / "Add" / "Connect another device" all open the same **Add** sheet).
