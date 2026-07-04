@@ -74,21 +74,20 @@ git commit -m "Converge Mac Devices on the account hub; remove local browser car
 ### Task 2: Remove the dead local-connect symbols
 
 **Files:**
-- Modify: `QuietGate/Views/ProtectionView.swift` (delete `primaryConnectAction`)
 - Modify: `QuietGate/Stores/ProtectionStore.swift` (delete `performReadinessAction(_:)`)
 - Test: none new (dead-code removal; existing suite is the guard).
 
-**Interfaces:** No public surface changes. Both symbols already carry `// TODO(2c)` markers and have zero callers.
+> Note: `primaryConnectAction` was already removed in Task 1 (it was orphaned by the card removal and grep-verified dead). Task 2 is now solely `ProtectionStore.performReadinessAction(_:)`.
 
-- [ ] **Step 1: Grep-guard both symbols.** Run:
+**Interfaces:** No public surface changes. `performReadinessAction(_:)` carries a `// TODO(2c)` marker and has zero callers.
+
+- [ ] **Step 1: Grep-guard the symbol.** Run:
 ```
 grep -rn 'primaryConnectAction\|performReadinessAction' --include='*.swift' QuietGate Tortoise QuietGateTests
 ```
-Expect each to appear ONLY on its own definition line (`ProtectionView.swift` for `primaryConnectAction`, `ProtectionStore.swift` for `performReadinessAction`). If either has any other hit, STOP and report — do not delete a referenced symbol. Record the result.
+Expect `performReadinessAction` ONLY on its own definition line in `ProtectionStore.swift`, and `primaryConnectAction` to return ZERO hits (already removed in Task 1). If `performReadinessAction` has any other hit, STOP and report — do not delete a referenced symbol. Record the result.
 
-- [ ] **Step 2: Delete `ProtectionView.primaryConnectAction`** (the `private var primaryConnectAction: ReadinessAction? { ... }` and its `// TODO(2c)` comment).
-
-- [ ] **Step 3: Delete `ProtectionStore.performReadinessAction(_:)`** (the `func performReadinessAction(_ action: ReadinessAction) { ... }` and its `// TODO(2c)` comment). Leave `ReadinessAction`, `supportedBrowserConnectorAction`, and `BrowserConnectorSnapshot.nextAction` intact.
+- [ ] **Step 2: Delete `ProtectionStore.performReadinessAction(_:)`** (the `func performReadinessAction(_ action: ReadinessAction) { ... }` and its `// TODO(2c)` comment). Leave `ReadinessAction`, `supportedBrowserConnectorAction`, and `BrowserConnectorSnapshot.nextAction` intact.
 
 - [ ] **Step 4: Build + full macOS suite.**
 Run: `xcodebuild -project QuietGate.xcodeproj -scheme QuietGate -configuration Debug -destination 'platform=macOS' -derivedDataPath build/DerivedData test`
@@ -100,8 +99,8 @@ Expected: `BUILD SUCCEEDED`.
 
 - [ ] **Step 6: Commit.**
 ```bash
-git add QuietGate/Views/ProtectionView.swift QuietGate/Stores/ProtectionStore.swift
-git commit -m "Remove dead local-connect code (primaryConnectAction, performReadinessAction)"
+git add QuietGate/Stores/ProtectionStore.swift
+git commit -m "Remove dead performReadinessAction (superseded by the Add flow)"
 ```
 
 ---
