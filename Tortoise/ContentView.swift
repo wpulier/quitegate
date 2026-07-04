@@ -244,13 +244,25 @@ private struct TortoiseMobileShell: View {
         screenTime.refreshSetupStatus()
       }
       .onChange(of: model.snapshot.policy?.policy.browser?.options?.youtubeDailyLimitMinutes, initial: true) { _, minutes in
-        if let minutes {
-          screenTime.dailyLimitMinutes = minutes
+        if !screenTime.sessionLockedActive {
+          if let minutes {
+            screenTime.dailyLimitMinutes = minutes
+          }
         }
       }
       .onChange(of: model.snapshot.policy?.policy.browser?.features, initial: true) { _, _ in
-        if let policy = model.snapshot.policy?.policy {
-          screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: policy))
+        if !screenTime.sessionLockedActive {
+          if let policy = model.snapshot.policy?.policy {
+            screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: policy))
+          }
+        }
+      }
+      .onChange(of: screenTime.sessionLockedActive) { _, locked in
+        if !locked {
+          if let minutes = model.snapshot.policy?.policy.browser?.options?.youtubeDailyLimitMinutes {
+            screenTime.dailyLimitMinutes = minutes
+          }
+          screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: model.snapshot.policy?.policy))
         }
       }
       .onChange(of: scenePhase) { _, newPhase in
@@ -313,6 +325,7 @@ private struct TortoiseMobileShell: View {
   }
 
   private func setAccessMode(_ mode: MobileAccessMode) {
+    guard !screenTime.sessionLockedActive else { return }
     if mode != .open && !screenTime.canTurnOn {
       section = .blocking
       screenTime.refreshSetupStatus()
@@ -1514,12 +1527,14 @@ private struct MobileIOSYouTubeStatusCard: View {
             MobileStepperButton(systemImage: "minus") {
               adjustDailyLimit(by: -5)
             }
+            .disabled(screenTime.sessionLockedActive)
             Text("\(screenTime.dailyLimitMinutes)m")
               .font(.system(size: 13, weight: .bold))
               .frame(width: 48)
             MobileStepperButton(systemImage: "plus") {
               adjustDailyLimit(by: 5)
             }
+            .disabled(screenTime.sessionLockedActive)
           }
         }
 
@@ -1600,6 +1615,7 @@ private struct MobileIOSYouTubeStatusCard: View {
   }
 
   private func adjustDailyLimit(by delta: Int) {
+    guard !screenTime.sessionLockedActive else { return }
     let nextMinutes = min(max(screenTime.dailyLimitMinutes + delta, 5), 480)
     screenTime.dailyLimitMinutes = nextMinutes
     setDailyLimit?(nextMinutes)
