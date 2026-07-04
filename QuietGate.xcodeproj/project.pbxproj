@@ -111,8 +111,10 @@
 		B4D3DF85BD0F2E8E7165C320 /* DisabledLegacyProviderServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1472E89F3657BB69577F593 /* DisabledLegacyProviderServices.swift */; };
 		B644B3B4452286150313F985 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A63BF32250707E748199B397 /* Assets.xcassets */; };
 		BFD740EBC2EE5EFF07CE5F3E /* ApplicationBlockingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */; };
+		C02C20F3AAC030400E98F91E /* QRCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09838947772A802ABC8CD02 /* QRCodeTests.swift */; };
 		C1D287B08C8955F1FA73E60A /* LegacyProviderContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */; };
 		C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */; };
+		C70AE39FFB9F88BC00B96A16 /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */; };
 		C7C2B7BB062E39732B904A97 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
 		C8C733370E76BE332DD633FB /* reddit.css in Resources */ = {isa = PBXBuildFile; fileRef = 1F803AC6B5D759110B34FEAC /* reddit.css */; };
 		C98AE14C6515CE4327EFCDD6 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120140E7CBD7F2EECD2D2084 /* AppConfig.swift */; };
@@ -145,6 +147,7 @@
 		F2153D1403D36B605A93B55E /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 892825147CC27E6727E35275 /* background.js */; };
 		F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD16A82D2B5139D57A101409 /* TortoiseApp.swift */; };
 		F3F16B9EC018AFC379D05E8C /* TortoiseShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D05F096844E04708BBBCAE46 /* TortoiseShieldConfiguration.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		FA6A7FF6019A0D43AF72EA84 /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */; };
 		FC5772371753CFBB84446085 /* ChromeExtensionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */; };
 /* End PBXBuildFile section */
 
@@ -324,8 +327,10 @@
 		DDC92C0665BEF24E2BD9493B /* LocalMacBlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMacBlockingProvider.swift; sourceTree = "<group>"; };
 		DF5C3C0E169106BD429B796E /* LegacyProviderClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderClient.swift; sourceTree = "<group>"; };
 		DFC86964CB1E05B942884D6C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E09838947772A802ABC8CD02 /* QRCodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeTests.swift; sourceTree = "<group>"; };
 		E10882E6DFEB8F566BA4D8E2 /* Tortoise.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Tortoise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1472E89F3657BB69577F593 /* DisabledLegacyProviderServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisabledLegacyProviderServices.swift; sourceTree = "<group>"; };
+		E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCode.swift; sourceTree = "<group>"; };
 		E3E886EE08264967C23A837E /* DeviceActivityMonitorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityMonitorExtension.swift; sourceTree = "<group>"; };
 		E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuietGateApp.swift; sourceTree = "<group>"; };
 		E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -650,6 +655,7 @@
 				899CA3F2232649843D526BBF /* PlatformControlsTests.swift */,
 				BB64C9620DA049F321B8E848 /* PresetUnificationTests.swift */,
 				59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */,
+				E09838947772A802ABC8CD02 /* QRCodeTests.swift */,
 				AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */,
 				757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */,
 				AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */,
@@ -686,6 +692,7 @@
 				395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */,
 				C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */,
 				CEFA98961060B02E33E4F2E5 /* IOSYouTubeScreenTimeController.swift */,
+				E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */,
 				9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */,
 				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
 				CD16A82D2B5139D57A101409 /* TortoiseApp.swift */,
@@ -1046,6 +1053,7 @@
 				25B59FDB054E488CDBBE2BDE /* PresetUnificationTests.swift in Sources */,
 				071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */,
 				13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */,
+				C02C20F3AAC030400E98F91E /* QRCodeTests.swift in Sources */,
 				F1A977F94DC0C35C6CC5A6AF /* TortoisePolicyCatalogTests.swift in Sources */,
 				9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */,
 				CDE2360F6B637182D8E13D1C /* TuningSyncInvariantTests.swift in Sources */,
@@ -1067,6 +1075,7 @@
 				4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */,
 				033ED0398C4323B5E6FD7513 /* IOSYouTubeScreenTimeController.swift in Sources */,
 				A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */,
+				C70AE39FFB9F88BC00B96A16 /* QRCode.swift in Sources */,
 				339528CD0C5C0D639462B725 /* SiteUsageModels.swift in Sources */,
 				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
 				F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */,
@@ -1128,6 +1137,7 @@
 				981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */,
 				25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */,
 				416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */,
+				FA6A7FF6019A0D43AF72EA84 /* QRCode.swift in Sources */,
 				029A084EC6564B7EE8B8E6A7 /* QuietGateApp.swift in Sources */,
 				657F2FFA32B7C076D8B89CEA /* ReadinessCheck.swift in Sources */,
 				227DB1AC963E20209757F7EF /* SettingsView.swift in Sources */,

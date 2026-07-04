@@ -45,6 +45,8 @@ targets:
         type: file
       - path: Tortoise/AddDestination.swift
         type: file
+      - path: Tortoise/QRCode.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
