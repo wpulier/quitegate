@@ -190,6 +190,7 @@ struct ProtectionView: View {
     )
   }
 
+  // TODO(2c): dead since the Add sheet replaced the local connect path; remove with the local browser card.
   private var primaryConnectAction: ReadinessAction? {
     store.primaryBrowserConnector.nextAction
       ?? store.browserConnectors.compactMap(\.nextAction).first

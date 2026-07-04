@@ -43,7 +43,7 @@ struct AddSheetView: View {
         .font(.system(size: 16, weight: .semibold))
         .foregroundStyle(QGDesign.secondaryText)
         .frame(width: 34, height: 34)
-        .background(QGDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
       Text(d.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(QGDesign.primaryText)
       Spacer()
       Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(QGDesign.secondaryText)

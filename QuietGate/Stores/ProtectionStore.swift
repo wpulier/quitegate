@@ -4009,6 +4009,7 @@ final class ProtectionStore: ObservableObject {
     errorMessage = nil
   }
 
+  // TODO(2c): no callers after the 2b Add flow; remove with the local browser-connector path.
   func performReadinessAction(_ action: ReadinessAction) {
     switch action {
     case .allowSavedProviderCredentialAccess:
