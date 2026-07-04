@@ -764,6 +764,18 @@ private struct MobileTuningScreen: View {
     selectedSiteFeatures.filter(\.isOn).count
   }
 
+  /// Only the features this surface (iOS Safari) can actually enforce. The bulk
+  /// "Hide all" / "Reset all" action must stay within this subset so it never
+  /// silently flips a feature whose row switch is disabled for being
+  /// non-enforceable here (see `MobileTuningFeatureRow`'s `isEnabled`).
+  private var enforceableSiteFeatures: [TuneFeature] {
+    selectedSiteFeatures.filter(\.isEnforceable)
+  }
+
+  private var enabledEnforceableFeatureCount: Int {
+    enforceableSiteFeatures.filter(\.isOn).count
+  }
+
   private var tuningActionTitle: String {
     if selectedSite == "youtube" {
       if !screenTime.shieldingEnabled && !screenTime.canTurnOn {
@@ -771,11 +783,11 @@ private struct MobileTuningScreen: View {
       }
       return screenTime.shieldingEnabled ? "Turn off" : "Turn on"
     }
-    let countableFeatures = selectedSiteFeatures.count
+    let countableFeatures = enforceableSiteFeatures.count
     guard countableFeatures > 0 else {
       return "Connect"
     }
-    return enabledFeatureCount == countableFeatures ? "Reset all" : "Hide all"
+    return enabledEnforceableFeatureCount == countableFeatures ? "Reset all" : "Hide all"
   }
 
   private func performTuningAction() {
@@ -787,12 +799,12 @@ private struct MobileTuningScreen: View {
   }
 
   private func toggleAll() {
-    let countableFeatures = selectedSiteFeatures.count
+    let countableFeatures = enforceableSiteFeatures.count
     guard countableFeatures > 0 else {
       return
     }
-    let next = enabledFeatureCount != countableFeatures
-    setFeatures(selectedSiteFeatures.map(\.id), next)
+    let next = enabledEnforceableFeatureCount != countableFeatures
+    setFeatures(enforceableSiteFeatures.map(\.id), next)
   }
 }
 
