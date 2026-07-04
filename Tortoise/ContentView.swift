@@ -2418,14 +2418,6 @@ private struct MobileBrowserProfile: Identifiable {
 }
 
 private extension TortoiseDevice {
-  var displayName: String {
-    let trimmed = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    if !trimmed.isEmpty {
-      return trimmed
-    }
-    return platformLabel
-  }
-
   var platformLabel: String {
     switch normalizedPlatform {
     case "ios":
@@ -2441,13 +2433,6 @@ private extension TortoiseDevice {
     default:
       return platform?.isEmpty == false ? platform!.replacingOccurrences(of: "_", with: " ").capitalized : "Device"
     }
-  }
-
-  var isBrowserProfile: Bool {
-    normalizedPlatform.contains("chrome") ||
-      normalizedPlatform.contains("firefox") ||
-      normalizedPlatform.contains("safari") ||
-      normalizedPlatform.contains("extension")
   }
 
   var systemImage: String {
@@ -2467,15 +2452,6 @@ private extension TortoiseDevice {
     let version = helperVersion ?? appVersion
     let versionText = version.map { " · \($0)" } ?? ""
     return "\(platformLabel)\(versionText) · \(lastSeenText)"
-  }
-
-  var initials: String {
-    let words = displayName.split(separator: " ")
-    let letters = words.prefix(2).compactMap(\.first)
-    if letters.isEmpty {
-      return String(platformLabel.prefix(2)).uppercased()
-    }
-    return String(letters).uppercased()
   }
 
   private var normalizedPlatform: String {

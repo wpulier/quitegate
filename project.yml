@@ -39,6 +39,8 @@ targets:
         type: file
       - path: Tortoise/TuningCatalog.swift
         type: file
+      - path: Tortoise/DevicePresentation.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
