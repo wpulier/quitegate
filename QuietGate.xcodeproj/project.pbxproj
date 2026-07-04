@@ -48,9 +48,11 @@
 		376815F7B8655861DA1ED147 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFA12DDF78911C0F4BAC8B0 /* ConnectionState.swift */; };
 		40DD4A6CC022CD2F177A64D5 /* icon-128.png in Resources */ = {isa = PBXBuildFile; fileRef = BC969185D064186ACC51A71B /* icon-128.png */; };
 		416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C037C5FB406B8F0B9446463B /* ProtectionView.swift */; };
+		4243BA64201FE78C51257E0E /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */; };
 		43A9D7F3392A03ACE68C6E6D /* MacTortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504A95B1313F6EF8FB7F3DFB /* MacTortoiseAPIClient.swift */; };
 		43F84451FEF86A8C4DC50B48 /* DevicePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */; };
 		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
+		4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */; };
 		4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */; };
 		501413D7BFE38F77E24AC402 /* ConnectionStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 992885591B8276341DD0BDF4 /* ConnectionStatusTests.swift */; };
 		50554AA4590B8B99B1EE830E /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E886EE08264967C23A837E /* DeviceActivityMonitorExtension.swift */; };
@@ -76,6 +78,7 @@
 		7C92538C6E11C4A4D517CB6E /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */; };
 		7CFBEE12AFF4CA9BA9FA00E4 /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */; };
 		7E447253F97180178BDCEB74 /* AccessModeControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5E54ACCB18B6E5BDCFA66D /* AccessModeControl.swift */; };
+		7F7C468A234245185E1C44FF /* IOSSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273DAEE65592F418FA16396A /* IOSSession.swift */; };
 		8032D3B63DC5EAB50CC1DBBC /* web-classifier.js in Resources */ = {isa = PBXBuildFile; fileRef = 8ECA36423B1D95A2DD76EEAB /* web-classifier.js */; };
 		806D5C06664E093FDAB14C17 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4022A534497D10734ECFB8 /* ContentView.swift */; };
 		81D28CC8A95576F962D704A7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A298AFE1684A25A4DDD00FD /* ContentView.swift */; };
@@ -106,6 +109,7 @@
 		A57B5F50051812166AA4DBFD /* youtube.css in Resources */ = {isa = PBXBuildFile; fileRef = 4215B60EEEBE5EB74944D34B /* youtube.css */; };
 		A6799A41F5AE0F688DA31B0A /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68CA11AB044A28A3D7FAC1D0 /* SafariWebExtensionHandler.swift */; };
 		AA5A23A16B0FE2E3FE9FB253 /* LegacyProviderMacServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */; };
+		ABFC9437D9A0C375B7E191C5 /* IOSSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273DAEE65592F418FA16396A /* IOSSession.swift */; };
 		AD444AE42F87DCA8F0927C2C /* PlatformControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60AE1C57CC050901354EC9E0 /* PlatformControls.swift */; };
 		AD7806CB72E5D3BE833B55F0 /* x.css in Resources */ = {isa = PBXBuildFile; fileRef = F7B1B9C63A5C2FCE2369A3F7 /* x.css */; };
 		ADD9141DBB7430FE5A38B428 /* DevicesHubModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03346809F4EA38D985C2D3F5 /* DevicesHubModelTests.swift */; };
@@ -152,6 +156,8 @@
 		F2153D1403D36B605A93B55E /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 892825147CC27E6727E35275 /* background.js */; };
 		F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD16A82D2B5139D57A101409 /* TortoiseApp.swift */; };
 		F3F16B9EC018AFC379D05E8C /* TortoiseShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D05F096844E04708BBBCAE46 /* TortoiseShieldConfiguration.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F837DCFC6B7718F165C747A1 /* IOSSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273DAEE65592F418FA16396A /* IOSSession.swift */; };
+		F93142E90D2C3E4BD7BC0A63 /* IOSSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273DAEE65592F418FA16396A /* IOSSession.swift */; };
 		FA6A7FF6019A0D43AF72EA84 /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */; };
 		FC5772371753CFBB84446085 /* ChromeExtensionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D8AD8DD445B6D7E286EC8C /* ChromeExtensionStatus.swift */; };
 /* End PBXBuildFile section */
@@ -234,6 +240,7 @@
 		1F803AC6B5D759110B34FEAC /* reddit.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = reddit.css; sourceTree = "<group>"; };
 		20CB59D7EFB48D1D0EE238E5 /* icon-48.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-48.png"; sourceTree = "<group>"; };
 		22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockingStoreTests.swift; sourceTree = "<group>"; };
+		273DAEE65592F418FA16396A /* IOSSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSession.swift; sourceTree = "<group>"; };
 		2B1BA60040AB9CCA5A5F955A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		2CB16BD2B65FAC73392D34C8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProtectionStore+LegacyProviderState.swift"; sourceTree = "<group>"; };
@@ -277,6 +284,7 @@
 		757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningCatalogTests.swift; sourceTree = "<group>"; };
 		77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockingStore.swift; sourceTree = "<group>"; };
 		796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMacBlockingProviderTests.swift; sourceTree = "<group>"; };
+		7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSessionTests.swift; sourceTree = "<group>"; };
 		7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBlockingProviderTests.swift; sourceTree = "<group>"; };
 		7DDB3D0AA0D5EE6D889967A5 /* TortoiseSafariExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseSafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainNormalizer.swift; sourceTree = "<group>"; };
@@ -658,6 +666,7 @@
 				D8035DE489271EB4A91BB265 /* DevicePresentationTests.swift */,
 				03346809F4EA38D985C2D3F5 /* DevicesHubModelTests.swift */,
 				6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */,
+				7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */,
 				875814D47F22199A45571212 /* LegacyProviderClientTests.swift */,
 				74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */,
 				796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */,
@@ -700,6 +709,7 @@
 				54B8050C0212C4236FE20E5C /* DevicesHubModel.swift */,
 				B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */,
 				395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */,
+				273DAEE65592F418FA16396A /* IOSSession.swift */,
 				C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */,
 				CEFA98961060B02E33E4F2E5 /* IOSYouTubeScreenTimeController.swift */,
 				E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */,
@@ -1011,6 +1021,7 @@
 			files = (
 				6AED7A3DAC4ACF70624A1396 /* ConnectionStatus.swift in Sources */,
 				7C92538C6E11C4A4D517CB6E /* IOSEnforcementShared.swift in Sources */,
+				7F7C468A234245185E1C44FF /* IOSSession.swift in Sources */,
 				A6799A41F5AE0F688DA31B0A /* SafariWebExtensionHandler.swift in Sources */,
 				55213734CF36DD46CF774064 /* TuningCatalog.swift in Sources */,
 			);
@@ -1031,6 +1042,7 @@
 				6569BB92900C567204E828A6 /* ConnectionStatus.swift in Sources */,
 				50554AA4590B8B99B1EE830E /* DeviceActivityMonitorExtension.swift in Sources */,
 				A0EED63B1E0BD682F4107F9B /* IOSEnforcementShared.swift in Sources */,
+				F837DCFC6B7718F165C747A1 /* IOSSession.swift in Sources */,
 				C7C2B7BB062E39732B904A97 /* TuningCatalog.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1057,6 +1069,7 @@
 				892955A4A477E4376F3DF52A /* DevicePresentationTests.swift in Sources */,
 				ADD9141DBB7430FE5A38B428 /* DevicesHubModelTests.swift in Sources */,
 				8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */,
+				4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */,
 				9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */,
 				92597E236D5AC38BCEA2124C /* LegacyProviderStatusServiceTests.swift in Sources */,
 				CAB87C4B96F2644084DC7581 /* LocalMacBlockingProviderTests.swift in Sources */,
@@ -1085,6 +1098,7 @@
 				43F84451FEF86A8C4DC50B48 /* DevicePresentation.swift in Sources */,
 				5CB80A03E6C49CEE1DC34656 /* DevicesHubModel.swift in Sources */,
 				934BFCCF424ABDC856E8802A /* IOSEnforcementShared.swift in Sources */,
+				F93142E90D2C3E4BD7BC0A63 /* IOSSession.swift in Sources */,
 				4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */,
 				033ED0398C4323B5E6FD7513 /* IOSYouTubeScreenTimeController.swift in Sources */,
 				A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */,
@@ -1132,6 +1146,8 @@
 				20EA3EE19D2CBDF46A7A672F /* FocusWindow.swift in Sources */,
 				D38AB5164ED59F3E12C79C50 /* FocusWindowScheduleControl.swift in Sources */,
 				7CFBEE12AFF4CA9BA9FA00E4 /* HeaderView.swift in Sources */,
+				4243BA64201FE78C51257E0E /* IOSEnforcementShared.swift in Sources */,
+				ABFC9437D9A0C375B7E191C5 /* IOSSession.swift in Sources */,
 				EC30891BD52A0D3F0689E59D /* InstallationStore.swift in Sources */,
 				B18F419F8670F9128564F674 /* KeychainStore.swift in Sources */,
 				D5E88C806BE5EB2FD956F4C2 /* LegacyProviderClient.swift in Sources */,

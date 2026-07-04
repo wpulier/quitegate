@@ -1,7 +1,9 @@
+import Foundation
+#if os(iOS)
 import DeviceActivity
 import FamilyControls
-import Foundation
 import ManagedSettings
+#endif
 
 enum TortoiseAppGroup {
   static let identifier = "group.com.yourtortoise.Tortoise"
@@ -25,6 +27,7 @@ enum IOSEnforcementAuthorizationMode: String, Codable, CaseIterable, Identifiabl
 
   var id: String { rawValue }
 
+  #if os(iOS)
   var familyMember: FamilyControlsMember {
     switch self {
     case .individual:
@@ -33,6 +36,7 @@ enum IOSEnforcementAuthorizationMode: String, Codable, CaseIterable, Identifiabl
       return .child
     }
   }
+  #endif
 }
 
 enum IOSEnforcementSetupStep: String, Codable, CaseIterable, Identifiable {
@@ -88,6 +92,7 @@ struct IOSEnforcementSnapshot: Codable, Equatable {
   var lastSafariPolicyMode: IOSEnforcementMode? = nil
   var lastSafariPolicyAppliedAt: Date? = nil
   var lastSetupCheckAt: Date? = nil
+  var session: IOSSessionState? = nil
 
   var hasSelectedTargets: Bool {
     selectedApplicationCount > 0 || selectedCategoryCount > 0 || selectedWebDomainCount > 0
@@ -218,6 +223,7 @@ enum IOSEnforcementSharedStore {
   private static let thresholdEventsKey = "TortoiseIOSThresholdEvents"
   static let safariHeartbeatFreshInterval: TimeInterval = 15 * 60
 
+  #if os(iOS)
   static func loadSelection() -> FamilyActivitySelection {
     guard let data = defaults.data(forKey: selectionKey),
           let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
@@ -232,6 +238,7 @@ enum IOSEnforcementSharedStore {
     }
     defaults.set(data, forKey: selectionKey)
   }
+  #endif
 
   static func loadSnapshot() -> IOSEnforcementSnapshot {
     guard let data = defaults.data(forKey: snapshotKey),
@@ -318,6 +325,7 @@ enum IOSEnforcementSharedStore {
   }
 }
 
+#if os(iOS)
 enum IOSEnforcementShieldApplier {
   static func applySelection(
     _ selection: FamilyActivitySelection,
@@ -368,3 +376,4 @@ extension DeviceActivityName {
 extension DeviceActivityEvent.Name {
   static let tortoiseDailyLimit = Self("tortoise.youtube.dailyLimit")
 }
+#endif

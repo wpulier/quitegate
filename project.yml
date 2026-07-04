@@ -49,6 +49,10 @@ targets:
         type: file
       - path: Tortoise/QRCode.swift
         type: file
+      - path: Tortoise/IOSEnforcementShared.swift
+        type: file
+      - path: Tortoise/IOSSession.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
@@ -120,6 +124,8 @@ targets:
       - TortoiseDeviceActivityMonitor
       - path: Tortoise/IOSEnforcementShared.swift
         type: file
+      - path: Tortoise/IOSSession.swift
+        type: file
       - path: Tortoise/ConnectionStatus.swift
         type: file
       - path: Tortoise/TuningCatalog.swift
@@ -176,6 +182,8 @@ targets:
     sources:
       - TortoiseSafariExtension
       - path: Tortoise/IOSEnforcementShared.swift
+        type: file
+      - path: Tortoise/IOSSession.swift
         type: file
       - path: Tortoise/ConnectionStatus.swift
         type: file
