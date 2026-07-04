@@ -721,3 +721,11 @@ git commit -m "Route all Mac tuning writes through the account policy"
 **Type consistency:** `TuningSurface`, `ConnectionStatus`, `AttentionReason`, `ConnectionFreshness.freshWindow`, `TuningCatalog.{sites,features,allFeatureIDs,openFeatureIDs,focusFeatureIDs,strictFeatureIDs,enabledFeatureFlags(for:),siteID(forFeatureID:)}`, `TortoisePolicy.{browserFeatureKeys,focusBrowserFeatureKeys,open,settingBrowserFeature,settingMode}`, `AccessMode.tuningFeatures`, `SafariExtensionPolicy.{openFeatures,focusFeatures,strictFeatures,policy(for:...)}` are used consistently across tasks with matching signatures. `browserFeatureKeys` changes from `let [String]` to `var [String]` (computed) — callers use it read-only, so source-compatible.
 
 **Out of scope (correctly deferred):** removing the 7 legacy status enums (Phase 5); per-surface enforcement honesty in the UI (Phase 3); TikTok (Phase 4); any view/Add-flow/Tune-UI change (Phases 2–3).
+
+## Follow-ups surfaced in the whole-branch review (for later phases)
+
+The Phase 1 review passed with no Critical/Important findings. These deferred items must be carried forward so the "single source of truth" is truly complete:
+
+1. **`NativeHost/QuietGateNativeHost.swift:11-53` holds a 4th, divergent copy of the feature list** (the old 39-key set, missing the 3 Instagram keys). It is structurally isolated (a standalone single-file `swiftc` build that cannot import the shared catalog without a build restructure) and functionally inert today (its `normalizedSettings` merge preserves the app's 42-key writes). **Phase 5:** generate/reconcile this dict against `TuningCatalog`, or add a smoke test asserting `defaultSettings["features"].keys == TuningCatalog.allFeatureIDs`.
+2. **`BrowserTuningSite.title`/`brandAssetName` (`QuietGate/Models/BrowserTuningFeature.swift:3-90`) duplicate `TuningCatalog.sites`** with no drift guard. **Phase 2/3 (UI) or Phase 5:** collapse the site type into the catalog, or add a drift-guard test in the interim.
+3. **`TuningCatalog.siteID(forFeatureID:)` currently has no production consumer** (foundation API for the Tune UI). Wired in Phase 2; leave as-is or add a one-line test.
