@@ -67,6 +67,7 @@ final class IOSEnforcementController: ObservableObject {
   private let immediateStore = ManagedSettingsStore(named: .tortoiseImmediate)
   private let activityCenter = DeviceActivityCenter()
   private var isApplying = false
+  private var policyFeatures: [String: Bool] = [:]
 
   init() {
     let persisted = Self.loadState()
@@ -525,13 +526,21 @@ final class IOSEnforcementController: ObservableObject {
     }
   }
 
+  func applyPolicyFeatures(_ features: [String: Bool]) {
+    policyFeatures = features
+    writeSafariPolicy()
+  }
+
   private func writeSafariPolicy(mode overrideMode: IOSEnforcementMode? = nil) {
     let mode = overrideMode ?? (shieldingEnabled ? enforcementMode : .open)
-    let policy = SafariExtensionPolicy.policy(
+    var policy = SafariExtensionPolicy.policy(
       for: mode,
       dailyLimitMinutes: dailyLimitMinutes,
       adultWebFilterEnabled: mode == .strict
     )
+    if !policyFeatures.isEmpty {
+      policy.features = policyFeatures  // real per-feature state (Safari-enforceable only) overrides the mode preset
+    }
     IOSEnforcementSharedStore.saveSafariPolicy(policy)
   }
 

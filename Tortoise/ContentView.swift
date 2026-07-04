@@ -247,6 +247,9 @@ private struct TortoiseMobileShell: View {
           screenTime.dailyLimitMinutes = minutes
         }
       }
+      .onChange(of: model.snapshot.policy?.policy.browser?.features, initial: true) { _, _ in
+        screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: model.snapshot.policy?.policy))
+      }
 
       bottomTabBar
     }
