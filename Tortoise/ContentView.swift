@@ -327,12 +327,15 @@ private struct TortoiseMobileShell: View {
   }
 
   private func setTuningFeature(_ id: String, _ enabled: Bool) {
+    guard !screenTime.sessionLockedActive else { return }
+
     Task {
       _ = await model.setBrowserFeature(id, enabled: enabled, using: clerk)
     }
   }
 
   private func setTuningFeatures(_ ids: [String], _ enabled: Bool) {
+    guard !screenTime.sessionLockedActive else { return }
     guard !ids.isEmpty else {
       return
     }
@@ -343,6 +346,8 @@ private struct TortoiseMobileShell: View {
   }
 
   private func setYoutubeProtection(_ enabled: Bool) {
+    guard !screenTime.sessionLockedActive else { return }
+
     if enabled && !screenTime.canTurnOn {
       section = .blocking
       screenTime.refreshSetupStatus()
@@ -714,7 +719,7 @@ private struct MobileTuningScreen: View {
               performTuningAction()
             }
             .buttonStyle(.bordered)
-            .disabled(model.isSyncing)
+            .disabled(model.isSyncing || screenTime.sessionLockedActive)
           }
         }
 
@@ -786,7 +791,7 @@ private struct MobileTuningScreen: View {
                   get: { feature.isOn },
                   set: { setFeature(feature.id, $0) }
                 ),
-                isEnabled: feature.isEnforceable && !model.isSyncing
+                isEnabled: feature.isEnforceable && !model.isSyncing && !screenTime.sessionLockedActive
               )
             }
           }
