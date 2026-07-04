@@ -6,15 +6,22 @@ struct TuningView: View {
   @EnvironmentObject private var store: ProtectionStore
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
   @EnvironmentObject private var accountStore: MacAccountStore
-  @State private var selectedSite = DesignTuningSite.youtube
-  @State private var localTikTokFeatures: [String: Bool] = [
-    "tt_foryou": true,
-    "tt_live": true,
-    "tt_explore": false,
-    "tt_track": true,
-    "tt_limit": false
-  ]
+  @State private var selectedSite = "youtube"
   @State private var addSheetPresented = false
+
+  private var tunePolicy: TortoisePolicy? { accountStore.snapshot.policy?.policy }
+
+  private var tuneSites: [TuneSite] {
+    TuneScreen.sites(policy: tunePolicy, surface: .chromeExtension)
+  }
+
+  private var selectedTuneSite: TuneSite? {
+    tuneSites.first { $0.id == selectedSite }
+  }
+
+  private var selectedSiteFeatures: [TuneFeature] {
+    TuneScreen.features(forSiteID: selectedSite, policy: tunePolicy, surface: .chromeExtension)
+  }
 
   var body: some View {
     QGPage(maxWidth: 820) {
@@ -52,18 +59,16 @@ struct TuningView: View {
       alignment: .leading,
       spacing: 10
     ) {
-      ForEach(DesignTuningSite.allCases) { site in
+      ForEach(tuneSites) { site in
         Button {
-          selectedSite = site
+          selectedSite = site.id
         } label: {
-          TuningSiteTile(
-            site: site,
-            countText: countText(for: site),
-            isSelected: selectedSite == site
-          )
+          TuningSiteTile(site: site, isSelected: selectedSite == site.id)
         }
         .buttonStyle(.plain)
       }
+
+      TuningComingSoonTile(title: "TikTok")
 
       VStack(alignment: .leading, spacing: 12) {
         Image(systemName: "plus")
@@ -87,18 +92,12 @@ struct TuningView: View {
   private var selectedSiteHeader: some View {
     QGCard {
       HStack(spacing: 14) {
-        QGAvatar(
-          text: selectedSite.letter,
-          size: 44,
-          background: selectedSite.color,
-          foreground: selectedSite.foreground,
-          cornerRadius: 10
-        )
+        TuneBrandMark(assetName: selectedTuneSite?.brandAssetName, size: 44, cornerRadius: 10)
         VStack(alignment: .leading, spacing: 3) {
-          Text("\(selectedSite.title) cleanup")
+          Text("\(selectedTuneSite?.title ?? "") cleanup")
             .font(.system(size: 17, weight: .bold))
             .foregroundStyle(QGDesign.primaryText)
-          Text(selectedSite.domain)
+          Text("\(selectedFeatureCount)/\(selectedSiteFeatures.count) hidden")
             .font(.system(size: 13))
             .foregroundStyle(QGDesign.secondaryText)
         }
@@ -107,7 +106,7 @@ struct TuningView: View {
           toggleAll()
         }
         .buttonStyle(QGPrimaryButtonStyle())
-        .disabled(selectedSite == .tiktok ? false : store.timedSessionLockedActive)
+        .disabled(store.timedSessionLockedActive)
       }
     }
   }
@@ -118,7 +117,7 @@ struct TuningView: View {
         HStack(spacing: 8) {
           Image(systemName: "shield.checkered")
             .foregroundStyle(QGDesign.green)
-          Text("Where \(selectedSite.title) tuning is active")
+          Text("Where \(selectedTuneSite?.title ?? "") tuning is active")
             .font(.system(size: 13, weight: .bold))
             .foregroundStyle(QGDesign.primaryText)
           Text("· \(scopeCountText)")
@@ -148,31 +147,27 @@ struct TuningView: View {
   private var featuresCard: some View {
     QGCard {
       VStack(spacing: 0) {
-        ForEach(Array(siteFeatures.enumerated()), id: \.element.id) { index, feature in
+        ForEach(Array(selectedSiteFeatures.enumerated()), id: \.element.id) { index, feature in
           if index > 0 {
             ProductDivider()
               .padding(.vertical, 13)
           }
-          TuningFeatureDisplayRow(
+          TuningFeatureRow(
             feature: feature,
             isOn: binding(for: feature),
-            isEnabled: selectedSite == .tiktok || !store.timedSessionLockedActive
+            isEnabled: !store.timedSessionLockedActive
           )
         }
       }
     }
   }
 
-  private var siteFeatures: [TuningFeatureDisplay] {
-    selectedSite.features
-  }
-
   private var selectedFeatureCount: Int {
-    siteFeatures.filter { binding(for: $0).wrappedValue }.count
+    selectedSiteFeatures.filter(\.isOn).count
   }
 
   private var toggleAllLabel: String {
-    selectedFeatureCount == siteFeatures.count ? "Reset all" : "Hide all"
+    selectedFeatureCount == selectedSiteFeatures.count ? "Reset all" : "Hide all"
   }
 
   private var scopeCountText: String {
@@ -190,22 +185,9 @@ struct TuningView: View {
     return connected
   }
 
-  private func countText(for site: DesignTuningSite) -> String {
-    let features = site.features
-    let count = features.filter { binding(for: $0).wrappedValue }.count
-    return "\(count)/\(features.count) on"
-  }
-
   private func toggleAll() {
-    let nextValue = selectedFeatureCount != siteFeatures.count
-    if selectedSite == .tiktok {
-      for feature in siteFeatures {
-        localTikTokFeatures[feature.id] = nextValue
-      }
-      return
-    }
-
-    let features = siteFeatures.compactMap(\.storeFeature)
+    let nextValue = selectedFeatureCount != selectedSiteFeatures.count
+    let features = selectedSiteFeatures.compactMap { BrowserTuningFeature(rawValue: $0.id) }
     Task {
       await accountStore.setTuningFeatures(
         features,
@@ -217,27 +199,21 @@ struct TuningView: View {
     }
   }
 
-  private func binding(for feature: TuningFeatureDisplay) -> Binding<Bool> {
-    if let storeFeature = feature.storeFeature {
-      return Binding {
-        store.tuningFeatureEnabled(storeFeature)
-      } set: { enabled in
-        Task {
+  private func binding(for feature: TuneFeature) -> Binding<Bool> {
+    Binding {
+      feature.isOn
+    } set: { newValue in
+      Task {
+        if let f = BrowserTuningFeature(rawValue: feature.id) {
           await accountStore.setTuningFeature(
-            storeFeature,
-            enabled: enabled,
+            f,
+            enabled: newValue,
             using: clerk,
             protectionStore: store,
             appBlockingStore: appBlockingStore
           )
         }
       }
-    }
-
-    return Binding {
-      localTikTokFeatures[feature.id, default: false]
-    } set: { enabled in
-      localTikTokFeatures[feature.id] = enabled
     }
   }
 
@@ -252,18 +228,17 @@ struct TuningView: View {
 }
 
 private struct TuningSiteTile: View {
-  let site: DesignTuningSite
-  let countText: String
+  let site: TuneSite
   let isSelected: Bool
 
   var body: some View {
     HStack(spacing: 10) {
-      QGAvatar(text: site.letter, size: 34, background: site.color, foreground: site.foreground, cornerRadius: 8)
+      TuneBrandMark(assetName: site.brandAssetName, size: 34, cornerRadius: 8)
       VStack(alignment: .leading, spacing: 2) {
         Text(site.title)
           .font(.system(size: 14, weight: .bold))
           .foregroundStyle(QGDesign.primaryText)
-        Text(countText)
+        Text("\(site.enabledCount)/\(site.totalCount)")
           .font(.system(size: 12, weight: .semibold))
           .foregroundStyle(QGDesign.secondaryText)
       }
@@ -279,8 +254,71 @@ private struct TuningSiteTile: View {
   }
 }
 
-private struct TuningFeatureDisplayRow: View {
-  let feature: TuningFeatureDisplay
+/// A dimmed, non-interactive tile for a site that isn't tunable yet. No toggles,
+/// no fake data - just an honest placeholder until the real tuner ships.
+private struct TuningComingSoonTile: View {
+  let title: String
+
+  var body: some View {
+    HStack(spacing: 10) {
+      RoundedRectangle(cornerRadius: 8, style: .continuous)
+        .fill(Color.white.opacity(0.06))
+        .frame(width: 34, height: 34)
+        .overlay {
+          Image(systemName: "hourglass")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(QGDesign.tertiaryText)
+        }
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+          .font(.system(size: 14, weight: .bold))
+          .foregroundStyle(QGDesign.secondaryText)
+        Text("Coming soon")
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(QGDesign.tertiaryText)
+      }
+      Spacer(minLength: 0)
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, minHeight: 68)
+    .background(QGDesign.panel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 12, style: .continuous)
+        .strokeBorder(QGDesign.hairline)
+    }
+    .opacity(0.55)
+  }
+}
+
+/// Renders a site's real brand mark asset, falling back to a plain glyph if the
+/// asset name is unavailable (e.g. before the policy has loaded).
+private struct TuneBrandMark: View {
+  let assetName: String?
+  var size: CGFloat = 34
+  var cornerRadius: CGFloat = 8
+
+  var body: some View {
+    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+      .fill(Color.white.opacity(0.08))
+      .frame(width: size, height: size)
+      .overlay {
+        if let assetName {
+          Image(assetName)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .padding(size * 0.2)
+        } else {
+          Image(systemName: "globe")
+            .font(.system(size: size * 0.4, weight: .semibold))
+            .foregroundStyle(QGDesign.secondaryText)
+        }
+      }
+      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+  }
+}
+
+private struct TuningFeatureRow: View {
+  let feature: TuneFeature
   @Binding var isOn: Bool
   let isEnabled: Bool
 
@@ -329,120 +367,4 @@ private struct TuningScopeChipModel: Identifiable {
   let avatar: String
   let title: String
   let isOn: Bool
-}
-
-private enum DesignTuningSite: String, CaseIterable, Identifiable {
-  case youtube
-  case x
-  case instagram
-  case reddit
-  case tiktok
-
-  var id: String { rawValue }
-
-  var title: String {
-    switch self {
-    case .youtube: return "YouTube"
-    case .x: return "X"
-    case .instagram: return "Instagram"
-    case .reddit: return "Reddit"
-    case .tiktok: return "TikTok"
-    }
-  }
-
-  var letter: String {
-    switch self {
-    case .youtube: return "YT"
-    case .x: return "X"
-    case .instagram: return "IG"
-    case .reddit: return "RD"
-    case .tiktok: return "TT"
-    }
-  }
-
-  var domain: String {
-    switch self {
-    case .youtube: return "youtube.com"
-    case .x: return "x.com · twitter.com"
-    case .instagram: return "instagram.com"
-    case .reddit: return "reddit.com"
-    case .tiktok: return "tiktok.com"
-    }
-  }
-
-  var color: Color {
-    switch self {
-    case .youtube:
-      return QGDesign.red
-    case .x, .tiktok:
-      return .black
-    case .instagram:
-      return .pink
-    case .reddit:
-      return .orange
-    }
-  }
-
-  var foreground: Color {
-    switch self {
-    case .tiktok:
-      return .cyan
-    default:
-      return .white
-    }
-  }
-
-  var features: [TuningFeatureDisplay] {
-    switch self {
-    case .youtube:
-      return [
-        TuningFeatureDisplay(id: "yt_home", title: "Hide Home Feed", detail: "Open YouTube straight to search and subscriptions - no recommendation wall.", storeFeature: .youtubeHome),
-        TuningFeatureDisplay(id: "yt_shorts", title: "Hide Shorts", detail: "Remove Shorts shelves, links, and the full-screen Shorts player.", storeFeature: .youtubeShorts),
-        TuningFeatureDisplay(id: "yt_recs", title: "Hide Recommended", detail: "Strip recommended videos from the watch sidebar and end screens.", storeFeature: .youtubeRecommendations),
-        TuningFeatureDisplay(id: "yt_autoplay", title: "Disable Autoplay", detail: "Stop the next video from rolling automatically.", storeFeature: .youtubeAutoplay),
-        TuningFeatureDisplay(id: "yt_comments", title: "Hide Comments", detail: "Remove the comment section from watch pages.", storeFeature: .youtubeComments),
-        TuningFeatureDisplay(id: "yt_track", title: "Track Time & Videos", detail: "Count active time and unique videos across connected profiles.", storeFeature: .youtubeUsageTracking),
-        TuningFeatureDisplay(id: "yt_limit", title: "Daily Time Limit · 45m", detail: "Block YouTube once the daily limit is reached.", storeFeature: .youtubeDailyLimit)
-      ]
-    case .x:
-      return [
-        TuningFeatureDisplay(id: "x_sensitive", title: "Hide Sensitive Media", detail: "Hide flagged sensitive media and high-confidence explicit posts.", storeFeature: .xSensitiveMedia),
-        TuningFeatureDisplay(id: "x_video", title: "Hide Videos & GIFs", detail: "Remove autoplaying video and GIF players from the timeline.", storeFeature: .xVideos),
-        TuningFeatureDisplay(id: "x_explore", title: "Hide Explore & Trends", detail: "Remove trend modules and Explore entry points.", storeFeature: .xExploreTrends),
-        TuningFeatureDisplay(id: "x_photos", title: "Hide Tweet Photos", detail: "Remove inline photos while keeping text and avatars.", storeFeature: .xPhotos),
-        TuningFeatureDisplay(id: "x_cards", title: "Hide Media Cards", detail: "Remove rich link cards with large media previews.", storeFeature: .xMediaCards)
-      ]
-    case .instagram:
-      return [
-        TuningFeatureDisplay(id: "ig_reels", title: "Hide Reels", detail: "Remove Reels trays, links, and the Reels player.", storeFeature: .instagramReels),
-        TuningFeatureDisplay(id: "ig_explore", title: "Hide Explore", detail: "Remove Explore and redirect it back to your feed.", storeFeature: .instagramExplore),
-        TuningFeatureDisplay(id: "ig_suggested", title: "Hide Suggested Posts", detail: "Remove recommended and promoted posts from the feed.", storeFeature: .instagramSuggested),
-        TuningFeatureDisplay(id: "ig_stories", title: "Hide Stories", detail: "Remove the stories tray at the top of the feed.", storeFeature: .instagramStories),
-        TuningFeatureDisplay(id: "ig_dms", title: "Hide DMs", detail: "Remove direct-message entry points.", storeFeature: .instagramMessages)
-      ]
-    case .reddit:
-      return [
-        TuningFeatureDisplay(id: "rd_popular", title: "Hide Popular & All", detail: "Remove r/popular and r/all and redirect them home.", storeFeature: .redditPopularAll),
-        TuningFeatureDisplay(id: "rd_recs", title: "Hide Recommendations", detail: "Remove recommended and promoted community modules.", storeFeature: .redditRecommendations),
-        TuningFeatureDisplay(id: "rd_nsfw", title: "Hide NSFW Posts & Communities", detail: "Remove mature posts, communities, and adult media.", storeFeature: .redditNSFW),
-        TuningFeatureDisplay(id: "rd_media", title: "Hide Media Posts", detail: "Remove image and video posts while keeping text.", storeFeature: .redditMedia),
-        TuningFeatureDisplay(id: "rd_sidebars", title: "Hide Sidebars", detail: "Remove right-rail sidebars and community panels.", storeFeature: .redditSidebars)
-      ]
-    case .tiktok:
-      return [
-        TuningFeatureDisplay(id: "tt_foryou", title: "Hide For You Feed", detail: "Open TikTok to Following instead of the For You loop.", storeFeature: nil),
-        TuningFeatureDisplay(id: "tt_live", title: "Hide LIVE", detail: "Remove LIVE entry points and shelves.", storeFeature: nil),
-        TuningFeatureDisplay(id: "tt_explore", title: "Hide Explore", detail: "Remove the Explore tab.", storeFeature: nil),
-        TuningFeatureDisplay(id: "tt_track", title: "Track Time", detail: "Count active time across connected profiles.", storeFeature: nil),
-        TuningFeatureDisplay(id: "tt_limit", title: "Daily Time Limit · 20m", detail: "Block TikTok once the daily limit is reached.", storeFeature: nil)
-      ]
-    }
-  }
-}
-
-private struct TuningFeatureDisplay: Identifiable {
-  let id: String
-  let title: String
-  let detail: String
-  let storeFeature: BrowserTuningFeature?
 }
