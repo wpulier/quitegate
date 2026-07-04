@@ -178,78 +178,9 @@ struct SafariExtensionPolicy: Codable, Equatable {
     ]
   }
 
-  private static let openFeatures: [String: Bool] = [
-    "youtubeHome": false,
-    "youtubeVideoSidebar": false,
-    "youtubeShorts": false,
-    "youtubeComments": false,
-    "youtubeRecommendations": false,
-    "youtubeSearch": false,
-    "youtubeEndScreens": false,
-    "youtubeEndScreenCards": false,
-    "youtubeLiveChat": false,
-    "youtubeAutoplay": false,
-    "youtubePlaylists": false,
-    "youtubeFundraisers": false,
-    "youtubeMixes": false,
-    "youtubeMerch": false,
-    "youtubeVideoInfo": false,
-    "youtubeTopHeader": false,
-    "youtubeNotifications": false,
-    "youtubeExplore": false,
-    "youtubeMoreFromYouTube": false,
-    "youtubeSubscriptions": false,
-    "youtubeAnnotations": false,
-    "youtubeUsageTracking": true,
-    "youtubeDailyLimit": false,
-    "xSensitiveMedia": false,
-    "xExplicitContent": false,
-    "xExplicitSearch": false,
-    "xVideos": false,
-    "xPhotos": false,
-    "xMediaCards": false,
-    "xExploreTrends": false,
-    "instagramReels": false,
-    "instagramExplore": false,
-    "instagramSuggested": false,
-    "instagramStories": false,
-    "instagramMessages": false,
-    "redditPopularAll": false,
-    "redditRecommendations": false,
-    "redditNSFW": false,
-    "redditMedia": false,
-    "redditSidebars": false
-  ]
-
-  private static var focusFeatures: [String: Bool] {
-    var features = openFeatures
-    [
-      "youtubeHome",
-      "youtubeShorts",
-      "youtubeRecommendations",
-      "youtubeVideoSidebar",
-      "youtubeAutoplay",
-      "youtubeExplore",
-      "xSensitiveMedia",
-      "xVideos",
-      "xExploreTrends",
-      "instagramReels",
-      "instagramExplore",
-      "instagramSuggested",
-      "redditPopularAll",
-      "redditRecommendations",
-      "redditNSFW"
-    ].forEach { features[$0] = true }
-    return features
-  }
-
-  private static var strictFeatures: [String: Bool] {
-    var features = openFeatures
-    for key in Array(features.keys) {
-      features[key] = true
-    }
-    return features
-  }
+  private static var openFeatures: [String: Bool] { TuningCatalog.enabledFeatureFlags(for: "open") }
+  private static var focusFeatures: [String: Bool] { TuningCatalog.enabledFeatureFlags(for: "focus") }
+  private static var strictFeatures: [String: Bool] { TuningCatalog.enabledFeatureFlags(for: "strict") }
 
   private static let adultFallbackDomains = [
     "pornhub.com",

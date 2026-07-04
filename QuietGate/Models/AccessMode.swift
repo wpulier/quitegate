@@ -56,13 +56,7 @@ enum AccessMode: String, CaseIterable, Codable, Identifiable {
     case .open:
       return []
     case .focus:
-      return [
-        .youtubeHome, .youtubeShorts, .youtubeUsageTracking,
-        .xSensitiveMedia, .xVideos,
-        .instagramReels, .instagramExplore, .instagramSuggested, .instagramProfileSuggestions,
-        .instagramMessages, .instagramNotifications,
-        .redditPopularAll, .redditRecommendations,
-      ]
+      return BrowserTuningFeature.allCases.filter { TuningCatalog.focusFeatureIDs.contains($0.rawValue) }
     case .strict:
       return BrowserTuningFeature.allCases
     }
