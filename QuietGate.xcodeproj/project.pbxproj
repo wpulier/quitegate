@@ -16,6 +16,7 @@
 		071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10484E7F6F5747D99616D28 /* ProtectionStoreTestDoubles.swift */; };
 		07CADBE5FF31740DB4EFA6DF /* TortoiseSafariExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7DDB3D0AA0D5EE6D889967A5 /* TortoiseSafariExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		092E300E5FE386FB11403794 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01791AB8AB4316D2C80E7829 /* ClerkKit */; };
+		0D186DA5BF4949E068B580CA /* AddSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912A7297B8C50F7E12F7199D /* AddSheetView.swift */; };
 		11B11A8B7BFDEBF44B7F66BD /* blocked.css in Resources */ = {isa = PBXBuildFile; fileRef = 885DC37A991A432C1E950CB1 /* blocked.css */; };
 		13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */; };
 		1891D289C73152B6BA059DB8 /* AddDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB03297B4ADDB28BD7E61099 /* AddDestinationTests.swift */; };
@@ -281,6 +282,7 @@
 		899CA3F2232649843D526BBF /* PlatformControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsTests.swift; sourceTree = "<group>"; };
 		8ECA36423B1D95A2DD76EEAB /* web-classifier.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "web-classifier.js"; sourceTree = "<group>"; };
 		904A4A01A1D931693B9E434E /* ControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlView.swift; sourceTree = "<group>"; };
+		912A7297B8C50F7E12F7199D /* AddSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSheetView.swift; sourceTree = "<group>"; };
 		92D3D43FDF93709049161548 /* BlockRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockRules.swift; sourceTree = "<group>"; };
 		94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationBlockingService.swift; sourceTree = "<group>"; };
 		951E2873B26BD2675998D19A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -509,6 +511,7 @@
 		48C8C25C0447433ADDA3A65E /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				912A7297B8C50F7E12F7199D /* AddSheetView.swift */,
 				48D70E7CB61ED25567925555 /* AppsView.swift */,
 				CB264978DFD0DC526DD449C0 /* BlockRulesSection.swift */,
 				6B4022A534497D10734ECFB8 /* ContentView.swift */,
@@ -1091,6 +1094,7 @@
 				543D3D77B8DCB58049FA2F27 /* AccessMode.swift in Sources */,
 				7E447253F97180178BDCEB74 /* AccessModeControl.swift in Sources */,
 				2D1EF6E98CFC1AC7BF55E9D0 /* AddDestination.swift in Sources */,
+				0D186DA5BF4949E068B580CA /* AddSheetView.swift in Sources */,
 				522F946F5B674055032FC0B0 /* AdultContentPreset.swift in Sources */,
 				5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */,
 				C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */,

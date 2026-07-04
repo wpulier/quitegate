@@ -17,6 +17,7 @@ struct ControlView: View {
   @State private var pendingCategoryIDs: Set<BlockCategoryID> = []
   @State private var pendingSiteDomains: Set<String> = []
   @State private var addingCustomDomain = false
+  @State private var addSheetPresented = false
 
   init(openProtection: @escaping () -> Void = {}) {}
 
@@ -44,6 +45,9 @@ struct ControlView: View {
       await store.refreshProtectionStatus()
       appBlockingStore.refreshAvailableApplications()
       appBlockingStore.startMonitoring()
+    }
+    .sheet(isPresented: $addSheetPresented) {
+      AddSheetView()
     }
   }
 
@@ -126,14 +130,11 @@ struct ControlView: View {
             .foregroundStyle(QGDesign.primaryText)
           Spacer()
           Button {
-            if let connectAction {
-              store.performReadinessAction(connectAction)
-            }
+            addSheetPresented = true
           } label: {
             Label("Expand to another device", systemImage: "plus")
           }
           .buttonStyle(QGPrimaryButtonStyle())
-          .disabled(connectAction == nil || store.isWorking)
         }
 
         LazyVGrid(
@@ -323,11 +324,6 @@ struct ControlView: View {
     }
 
     return connectedBrowsers + connectedDevices
-  }
-
-  private var connectAction: ReadinessAction? {
-    store.primaryBrowserConnector.nextAction
-      ?? store.browserConnectors.compactMap(\.nextAction).first
   }
 
   private var conceptRows: [ConceptRowModel] {

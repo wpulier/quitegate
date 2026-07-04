@@ -8,6 +8,7 @@ struct ProtectionView: View {
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
   @EnvironmentObject private var accountStore: MacAccountStore
   @State private var refreshInFlight = false
+  @State private var addSheetPresented = false
 
   var body: some View {
     QGPage(maxWidth: 820) {
@@ -56,6 +57,9 @@ struct ProtectionView: View {
       if newPhase == .active {
         refreshStatusLater()
       }
+    }
+    .sheet(isPresented: $addSheetPresented) {
+      AddSheetView()
     }
   }
 
@@ -139,9 +143,7 @@ struct ProtectionView: View {
 
   private var connectButton: some View {
     Button {
-      if let primaryConnectAction {
-        store.performReadinessAction(primaryConnectAction)
-      }
+      addSheetPresented = true
     } label: {
       HStack {
         Image(systemName: "plus")
@@ -150,7 +152,6 @@ struct ProtectionView: View {
       .frame(maxWidth: .infinity)
     }
     .buttonStyle(QGPrimaryButtonStyle())
-    .disabled(primaryConnectAction == nil || store.isWorking)
   }
 
   private var hubRows: [DeviceHubRow] {
