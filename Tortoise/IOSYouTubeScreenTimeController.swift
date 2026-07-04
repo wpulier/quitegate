@@ -63,11 +63,13 @@ final class IOSEnforcementController: ObservableObject {
   @Published private(set) var lastSafariPolicyAppliedAt: Date?
   @Published private(set) var lastSetupCheckAt: Date?
   @Published private(set) var safariExtensionStatusError: String?
+  @Published private(set) var session: IOSSessionState?
 
   private let immediateStore = ManagedSettingsStore(named: .tortoiseImmediate)
   private let activityCenter = DeviceActivityCenter()
   private var isApplying = false
   private var policyFeatures: [String: Bool] = [:]
+  private var sessionExpiryTimer: Timer?
 
   init() {
     let persisted = Self.loadState()
@@ -81,6 +83,8 @@ final class IOSEnforcementController: ObservableObject {
     refreshAuthorizationState()
     refreshSetupStatus()
     applyCurrentMode()
+    session = IOSEnforcementSharedStore.loadSnapshot().session
+    expireSessionIfNeeded()
   }
 
   var hasSelection: Bool {
@@ -106,6 +110,20 @@ final class IOSEnforcementController: ObservableObject {
 
   var canTurnOn: Bool {
     canApplyShielding
+  }
+
+  var sessionActive: Bool {
+    IOSSession.isActive(session, now: Date())
+  }
+
+  var sessionLockedActive: Bool {
+    IOSSession.isLockedActive(session, now: Date())
+  }
+
+  var sessionStatusLine: String {
+    guard let session, sessionActive else { return "No active session" }
+    let mins = Int(IOSSession.remaining(session, now: Date()) / 60) + 1
+    return "\(session.locked ? "Locked " : "")\(session.mode.rawValue.capitalized) session · \(mins)m left"
   }
 
   var connectionState: IOSEnforcementConnectionState {
@@ -336,6 +354,15 @@ final class IOSEnforcementController: ObservableObject {
   }
 
   func setMode(_ mode: IOSEnforcementMode) {
+    guard IOSSession.canChangeMode(session, now: Date()) else { return }
+    applyMode(mode)
+  }
+
+  /// Applies a mode without the locked-session guard. Used by `setMode` (after
+  /// its guard passes) and by the session lifecycle methods below, which must
+  /// always be able to apply their own start/end/expiry transition even while
+  /// `session` reflects the very session being started or ended.
+  private func applyMode(_ mode: IOSEnforcementMode) {
     enforcementMode = mode
     shieldingEnabled = mode != .open
   }
@@ -349,6 +376,7 @@ final class IOSEnforcementController: ObservableObject {
   }
 
   func turnOff() {
+    guard IOSSession.canEndEarly(session, now: Date()) else { return }
     shieldingEnabled = false
     enforcementMode = .open
     applyCurrentMode()
@@ -357,6 +385,42 @@ final class IOSEnforcementController: ObservableObject {
   func clearSelection() {
     selection = FamilyActivitySelection()
     shieldingEnabled = false
+  }
+
+  func startSession(mode: IOSEnforcementMode, duration: TimeInterval, locked: Bool) {
+    guard !sessionLockedActive else { return }          // can't override a locked session
+    let mode = mode == .open ? .focus : mode
+    session = IOSSessionState(mode: mode, endsAt: Date().addingTimeInterval(duration), locked: locked)
+    applyMode(mode)                                      // applies shield via applyCurrentMode + persists
+    scheduleSessionExpiry()
+    saveSnapshot(lastError: lastError)                   // persist the session field
+  }
+
+  func endSession() {
+    guard IOSSession.canEndEarly(session, now: Date()) else { return }  // locked → refuse
+    session = nil
+    applyMode(.open)
+    sessionExpiryTimer?.invalidate()
+    saveSnapshot(lastError: lastError)
+  }
+
+  func expireSessionIfNeeded() {
+    guard IOSSession.hasExpired(session, now: Date()) else {
+      scheduleSessionExpiry()
+      return
+    }
+    session = nil
+    applyMode(.open)
+    saveSnapshot(lastError: lastError)
+  }
+
+  private func scheduleSessionExpiry() {
+    sessionExpiryTimer?.invalidate()
+    guard let session, sessionActive else { return }
+    let interval = max(1, session.endsAt.timeIntervalSinceNow)
+    sessionExpiryTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
+      Task { @MainActor in self?.expireSessionIfNeeded() }
+    }
   }
 
   func retrySetupStep(_ step: IOSEnforcementSetupStep) {
@@ -564,6 +628,7 @@ final class IOSEnforcementController: ObservableObject {
     snapshot.lastSafariExtensionSeenAt = lastSafariExtensionSeenAt
     snapshot.lastSafariPolicyAppliedAt = lastSafariPolicyAppliedAt
     snapshot.lastSetupCheckAt = lastSetupCheckAt
+    snapshot.session = session
     if let previousMode = IOSEnforcementSharedStore.loadSnapshot().lastSafariPolicyMode {
       snapshot.lastSafariPolicyMode = previousMode
     }
