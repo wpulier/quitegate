@@ -162,7 +162,7 @@ struct ProtectionView: View {
   }
 
   private var connectionCount: Int {
-    DevicesHub.connectedCount(hubRows) + macBrowserGroups.filter(\.isConnected).count
+    DevicesHub.connectedCount(hubRows)
   }
 
   private var macBrowserGroups: [BrowserProfileGroup] {
