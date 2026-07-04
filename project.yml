@@ -35,6 +35,18 @@ targets:
         type: file
       - path: Tortoise/TortoiseModels.swift
         type: file
+      - path: Tortoise/ConnectionStatus.swift
+        type: file
+      - path: Tortoise/TuningCatalog.swift
+        type: file
+      - path: Tortoise/DevicePresentation.swift
+        type: file
+      - path: Tortoise/DevicesHubModel.swift
+        type: file
+      - path: Tortoise/AddDestination.swift
+        type: file
+      - path: Tortoise/QRCode.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
@@ -104,6 +116,10 @@ targets:
       - TortoiseDeviceActivityMonitor
       - path: Tortoise/IOSEnforcementShared.swift
         type: file
+      - path: Tortoise/ConnectionStatus.swift
+        type: file
+      - path: Tortoise/TuningCatalog.swift
+        type: file
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.yourtortoise.Tortoise.DeviceActivityMonitor
@@ -156,6 +172,10 @@ targets:
     sources:
       - TortoiseSafariExtension
       - path: Tortoise/IOSEnforcementShared.swift
+        type: file
+      - path: Tortoise/ConnectionStatus.swift
+        type: file
+      - path: Tortoise/TuningCatalog.swift
         type: file
     settings:
       base:

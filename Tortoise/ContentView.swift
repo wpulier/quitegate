@@ -811,6 +811,7 @@ private struct MobileDevicesScreen: View {
   let accountLabel: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  @State private var addSheetPresented = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -846,7 +847,7 @@ private struct MobileDevicesScreen: View {
       MobileCard {
         VStack(spacing: 0) {
           MobileIOSDeviceStatusRow(screenTime: screenTime, syncMessage: model.syncMessage)
-          if otherDevices.isEmpty {
+          if deviceRows.isEmpty {
             MobileDivider()
               .padding(.vertical, 13)
             MobileEmptyState(
@@ -854,15 +855,10 @@ private struct MobileDevicesScreen: View {
               detail: "Install Tortoise on the Mac or connect a browser helper with this account."
             )
           } else {
-            ForEach(otherDevices) { device in
+            ForEach(deviceRows) { row in
               MobileDivider()
                 .padding(.vertical, 13)
-              MobileDeviceRow(
-                systemImage: device.systemImage,
-                title: device.displayName,
-                badge: nil,
-                subtitle: device.statusSubtitle
-              )
+              MobileHubRow(row: row)
             }
           }
         }
@@ -871,21 +867,37 @@ private struct MobileDevicesScreen: View {
       MobileSectionLabel("Browser profiles")
       MobileCard {
         VStack(spacing: 0) {
-          if browserRows.isEmpty {
+          if browserHubRows.isEmpty {
             MobileEmptyState(
               title: "No browser profiles yet",
               detail: "Connect the browser helper from the web setup page to sync usage and tuning status."
             )
           } else {
-            ForEach(Array(browserRows.enumerated()), id: \.element.id) { index, row in
+            ForEach(Array(browserHubRows.enumerated()), id: \.element.id) { index, row in
               if index > 0 {
                 MobileDivider()
                   .padding(.vertical, 13)
               }
-              MobileBrowserProfileRow(row: row)
+              VStack(alignment: .leading, spacing: 0) {
+                MobileHubRow(row: row)
+                if !row.profiles.isEmpty {
+                  VStack(spacing: 0) {
+                    ForEach(Array(row.profiles.enumerated()), id: \.element.id) { profileIndex, profile in
+                      if profileIndex > 0 {
+                        MobileDivider()
+                          .padding(.vertical, 10)
+                      }
+                      MobileHubRow(row: profile)
+                    }
+                  }
+                  .padding(.leading, 48)
+                  .padding(.top, 10)
+                }
+              }
             }
           }
           Button {
+            addSheetPresented = true
           } label: {
             Label("Connect another device", systemImage: "plus")
               .font(.system(size: 13, weight: .bold))
@@ -896,10 +908,33 @@ private struct MobileDevicesScreen: View {
         }
       }
     }
+    .sheet(isPresented: $addSheetPresented) { MobileAddSheet() }
+  }
+
+  private var hubRows: [DeviceHubRow] {
+    DevicesHub.rows(
+      devices: model.snapshot.devices,
+      currentDeviceID: model.snapshot.device?.id,
+      now: Date()
+    )
+  }
+
+  private var deviceRows: [DeviceHubRow] {
+    hubRows.filter { row in
+      if case .browser = row.kind { return false }
+      return !row.isCurrentDevice
+    }
+  }
+
+  private var browserHubRows: [DeviceHubRow] {
+    hubRows.filter { row in
+      if case .browser = row.kind { return true }
+      return false
+    }
   }
 
   private var connectionCount: Int {
-    max(model.snapshot.devices.count, 1)
+    DevicesHub.connectedCount(hubRows)
   }
 
   private var accountTitle: String {
@@ -915,15 +950,78 @@ private struct MobileDevicesScreen: View {
   private var accountInitials: String {
     String(accountTitle.split(separator: " ").prefix(2).compactMap(\.first)).uppercased()
   }
+}
 
-  private var otherDevices: [TortoiseDevice] {
-    model.snapshot.devices.filter { device in
-      device.id != model.snapshot.device?.id && !device.isBrowserProfile
+/// The "Add" sheet on iOS: pick Phone / Computer / Browser, then scan the QR
+/// (or tap the link) on that thing and sign in — it shows up in the hub. No codes.
+private struct MobileAddSheet: View {
+  @Environment(\.dismiss) private var dismiss
+  @State private var selected: AddDestination?
+
+  var body: some View {
+    NavigationStack {
+      ScrollView {
+        VStack(spacing: 14) {
+          if let selected {
+            detail(selected)
+          } else {
+            ForEach(AddDestination.allCases) { d in
+              Button { selected = d } label: { tile(d) }.buttonStyle(.plain)
+            }
+          }
+        }
+        .padding(20)
+      }
+      .background(TortoiseDesign.background)
+      .navigationTitle(selected.map { "Add \($0.title.lowercased())" } ?? "Add")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          if selected != nil {
+            Button("Back") { selected = nil }
+          } else {
+            Button("Close") { dismiss() }
+          }
+        }
+      }
     }
+    .preferredColorScheme(.dark)
   }
 
-  private var browserRows: [MobileBrowserProfile] {
-    model.snapshot.devices.filter(\.isBrowserProfile).map(MobileBrowserProfile.init(device:))
+  private func tile(_ d: AddDestination) -> some View {
+    HStack(spacing: 14) {
+      Image(systemName: d.systemImage)
+        .font(.system(size: 18, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+        .frame(width: 40, height: 40)
+        .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+      Text(d.title).font(.system(size: 16, weight: .semibold)).foregroundStyle(TortoiseDesign.primaryText)
+      Spacer()
+      Image(systemName: "chevron.right").foregroundStyle(TortoiseDesign.tertiaryText)
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .overlay { RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(TortoiseDesign.strongHairline) }
+  }
+
+  @ViewBuilder private func detail(_ d: AddDestination) -> some View {
+    VStack(spacing: 18) {
+      if let cg = QRCode.cgImage(for: d.url().absoluteString) {
+        Image(decorative: cg, scale: 1)
+          .interpolation(.none).resizable()
+          .frame(width: 200, height: 200)
+          .padding(12)
+          .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+      }
+      Link(destination: d.url()) {
+        Text(d.url().absoluteString).font(.system(size: 13, weight: .semibold)).foregroundStyle(TortoiseDesign.accent)
+      }
+      Text(d.caption)
+        .font(.system(size: 14)).foregroundStyle(TortoiseDesign.secondaryText)
+        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(.top, 12)
   }
 }
 
@@ -1949,49 +2047,70 @@ private struct MobileTuningFeatureRow: View {
   }
 }
 
-private struct MobileDeviceRow: View {
-  let systemImage: String
-  let title: String
-  let badge: String?
-  let subtitle: String
+/// A status-dot row for one `DeviceHubRow`. Mirrors the mac `HubDeviceRow` +
+/// `HubStatusStyle` pairing (ProtectionView.swift), scoped locally since that
+/// styling type is private to the macOS view file.
+private struct MobileHubRow: View {
+  let row: DeviceHubRow
 
   var body: some View {
     HStack(spacing: 12) {
-      Image(systemName: systemImage)
+      Image(systemName: MobileHubStatusStyle.systemImage(for: row.kind))
         .foregroundStyle(TortoiseDesign.accent)
         .frame(width: 36, height: 36)
         .background(TortoiseDesign.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
       VStack(alignment: .leading, spacing: 3) {
         HStack(spacing: 6) {
-          Text(title)
+          Text(row.title)
             .font(.system(size: 14, weight: .bold))
-          if let badge {
-            Text(badge)
+          if row.isCurrentDevice {
+            Text("CURRENT")
               .font(.system(size: 9, weight: .bold))
               .foregroundStyle(TortoiseDesign.accent)
           }
         }
-        Text(subtitle)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
+        if !row.profiles.isEmpty {
+          Text("\(row.profiles.count) profile\(row.profiles.count == 1 ? "" : "s")")
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+        }
+      }
+      Spacer()
+      HStack(spacing: 6) {
+        Text(MobileHubStatusStyle.label(for: row.status))
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(MobileHubStatusStyle.color(for: row.status))
+        Circle()
+          .fill(MobileHubStatusStyle.color(for: row.status))
+          .frame(width: 7, height: 7)
       }
     }
   }
 }
 
-private struct MobileBrowserProfileRow: View {
-  let row: MobileBrowserProfile
+private enum MobileHubStatusStyle {
+  static func label(for status: ConnectionStatus) -> String {
+    switch status {
+    case .on: return "On"
+    case .attention: return "Tap"
+    case .off: return "Off"
+    }
+  }
 
-  var body: some View {
-    HStack(spacing: 12) {
-      MobileAvatar(text: row.avatar, size: 34)
-      VStack(alignment: .leading, spacing: 3) {
-        Text(row.title)
-          .font(.system(size: 14, weight: .bold))
-        Text(row.subtitle)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-      }
+  static func color(for status: ConnectionStatus) -> Color {
+    switch status {
+    case .on: return TortoiseDesign.green
+    case .attention: return TortoiseDesign.orange
+    case .off: return TortoiseDesign.secondaryText
+    }
+  }
+
+  static func systemImage(for kind: DeviceKind) -> String {
+    switch kind {
+    case .mac: return "desktopcomputer"
+    case .iphone: return "iphone"
+    case .browser: return "globe"
+    case .other: return "laptopcomputer"
     }
   }
 }
@@ -2417,15 +2536,13 @@ private struct MobileBrowserProfile: Identifiable {
   }
 }
 
+// NOTE: `MobileDevicesScreen` now renders from the shared `DevicesHub`, so most
+// of what used to live here moved to `DevicePresentation.swift`. This trimmed
+// extension survives only because `MobileBrowserProfile.init(device:)` (used
+// by `MobileTuningScreen`'s "Active on · browser profiles" chips, an unrelated
+// screen) still calls `platformLabel` / `statusSubtitle`. Do not delete
+// without also updating that call site.
 private extension TortoiseDevice {
-  var displayName: String {
-    let trimmed = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    if !trimmed.isEmpty {
-      return trimmed
-    }
-    return platformLabel
-  }
-
   var platformLabel: String {
     switch normalizedPlatform {
     case "ios":
@@ -2443,39 +2560,10 @@ private extension TortoiseDevice {
     }
   }
 
-  var isBrowserProfile: Bool {
-    normalizedPlatform.contains("chrome") ||
-      normalizedPlatform.contains("firefox") ||
-      normalizedPlatform.contains("safari") ||
-      normalizedPlatform.contains("extension")
-  }
-
-  var systemImage: String {
-    switch normalizedPlatform {
-    case "ios":
-      return "iphone"
-    case "macos", "mac":
-      return "desktopcomputer"
-    case "chrome_extension", "chrome", "firefox_extension", "firefox", "safari_extension", "safari":
-      return "globe"
-    default:
-      return "laptopcomputer"
-    }
-  }
-
   var statusSubtitle: String {
     let version = helperVersion ?? appVersion
     let versionText = version.map { " · \($0)" } ?? ""
     return "\(platformLabel)\(versionText) · \(lastSeenText)"
-  }
-
-  var initials: String {
-    let words = displayName.split(separator: " ")
-    let letters = words.prefix(2).compactMap(\.first)
-    if letters.isEmpty {
-      return String(platformLabel.prefix(2)).uppercased()
-    }
-    return String(letters).uppercased()
   }
 
   private var normalizedPlatform: String {

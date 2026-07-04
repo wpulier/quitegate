@@ -4009,47 +4009,6 @@ final class ProtectionStore: ObservableObject {
     errorMessage = nil
   }
 
-  func performReadinessAction(_ action: ReadinessAction) {
-    switch action {
-    case .allowSavedProviderCredentialAccess:
-      Task { await allowSavedProviderCredentialAccess() }
-    case .refreshProtectionStatus:
-      Task { await refreshProtectionStatus() }
-    case .openLegacyProviderAccount:
-      openLegacyProviderAccount()
-    case .openLegacyMacPermissionSetup:
-      openLegacyMacPermissionSetup()
-    case .createLegacyMacPermissionProfile:
-      createLegacyMacPermissionProfile()
-    case .openSystemProfiles:
-      openSystemProfiles()
-    case .checkThisMac:
-      Task { await checkThisMac() }
-    case .checkLegacyMacConnection:
-      Task { await checkResolverStatus() }
-    case .installLocalBlockerBackup:
-      installLocalBlockerBackup()
-    case .launchChromeTunerSession:
-      launchChromeTunerSession()
-    case .openChromeDownload:
-      openChromeDownload()
-    case .showChromeExtensionFolder:
-      prepareChromeExtensionInstall()
-    case .installChromeSync:
-      installChromeBridge()
-    case .applyBrowserChanges(let browser):
-      applyBrowserChanges(browser)
-    case .openBrowserExtensionsPage(let browser):
-      openBrowserExtensionsPage(browser)
-    case .launchBrowserTunerSession(let browser):
-      launchBrowserTunerSession(browser)
-    case .openBrowserDownload(let browser):
-      openBrowserDownload(browser)
-    case .installBrowserSync(let browser):
-      installBrowserBridge(browser)
-    }
-  }
-
   private func refreshActivity(using client: LegacyProviderServicing) async {
     do {
       blockedLogs = try await client.blockedLogs(profileID: profileID, limit: 50)

@@ -283,11 +283,6 @@ final class MacAccountStore: ObservableObject {
     protectionStore: ProtectionStore,
     appBlockingStore: AppBlockingStore
   ) async {
-    guard TortoisePolicy.browserFeatureKeys.contains(feature.rawValue) else {
-      protectionStore.setTuningFeature(feature, enabled: enabled)
-      return
-    }
-
     await updatePolicy(
       using: clerk,
       protectionStore: protectionStore,
@@ -304,21 +299,12 @@ final class MacAccountStore: ObservableObject {
     protectionStore: ProtectionStore,
     appBlockingStore: AppBlockingStore
   ) async {
-    let supported = features
-      .map(\.rawValue)
-      .filter { TortoisePolicy.browserFeatureKeys.contains($0) }
-
-    guard !supported.isEmpty else {
-      protectionStore.setTuningFeatures(features, enabled: enabled)
-      return
-    }
-
     await updatePolicy(
       using: clerk,
       protectionStore: protectionStore,
       appBlockingStore: appBlockingStore
     ) { policy in
-      policy.settingBrowserFeatures(supported, enabled: enabled)
+      policy.settingBrowserFeatures(features.map(\.rawValue), enabled: enabled)
     }
   }
 

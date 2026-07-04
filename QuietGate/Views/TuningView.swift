@@ -14,6 +14,7 @@ struct TuningView: View {
     "tt_track": true,
     "tt_limit": false
   ]
+  @State private var addSheetPresented = false
 
   var body: some View {
     QGPage(maxWidth: 820) {
@@ -39,6 +40,9 @@ struct TuningView: View {
           .font(.system(size: 13))
           .foregroundStyle(QGDesign.orange)
       }
+    }
+    .sheet(isPresented: $addSheetPresented) {
+      AddSheetView()
     }
   }
 
@@ -131,23 +135,11 @@ struct TuningView: View {
             TuningScopeChip(chip: chip)
           }
           Button {
-            if let connectAction {
-              store.performReadinessAction(connectAction)
-            }
+            addSheetPresented = true
           } label: {
-            Label("Add browser account", systemImage: "plus")
+            Label("Add", systemImage: "plus")
           }
           .buttonStyle(QGPrimaryButtonStyle())
-          .disabled(connectAction == nil || store.isWorking)
-          Button {
-            if let connectAction {
-              store.performReadinessAction(connectAction)
-            }
-          } label: {
-            Label("Add iPhone (iOS)", systemImage: "plus")
-          }
-          .buttonStyle(QGPrimaryButtonStyle())
-          .disabled(connectAction == nil || store.isWorking)
         }
       }
     }
@@ -196,11 +188,6 @@ struct TuningView: View {
     }
 
     return connected
-  }
-
-  private var connectAction: ReadinessAction? {
-    store.primaryBrowserConnector.nextAction
-      ?? store.browserConnectors.compactMap(\.nextAction).first
   }
 
   private func countText(for site: DesignTuningSite) -> String {

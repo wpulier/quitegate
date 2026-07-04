@@ -70,60 +70,26 @@ struct ApplicationPolicyRule: Codable, Identifiable {
 }
 
 extension TortoisePolicy {
-  static let browserFeatureKeys = [
-    "youtubeHome",
-    "youtubeVideoSidebar",
-    "youtubeRecommendations",
-    "youtubeLiveChat",
-    "youtubePlaylists",
-    "youtubeFundraisers",
-    "youtubeEndScreens",
-    "youtubeEndScreenCards",
-    "youtubeShorts",
-    "youtubeComments",
-    "youtubeMixes",
-    "youtubeMerch",
-    "youtubeVideoInfo",
-    "youtubeTopHeader",
-    "youtubeNotifications",
-    "youtubeSearch",
-    "youtubeExplore",
-    "youtubeMoreFromYouTube",
-    "youtubeSubscriptions",
-    "youtubeAutoplay",
-    "youtubeAnnotations",
-    "youtubeUsageTracking",
-    "youtubeDailyLimit",
-    "xSensitiveMedia",
-    "xExplicitContent",
-    "xExplicitSearch",
-    "xVideos",
-    "xPhotos",
-    "xMediaCards",
-    "xExploreTrends",
-    "instagramReels",
-    "instagramExplore",
-    "instagramSuggested",
-    "instagramStories",
-    "redditPopularAll",
-    "redditRecommendations",
-    "redditNSFW",
-    "redditMedia",
-    "redditSidebars"
-  ]
+  static var browserFeatureKeys: [String] { TuningCatalog.allFeatureIDs }
 
-  static let focusBrowserFeatureKeys: Set<String> = [
-    "youtubeHome",
-    "youtubeShorts",
-    "youtubeUsageTracking",
-    "xSensitiveMedia",
-    "xVideos",
-    "instagramReels",
-    "instagramExplore",
-    "instagramSuggested",
-    "redditPopularAll",
-    "redditRecommendations"
-  ]
+  static var focusBrowserFeatureKeys: Set<String> { TuningCatalog.focusFeatureIDs }
+
+  /// A blank baseline policy (Open mode, no features) for tests and first-run.
+  static var open: TortoisePolicy {
+    TortoisePolicy(
+      schemaVersion: 1,
+      mode: "open",
+      adultBlockingEnabled: false,
+      browser: BrowserPolicy(
+        features: TuningCatalog.enabledFeatureFlags(for: "open"),
+        blockedDomains: [],
+        blockedCategories: [],
+        options: BrowserPolicyOptions(explicitHideStyle: "post", youtubeDailyLimitMinutes: 30)
+      ),
+      schedules: SchedulePolicy(enabled: false, dailyFocusWindows: []),
+      applications: ApplicationsPolicy(enforcementEnabled: true, blocked: [], allowed: [])
+    )
+  }
 
   var normalizedMode: String {
     mode.capitalized
@@ -207,14 +173,7 @@ extension TortoisePolicy {
   }
 
   private static func defaultFeatures(for mode: String) -> [String: Bool] {
-    switch mode {
-    case "strict":
-      return Dictionary(uniqueKeysWithValues: browserFeatureKeys.map { ($0, true) })
-    case "focus":
-      return Dictionary(uniqueKeysWithValues: browserFeatureKeys.map { ($0, focusBrowserFeatureKeys.contains($0)) })
-    default:
-      return Dictionary(uniqueKeysWithValues: browserFeatureKeys.map { ($0, false) })
-    }
+    TuningCatalog.enabledFeatureFlags(for: mode)
   }
 
   private func normalizedBrowserFeatures() -> [String: Bool] {
