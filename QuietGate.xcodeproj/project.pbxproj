@@ -18,6 +18,7 @@
 		092E300E5FE386FB11403794 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01791AB8AB4316D2C80E7829 /* ClerkKit */; };
 		11B11A8B7BFDEBF44B7F66BD /* blocked.css in Resources */ = {isa = PBXBuildFile; fileRef = 885DC37A991A432C1E950CB1 /* blocked.css */; };
 		13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */; };
+		1891D289C73152B6BA059DB8 /* AddDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB03297B4ADDB28BD7E61099 /* AddDestinationTests.swift */; };
 		1962B616F927A9DD1EEDA2F5 /* x-page.js in Resources */ = {isa = PBXBuildFile; fileRef = F25E7B7FA18AB42D202A0CB8 /* x-page.js */; };
 		1A1CF74086AB973AB7DEE327 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = DC02935866BE041AD3A8E737 /* ClerkKitUI */; };
 		1D9AB215D2DC0FF9377891F5 /* icon-32.png in Resources */ = {isa = PBXBuildFile; fileRef = A31E1283FE971EC880252588 /* icon-32.png */; };
@@ -30,6 +31,7 @@
 		25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E83559A72E96D37ED558E9 /* ProtectionStore.swift */; };
 		2A7C2EE45B5490848D49E39F /* FirefoxExtension in Resources */ = {isa = PBXBuildFile; fileRef = 49108B605636DFE560B901A1 /* FirefoxExtension */; };
 		2CA7E87B7D54E3A5E1FBE015 /* site-usage.js in Resources */ = {isa = PBXBuildFile; fileRef = 3EED86761B2E23D3EAD4D2BC /* site-usage.js */; };
+		2D1EF6E98CFC1AC7BF55E9D0 /* AddDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD6AA363596C6AF0195D1DE /* AddDestination.swift */; };
 		2DF28E4F91C032B668D05F49 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = D076F3CC634E2EBCEB0FA5C8 /* manifest.json */; };
 		2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */; };
 		302291A5F526955CE5285A4E /* instagram.css in Resources */ = {isa = PBXBuildFile; fileRef = A43E5CC9212988EAF189423B /* instagram.css */; };
@@ -86,6 +88,7 @@
 		9444DFB359EE2591B289F97C /* youtube.js in Resources */ = {isa = PBXBuildFile; fileRef = FFE207828E8229CD9EEAD9E8 /* youtube.js */; };
 		97040AFC5CEF7EBFD33A5F42 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
 		981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */; };
+		9A5F16211C9C251AC64CEB9B /* AddDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD6AA363596C6AF0195D1DE /* AddDestination.swift */; };
 		9A8666296BEEB907320D6EA4 /* TortoiseShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9BDA4A9C17A0C410438DA4C0 /* DevicePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */; };
 		9C0969F1393ACEF71E35F1C2 /* x.js in Resources */ = {isa = PBXBuildFile; fileRef = EF5C810052C9446E2726C089 /* x.js */; };
@@ -209,6 +212,7 @@
 		06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserExtensionBridge.swift; sourceTree = "<group>"; };
 		087265EBD487F081769A0206 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		0A298AFE1684A25A4DDD00FD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0AD6AA363596C6AF0195D1DE /* AddDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddDestination.swift; sourceTree = "<group>"; };
 		0C83EBBC9802A1BFFC76350D /* QuietGate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuietGate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductComponents.swift; sourceTree = "<group>"; };
 		0D9ED4A798405092F95055D8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -290,6 +294,7 @@
 		A63BF32250707E748199B397 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA358B98B5250BFDA5D0FA8E /* adult-domains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "adult-domains.json"; sourceTree = "<group>"; };
 		AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoisePolicyCatalogTests.swift; sourceTree = "<group>"; };
+		AB03297B4ADDB28BD7E61099 /* AddDestinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddDestinationTests.swift; sourceTree = "<group>"; };
 		AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningSyncInvariantTests.swift; sourceTree = "<group>"; };
 		AF79EB6986C1E3B20DD6D3CC /* icon-16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-16.png"; sourceTree = "<group>"; };
 		AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningCatalog.swift; sourceTree = "<group>"; };
@@ -630,6 +635,7 @@
 			isa = PBXGroup;
 			children = (
 				B1C9E1289903D976640AFF9D /* AccessModeTests.swift */,
+				AB03297B4ADDB28BD7E61099 /* AddDestinationTests.swift */,
 				22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */,
 				67481EEAFE4705285370B181 /* AppUpdateServiceTests.swift */,
 				7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */,
@@ -670,6 +676,7 @@
 			isa = PBXGroup;
 			children = (
 				F2880C0251EB92FD791228DF /* AccountHubModel.swift */,
+				0AD6AA363596C6AF0195D1DE /* AddDestination.swift */,
 				120140E7CBD7F2EECD2D2084 /* AppConfig.swift */,
 				4A8461B44A79C10190F70D06 /* ConnectionStatus.swift */,
 				0A298AFE1684A25A4DDD00FD /* ContentView.swift */,
@@ -1023,6 +1030,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				01E09F52B17A5C73BB6D6A9D /* AccessModeTests.swift in Sources */,
+				1891D289C73152B6BA059DB8 /* AddDestinationTests.swift in Sources */,
 				45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */,
 				03E45E39540A546303834DFB /* AppUpdateServiceTests.swift in Sources */,
 				918CCE47CA5D5E2589A1C008 /* BrowserBlockingProviderTests.swift in Sources */,
@@ -1049,6 +1057,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				81E1909BBF8897470F85EE1E /* AccountHubModel.swift in Sources */,
+				9A5F16211C9C251AC64CEB9B /* AddDestination.swift in Sources */,
 				A23960B33703BC7432135741 /* AppConfig.swift in Sources */,
 				D147EDF3E963C786C3C892AC /* ConnectionStatus.swift in Sources */,
 				81D28CC8A95576F962D704A7 /* ContentView.swift in Sources */,
@@ -1072,6 +1081,7 @@
 			files = (
 				543D3D77B8DCB58049FA2F27 /* AccessMode.swift in Sources */,
 				7E447253F97180178BDCEB74 /* AccessModeControl.swift in Sources */,
+				2D1EF6E98CFC1AC7BF55E9D0 /* AddDestination.swift in Sources */,
 				522F946F5B674055032FC0B0 /* AdultContentPreset.swift in Sources */,
 				5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */,
 				C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */,

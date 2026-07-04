@@ -43,6 +43,8 @@ targets:
         type: file
       - path: Tortoise/DevicesHubModel.swift
         type: file
+      - path: Tortoise/AddDestination.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
