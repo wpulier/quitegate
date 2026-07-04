@@ -17,6 +17,7 @@
 		07CADBE5FF31740DB4EFA6DF /* TortoiseSafariExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7DDB3D0AA0D5EE6D889967A5 /* TortoiseSafariExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		092E300E5FE386FB11403794 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01791AB8AB4316D2C80E7829 /* ClerkKit */; };
 		0D186DA5BF4949E068B580CA /* AddSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912A7297B8C50F7E12F7199D /* AddSheetView.swift */; };
+		0EF4EF64A7B54DA809B472FA /* BrowserTuningFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD4CB5D18C983E5D2C8EB2D /* BrowserTuningFeature.swift */; };
 		11B11A8B7BFDEBF44B7F66BD /* blocked.css in Resources */ = {isa = PBXBuildFile; fileRef = 885DC37A991A432C1E950CB1 /* blocked.css */; };
 		13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */; };
 		1891D289C73152B6BA059DB8 /* AddDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB03297B4ADDB28BD7E61099 /* AddDestinationTests.swift */; };
@@ -30,9 +31,11 @@
 		25400B64F03B038ED9372DB7 /* DevicesHubModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54B8050C0212C4236FE20E5C /* DevicesHubModel.swift */; };
 		25B59FDB054E488CDBBE2BDE /* PresetUnificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB64C9620DA049F321B8E848 /* PresetUnificationTests.swift */; };
 		25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E83559A72E96D37ED558E9 /* ProtectionStore.swift */; };
+		2A186DDCEEB6314D8C995B55 /* TuneScreenModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1953A6B4EF35A3EA45AD6C26 /* TuneScreenModelTests.swift */; };
 		2A7C2EE45B5490848D49E39F /* FirefoxExtension in Resources */ = {isa = PBXBuildFile; fileRef = 49108B605636DFE560B901A1 /* FirefoxExtension */; };
 		2CA7E87B7D54E3A5E1FBE015 /* site-usage.js in Resources */ = {isa = PBXBuildFile; fileRef = 3EED86761B2E23D3EAD4D2BC /* site-usage.js */; };
 		2D1EF6E98CFC1AC7BF55E9D0 /* AddDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD6AA363596C6AF0195D1DE /* AddDestination.swift */; };
+		2DBB456D7C021E5BB9E1D784 /* TuneScreenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54A2A544D0DFDD5A4BD2B45 /* TuneScreenModel.swift */; };
 		2DF28E4F91C032B668D05F49 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = D076F3CC634E2EBCEB0FA5C8 /* manifest.json */; };
 		2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */; };
 		302291A5F526955CE5285A4E /* instagram.css in Resources */ = {isa = PBXBuildFile; fileRef = A43E5CC9212988EAF189423B /* instagram.css */; };
@@ -134,6 +137,7 @@
 		D147EDF3E963C786C3C892AC /* ConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A8461B44A79C10190F70D06 /* ConnectionStatus.swift */; };
 		D1FA733C37029CAC304BA307 /* TortoiseDeviceActivityMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FAAD2800D37E56C9AD1C4513 /* TortoiseDeviceActivityMonitor.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D38AB5164ED59F3E12C79C50 /* FocusWindowScheduleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */; };
+		D51FBA409C543016890554AF /* TuneScreenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54A2A544D0DFDD5A4BD2B45 /* TuneScreenModel.swift */; };
 		D5E88C806BE5EB2FD956F4C2 /* LegacyProviderClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5C3C0E169106BD429B796E /* LegacyProviderClient.swift */; };
 		D63FC3D276A14BA56B25250B /* TortoiseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428CCAE23F622CC0E04DC22D /* TortoiseModels.swift */; };
 		D679E0BE8D81DE105F93851B /* BrowserExtensionBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9D0D6C462B904E4484093F /* BrowserExtensionBridgeTests.swift */; };
@@ -225,6 +229,7 @@
 		1241FE0B2B9FABFC3754F3CA /* ChromeExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ChromeExtension; sourceTree = SOURCE_ROOT; };
 		17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePresentation.swift; sourceTree = "<group>"; };
 		18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimedSessionControl.swift; sourceTree = "<group>"; };
+		1953A6B4EF35A3EA45AD6C26 /* TuneScreenModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuneScreenModelTests.swift; sourceTree = "<group>"; };
 		1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusWindowScheduleControl.swift; sourceTree = "<group>"; };
 		1F803AC6B5D759110B34FEAC /* reddit.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = reddit.css; sourceTree = "<group>"; };
 		20CB59D7EFB48D1D0EE238E5 /* icon-48.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-48.png"; sourceTree = "<group>"; };
@@ -312,6 +317,7 @@
 		BC969185D064186ACC51A71B /* icon-128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-128.png"; sourceTree = "<group>"; };
 		BE5E54ACCB18B6E5BDCFA66D /* AccessModeControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessModeControl.swift; sourceTree = "<group>"; };
 		C037C5FB406B8F0B9446463B /* ProtectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionView.swift; sourceTree = "<group>"; };
+		C54A2A544D0DFDD5A4BD2B45 /* TuneScreenModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuneScreenModel.swift; sourceTree = "<group>"; };
 		C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSiteUsageReporter.swift; sourceTree = "<group>"; };
 		CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
 		CAEA11C760200268EF079247 /* ShieldConfigurationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldConfigurationExtension.swift; sourceTree = "<group>"; };
@@ -660,6 +666,7 @@
 				59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */,
 				E09838947772A802ABC8CD02 /* QRCodeTests.swift */,
 				AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */,
+				1953A6B4EF35A3EA45AD6C26 /* TuneScreenModelTests.swift */,
 				757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */,
 				AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */,
 				9CBD2ED50203707F1688198C /* TestSupport */,
@@ -700,6 +707,7 @@
 				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
 				CD16A82D2B5139D57A101409 /* TortoiseApp.swift */,
 				428CCAE23F622CC0E04DC22D /* TortoiseModels.swift */,
+				C54A2A544D0DFDD5A4BD2B45 /* TuneScreenModel.swift */,
 				AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */,
 				C5BEA2B5897D1D97326C1686 /* Resources */,
 			);
@@ -1058,6 +1066,7 @@
 				13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */,
 				C02C20F3AAC030400E98F91E /* QRCodeTests.swift in Sources */,
 				F1A977F94DC0C35C6CC5A6AF /* TortoisePolicyCatalogTests.swift in Sources */,
+				2A186DDCEEB6314D8C995B55 /* TuneScreenModelTests.swift in Sources */,
 				9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */,
 				CDE2360F6B637182D8E13D1C /* TuningSyncInvariantTests.swift in Sources */,
 			);
@@ -1070,6 +1079,7 @@
 				81E1909BBF8897470F85EE1E /* AccountHubModel.swift in Sources */,
 				9A5F16211C9C251AC64CEB9B /* AddDestination.swift in Sources */,
 				A23960B33703BC7432135741 /* AppConfig.swift in Sources */,
+				0EF4EF64A7B54DA809B472FA /* BrowserTuningFeature.swift in Sources */,
 				D147EDF3E963C786C3C892AC /* ConnectionStatus.swift in Sources */,
 				81D28CC8A95576F962D704A7 /* ContentView.swift in Sources */,
 				43F84451FEF86A8C4DC50B48 /* DevicePresentation.swift in Sources */,
@@ -1083,6 +1093,7 @@
 				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
 				F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */,
 				D63FC3D276A14BA56B25250B /* TortoiseModels.swift in Sources */,
+				2DBB456D7C021E5BB9E1D784 /* TuneScreenModel.swift in Sources */,
 				97040AFC5CEF7EBFD33A5F42 /* TuningCatalog.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1147,6 +1158,7 @@
 				227DB1AC963E20209757F7EF /* SettingsView.swift in Sources */,
 				E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */,
 				1F268A49630164ED2D7210EF /* TortoiseModels.swift in Sources */,
+				D51FBA409C543016890554AF /* TuneScreenModel.swift in Sources */,
 				EC071389E1E2CDCB8F835293 /* TuningCatalog.swift in Sources */,
 				CAA0FAE2C4FD4D35B3AC1F7E /* TuningView.swift in Sources */,
 			);
