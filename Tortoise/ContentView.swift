@@ -811,6 +811,7 @@ private struct MobileDevicesScreen: View {
   let accountLabel: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  @State private var addSheetPresented = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -896,7 +897,7 @@ private struct MobileDevicesScreen: View {
             }
           }
           Button {
-            // TODO(2b): wire the Add flow
+            addSheetPresented = true
           } label: {
             Label("Connect another device", systemImage: "plus")
               .font(.system(size: 13, weight: .bold))
@@ -907,6 +908,7 @@ private struct MobileDevicesScreen: View {
         }
       }
     }
+    .sheet(isPresented: $addSheetPresented) { MobileAddSheet() }
   }
 
   private var hubRows: [DeviceHubRow] {
@@ -947,6 +949,79 @@ private struct MobileDevicesScreen: View {
 
   private var accountInitials: String {
     String(accountTitle.split(separator: " ").prefix(2).compactMap(\.first)).uppercased()
+  }
+}
+
+/// The "Add" sheet on iOS: pick Phone / Computer / Browser, then scan the QR
+/// (or tap the link) on that thing and sign in — it shows up in the hub. No codes.
+private struct MobileAddSheet: View {
+  @Environment(\.dismiss) private var dismiss
+  @State private var selected: AddDestination?
+
+  var body: some View {
+    NavigationStack {
+      ScrollView {
+        VStack(spacing: 14) {
+          if let selected {
+            detail(selected)
+          } else {
+            ForEach(AddDestination.allCases) { d in
+              Button { selected = d } label: { tile(d) }.buttonStyle(.plain)
+            }
+          }
+        }
+        .padding(20)
+      }
+      .background(TortoiseDesign.background)
+      .navigationTitle(selected.map { "Add \($0.title.lowercased())" } ?? "Add")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          if selected != nil {
+            Button("Back") { selected = nil }
+          } else {
+            Button("Close") { dismiss() }
+          }
+        }
+      }
+    }
+    .preferredColorScheme(.dark)
+  }
+
+  private func tile(_ d: AddDestination) -> some View {
+    HStack(spacing: 14) {
+      Image(systemName: d.systemImage)
+        .font(.system(size: 18, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+        .frame(width: 40, height: 40)
+        .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+      Text(d.title).font(.system(size: 16, weight: .semibold)).foregroundStyle(TortoiseDesign.primaryText)
+      Spacer()
+      Image(systemName: "chevron.right").foregroundStyle(TortoiseDesign.tertiaryText)
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .overlay { RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(TortoiseDesign.strongHairline) }
+  }
+
+  @ViewBuilder private func detail(_ d: AddDestination) -> some View {
+    VStack(spacing: 18) {
+      if let cg = QRCode.cgImage(for: d.url().absoluteString) {
+        Image(decorative: cg, scale: 1)
+          .interpolation(.none).resizable()
+          .frame(width: 200, height: 200)
+          .padding(12)
+          .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+      }
+      Link(destination: d.url()) {
+        Text(d.url().absoluteString).font(.system(size: 13, weight: .semibold)).foregroundStyle(TortoiseDesign.accent)
+      }
+      Text(d.caption)
+        .font(.system(size: 14)).foregroundStyle(TortoiseDesign.secondaryText)
+        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(.top, 12)
   }
 }
 
