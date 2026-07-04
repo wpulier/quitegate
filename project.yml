@@ -37,6 +37,8 @@ targets:
         type: file
       - path: Tortoise/ConnectionStatus.swift
         type: file
+      - path: Tortoise/TuningCatalog.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
