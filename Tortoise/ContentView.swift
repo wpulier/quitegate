@@ -846,7 +846,7 @@ private struct MobileDevicesScreen: View {
       MobileCard {
         VStack(spacing: 0) {
           MobileIOSDeviceStatusRow(screenTime: screenTime, syncMessage: model.syncMessage)
-          if otherDevices.isEmpty {
+          if deviceRows.isEmpty {
             MobileDivider()
               .padding(.vertical, 13)
             MobileEmptyState(
@@ -854,15 +854,10 @@ private struct MobileDevicesScreen: View {
               detail: "Install Tortoise on the Mac or connect a browser helper with this account."
             )
           } else {
-            ForEach(otherDevices) { device in
+            ForEach(deviceRows) { row in
               MobileDivider()
                 .padding(.vertical, 13)
-              MobileDeviceRow(
-                systemImage: device.systemImage,
-                title: device.displayName,
-                badge: nil,
-                subtitle: device.statusSubtitle
-              )
+              MobileHubRow(row: row)
             }
           }
         }
@@ -871,21 +866,37 @@ private struct MobileDevicesScreen: View {
       MobileSectionLabel("Browser profiles")
       MobileCard {
         VStack(spacing: 0) {
-          if browserRows.isEmpty {
+          if browserHubRows.isEmpty {
             MobileEmptyState(
               title: "No browser profiles yet",
               detail: "Connect the browser helper from the web setup page to sync usage and tuning status."
             )
           } else {
-            ForEach(Array(browserRows.enumerated()), id: \.element.id) { index, row in
+            ForEach(Array(browserHubRows.enumerated()), id: \.element.id) { index, row in
               if index > 0 {
                 MobileDivider()
                   .padding(.vertical, 13)
               }
-              MobileBrowserProfileRow(row: row)
+              VStack(alignment: .leading, spacing: 0) {
+                MobileHubRow(row: row)
+                if !row.profiles.isEmpty {
+                  VStack(spacing: 0) {
+                    ForEach(Array(row.profiles.enumerated()), id: \.element.id) { profileIndex, profile in
+                      if profileIndex > 0 {
+                        MobileDivider()
+                          .padding(.vertical, 10)
+                      }
+                      MobileHubRow(row: profile)
+                    }
+                  }
+                  .padding(.leading, 48)
+                  .padding(.top, 10)
+                }
+              }
             }
           }
           Button {
+            // TODO(2b): wire the Add flow
           } label: {
             Label("Connect another device", systemImage: "plus")
               .font(.system(size: 13, weight: .bold))
@@ -898,8 +909,30 @@ private struct MobileDevicesScreen: View {
     }
   }
 
+  private var hubRows: [DeviceHubRow] {
+    DevicesHub.rows(
+      devices: model.snapshot.devices,
+      currentDeviceID: model.snapshot.device?.id,
+      now: Date()
+    )
+  }
+
+  private var deviceRows: [DeviceHubRow] {
+    hubRows.filter { row in
+      if case .browser = row.kind { return false }
+      return !row.isCurrentDevice
+    }
+  }
+
+  private var browserHubRows: [DeviceHubRow] {
+    hubRows.filter { row in
+      if case .browser = row.kind { return true }
+      return false
+    }
+  }
+
   private var connectionCount: Int {
-    max(model.snapshot.devices.count, 1)
+    DevicesHub.connectedCount(hubRows)
   }
 
   private var accountTitle: String {
@@ -914,16 +947,6 @@ private struct MobileDevicesScreen: View {
 
   private var accountInitials: String {
     String(accountTitle.split(separator: " ").prefix(2).compactMap(\.first)).uppercased()
-  }
-
-  private var otherDevices: [TortoiseDevice] {
-    model.snapshot.devices.filter { device in
-      device.id != model.snapshot.device?.id && !device.isBrowserProfile
-    }
-  }
-
-  private var browserRows: [MobileBrowserProfile] {
-    model.snapshot.devices.filter(\.isBrowserProfile).map(MobileBrowserProfile.init(device:))
   }
 }
 
@@ -1949,49 +1972,70 @@ private struct MobileTuningFeatureRow: View {
   }
 }
 
-private struct MobileDeviceRow: View {
-  let systemImage: String
-  let title: String
-  let badge: String?
-  let subtitle: String
+/// A status-dot row for one `DeviceHubRow`. Mirrors the mac `HubDeviceRow` +
+/// `HubStatusStyle` pairing (ProtectionView.swift), scoped locally since that
+/// styling type is private to the macOS view file.
+private struct MobileHubRow: View {
+  let row: DeviceHubRow
 
   var body: some View {
     HStack(spacing: 12) {
-      Image(systemName: systemImage)
+      Image(systemName: MobileHubStatusStyle.systemImage(for: row.kind))
         .foregroundStyle(TortoiseDesign.accent)
         .frame(width: 36, height: 36)
         .background(TortoiseDesign.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
       VStack(alignment: .leading, spacing: 3) {
         HStack(spacing: 6) {
-          Text(title)
+          Text(row.title)
             .font(.system(size: 14, weight: .bold))
-          if let badge {
-            Text(badge)
+          if row.isCurrentDevice {
+            Text("CURRENT")
               .font(.system(size: 9, weight: .bold))
               .foregroundStyle(TortoiseDesign.accent)
           }
         }
-        Text(subtitle)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
+        if !row.profiles.isEmpty {
+          Text("\(row.profiles.count) profile\(row.profiles.count == 1 ? "" : "s")")
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+        }
+      }
+      Spacer()
+      HStack(spacing: 6) {
+        Text(MobileHubStatusStyle.label(for: row.status))
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(MobileHubStatusStyle.color(for: row.status))
+        Circle()
+          .fill(MobileHubStatusStyle.color(for: row.status))
+          .frame(width: 7, height: 7)
       }
     }
   }
 }
 
-private struct MobileBrowserProfileRow: View {
-  let row: MobileBrowserProfile
+private enum MobileHubStatusStyle {
+  static func label(for status: ConnectionStatus) -> String {
+    switch status {
+    case .on: return "On"
+    case .attention: return "Tap"
+    case .off: return "Off"
+    }
+  }
 
-  var body: some View {
-    HStack(spacing: 12) {
-      MobileAvatar(text: row.avatar, size: 34)
-      VStack(alignment: .leading, spacing: 3) {
-        Text(row.title)
-          .font(.system(size: 14, weight: .bold))
-        Text(row.subtitle)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-      }
+  static func color(for status: ConnectionStatus) -> Color {
+    switch status {
+    case .on: return TortoiseDesign.green
+    case .attention: return TortoiseDesign.orange
+    case .off: return TortoiseDesign.secondaryText
+    }
+  }
+
+  static func systemImage(for kind: DeviceKind) -> String {
+    switch kind {
+    case .mac: return "desktopcomputer"
+    case .iphone: return "iphone"
+    case .browser: return "globe"
+    case .other: return "laptopcomputer"
     }
   }
 }
@@ -2417,6 +2461,12 @@ private struct MobileBrowserProfile: Identifiable {
   }
 }
 
+// NOTE: `MobileDevicesScreen` now renders from the shared `DevicesHub`, so most
+// of what used to live here moved to `DevicePresentation.swift`. This trimmed
+// extension survives only because `MobileBrowserProfile.init(device:)` (used
+// by `MobileTuningScreen`'s "Active on · browser profiles" chips, an unrelated
+// screen) still calls `platformLabel` / `statusSubtitle`. Do not delete
+// without also updating that call site.
 private extension TortoiseDevice {
   var platformLabel: String {
     switch normalizedPlatform {
@@ -2432,19 +2482,6 @@ private extension TortoiseDevice {
       return "Safari"
     default:
       return platform?.isEmpty == false ? platform!.replacingOccurrences(of: "_", with: " ").capitalized : "Device"
-    }
-  }
-
-  var systemImage: String {
-    switch normalizedPlatform {
-    case "ios":
-      return "iphone"
-    case "macos", "mac":
-      return "desktopcomputer"
-    case "chrome_extension", "chrome", "firefox_extension", "firefox", "safari_extension", "safari":
-      return "globe"
-    default:
-      return "laptopcomputer"
     }
   }
 
