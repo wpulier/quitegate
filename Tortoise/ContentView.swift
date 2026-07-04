@@ -2,6 +2,7 @@ import ClerkKit
 import ClerkKitUI
 import FamilyControls
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
   @Environment(Clerk.self) private var clerk
@@ -192,7 +193,7 @@ private struct TortoiseMobileShell: View {
 
   @State private var section: MobileSection
   @State private var usageTab = MobileUsageTab.all
-  @State private var selectedSite = MobileTuningSite.youtube
+  @State private var selectedSite = "youtube"
   @State private var conceptStates: [String: Bool] = ["porn": true, "gambling": false, "news": false]
   @StateObject private var screenTime = IOSYouTubeScreenTimeController()
 
@@ -276,9 +277,8 @@ private struct TortoiseMobileShell: View {
         model: model,
         screenTime: screenTime,
         browserProfiles: browserProfiles,
-        featureEnabled: featureEnabled,
         setFeature: setTuningFeature,
-        toggleSite: toggleSiteTuning,
+        setFeatures: setTuningFeatures,
         setYoutubeProtection: setYoutubeProtection,
         setDailyLimit: setDailyLimit
       )
@@ -301,13 +301,6 @@ private struct TortoiseMobileShell: View {
       .map(MobileBrowserProfile.init(device:))
   }
 
-  private func featureEnabled(_ feature: MobileFeature) -> Bool {
-    guard feature.isPolicyBacked else {
-      return false
-    }
-    return model.snapshot.policy?.policy.browser?.features[feature.id] ?? feature.defaultOn
-  }
-
   private func setAccessMode(_ mode: MobileAccessMode) {
     if mode != .open && !screenTime.canTurnOn {
       section = .blocking
@@ -322,24 +315,19 @@ private struct TortoiseMobileShell: View {
     }
   }
 
-  private func setTuningFeature(_ feature: MobileFeature, enabled: Bool) {
-    guard feature.isPolicyBacked else {
-      return
-    }
-
+  private func setTuningFeature(_ id: String, _ enabled: Bool) {
     Task {
-      _ = await model.setBrowserFeature(feature.id, enabled: enabled, using: clerk)
+      _ = await model.setBrowserFeature(id, enabled: enabled, using: clerk)
     }
   }
 
-  private func toggleSiteTuning(_ site: MobileTuningSite, enabled: Bool) {
-    let featureIDs = site.policyFeatureIDs
-    guard !featureIDs.isEmpty else {
+  private func setTuningFeatures(_ ids: [String], _ enabled: Bool) {
+    guard !ids.isEmpty else {
       return
     }
 
     Task {
-      _ = await model.setBrowserFeatures(featureIDs, enabled: enabled, using: clerk)
+      _ = await model.setBrowserFeatures(ids, enabled: enabled, using: clerk)
     }
   }
 
@@ -351,9 +339,10 @@ private struct TortoiseMobileShell: View {
     }
 
     Task {
+      let youtubeFeatureIDs = TuningCatalog.sites.first { $0.id == "youtube" }?.featureIDs ?? []
       let updatedPolicy = await model.updatePolicy(using: clerk) { policy in
         let basePolicy = enabled && policy.mode == "open" ? policy.settingMode("focus") : policy
-        return basePolicy.settingBrowserFeatures(MobileTuningSite.youtube.policyFeatureIDs, enabled: enabled)
+        return basePolicy.settingBrowserFeatures(youtubeFeatureIDs, enabled: enabled)
       }
       guard updatedPolicy != nil else {
         return
@@ -624,15 +613,28 @@ private struct MobileBlockingScreen: View {
 }
 
 private struct MobileTuningScreen: View {
-  @Binding var selectedSite: MobileTuningSite
+  @Binding var selectedSite: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   let browserProfiles: [MobileBrowserProfile]
-  let featureEnabled: (MobileFeature) -> Bool
-  let setFeature: (MobileFeature, Bool) -> Void
-  let toggleSite: (MobileTuningSite, Bool) -> Void
+  let setFeature: (String, Bool) -> Void
+  let setFeatures: ([String], Bool) -> Void
   let setYoutubeProtection: (Bool) -> Void
   let setDailyLimit: (Int) -> Void
+
+  private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
+
+  private var tuneSites: [TuneSite] {
+    TuneScreen.sites(policy: tunePolicy, surface: .iosSafari)
+  }
+
+  private var selectedTuneSite: TuneSite? {
+    tuneSites.first { $0.id == selectedSite }
+  }
+
+  private var selectedSiteFeatures: [TuneFeature] {
+    TuneScreen.features(forSiteID: selectedSite, policy: tunePolicy, surface: .iosSafari)
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -646,92 +648,90 @@ private struct MobileTuningScreen: View {
         columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
         spacing: 10
       ) {
-        ForEach(MobileTuningSite.allCases) { site in
+        ForEach(tuneSites) { site in
           Button {
-            selectedSite = site
+            selectedSite = site.id
           } label: {
-            MobileSiteTile(
-              site: site,
-              countText: countText(for: site),
-              isSelected: selectedSite == site
-            )
+            MobileSiteTile(site: site, isSelected: selectedSite == site.id)
           }
           .buttonStyle(.plain)
         }
 
+        MobileTikTokComingSoonTile()
+
         MobileAddSiteTile()
       }
 
-      MobileCard {
-        HStack(spacing: 12) {
-          MobileAvatar(text: selectedSite.letter, size: 44, background: selectedSite.color, foreground: selectedSite.foreground, cornerRadius: 10)
-          VStack(alignment: .leading, spacing: 3) {
-            Text("\(selectedSite.title) cleanup")
-              .font(.system(size: 17, weight: .bold))
-              .foregroundStyle(TortoiseDesign.primaryText)
-            Text(selectedSite.domain)
-              .font(.system(size: 13))
-              .foregroundStyle(TortoiseDesign.secondaryText)
-          }
-          Spacer()
-          Button(tuningActionTitle) {
-            performTuningAction()
-          }
-          .buttonStyle(.bordered)
-          .disabled(model.isSyncing)
-        }
-      }
-
-      if selectedSite == .youtube {
-        MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
-      }
-
-      if selectedSite == .youtube {
+      if let selectedTuneSite {
         MobileCard {
-          VStack(alignment: .leading, spacing: 14) {
-            MobileSectionLabel("iOS enforcement")
-            MobileIOSPolicyRow(
-              systemImage: "play.rectangle.fill",
-              title: "YouTube app",
-              detail: screenTime.selection.applicationTokens.isEmpty ? "Select the native app in Screen Time." : "Selected through Screen Time."
-            )
-            MobileDivider()
-              .padding(.vertical, 2)
-            MobileIOSPolicyRow(
-              systemImage: "safari.fill",
-              title: "YouTube in Safari",
-              detail: screenTime.selection.webDomainTokens.isEmpty ? "Select youtube.com as a web domain." : "Selected through Screen Time."
-            )
-            MobileDivider()
-              .padding(.vertical, 2)
-            MobileIOSPolicyRow(
-              systemImage: "hand.raised.fill",
-              title: "Shielding",
-              detail: screenTime.shieldingEnabled ? "Selected targets are blocked on this iPhone." : "Ready when you turn on iOS blocking."
-            )
-          }
-        }
-      } else {
-        MobileCard {
-          VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-              Image(systemName: "shield.checkered")
-                .foregroundStyle(TortoiseDesign.green)
-              Text("Active on")
-                .font(.system(size: 13, weight: .bold))
-              Text("· browser profiles")
-                .font(.system(size: 13, weight: .bold))
+          HStack(spacing: 12) {
+            MobileTuneBrandMark(assetName: selectedTuneSite.brandAssetName, size: 44, cornerRadius: 10)
+            VStack(alignment: .leading, spacing: 3) {
+              Text("\(selectedTuneSite.title) cleanup")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(TortoiseDesign.primaryText)
+              Text("\(enabledFeatureCount)/\(selectedSiteFeatures.count) hidden")
+                .font(.system(size: 13))
                 .foregroundStyle(TortoiseDesign.secondaryText)
             }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
-              if browserProfiles.isEmpty {
-                MobileEmptyState(
-                  title: "No browser profiles yet",
-                  detail: "Install a browser helper, connect it to this Tortoise account, then Safari/browser tuning status will appear here."
-                )
-              } else {
-                ForEach(browserProfiles) { profile in
-                  MobileScopeChip(avatar: profile.avatar, title: profile.title)
+            Spacer()
+            Button(tuningActionTitle) {
+              performTuningAction()
+            }
+            .buttonStyle(.bordered)
+            .disabled(model.isSyncing)
+          }
+        }
+
+        if selectedSite == "youtube" {
+          MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
+
+          MobileCard {
+            VStack(alignment: .leading, spacing: 14) {
+              MobileSectionLabel("iOS enforcement")
+              MobileIOSPolicyRow(
+                systemImage: "play.rectangle.fill",
+                title: "YouTube app",
+                detail: screenTime.selection.applicationTokens.isEmpty ? "Select the native app in Screen Time." : "Selected through Screen Time."
+              )
+              MobileDivider()
+                .padding(.vertical, 2)
+              MobileIOSPolicyRow(
+                systemImage: "safari.fill",
+                title: "YouTube in Safari",
+                detail: screenTime.selection.webDomainTokens.isEmpty ? "Select youtube.com as a web domain." : "Selected through Screen Time."
+              )
+              MobileDivider()
+                .padding(.vertical, 2)
+              MobileIOSPolicyRow(
+                systemImage: "hand.raised.fill",
+                title: "Shielding",
+                detail: screenTime.shieldingEnabled ? "Selected targets are blocked on this iPhone." : "Ready when you turn on iOS blocking."
+              )
+            }
+          }
+        } else {
+          MobileCard {
+            VStack(alignment: .leading, spacing: 14) {
+              HStack(spacing: 8) {
+                Image(systemName: "shield.checkered")
+                  .foregroundStyle(TortoiseDesign.green)
+                Text("Active on")
+                  .font(.system(size: 13, weight: .bold))
+                Text("· browser profiles")
+                  .font(.system(size: 13, weight: .bold))
+                  .foregroundStyle(TortoiseDesign.secondaryText)
+              }
+              LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
+                if browserProfiles.isEmpty {
+                  MobileEmptyState(
+                    title: "No browser profiles yet",
+                    detail: "Install a browser helper, connect it to this Tortoise account, then Safari/browser tuning status will appear here."
+                  )
+                } else {
+                  ForEach(browserProfiles) { profile in
+                    MobileScopeChip(avatar: profile.avatar, title: profile.title)
+                  }
                 }
               }
             }
@@ -740,7 +740,7 @@ private struct MobileTuningScreen: View {
 
         MobileCard {
           VStack(spacing: 0) {
-            ForEach(Array(selectedSite.features.enumerated()), id: \.element.id) { index, feature in
+            ForEach(Array(selectedSiteFeatures.enumerated()), id: \.element.id) { index, feature in
               if index > 0 {
                 MobileDivider()
                   .padding(.vertical, 13)
@@ -748,10 +748,10 @@ private struct MobileTuningScreen: View {
               MobileTuningFeatureRow(
                 feature: feature,
                 isOn: Binding(
-                  get: { featureEnabled(feature) },
-                  set: { setFeature(feature, $0) }
+                  get: { feature.isOn },
+                  set: { setFeature(feature.id, $0) }
                 ),
-                isEnabled: feature.isPolicyBacked && !model.isSyncing
+                isEnabled: feature.isEnforceable && !model.isSyncing
               )
             }
           }
@@ -760,37 +760,26 @@ private struct MobileTuningScreen: View {
     }
   }
 
-  private func enabledCount(for site: MobileTuningSite) -> Int {
-    site.policyFeatures.filter(featureEnabled).count
-  }
-
-  private func countText(for site: MobileTuningSite) -> String {
-    if site == .youtube {
-      return screenTime.shieldingEnabled ? "iOS on" : (screenTime.hasSelection ? "iOS ready" : "Setup")
-    }
-    let countableFeatures = site.policyFeatures.count
-    guard countableFeatures > 0 else {
-      return "Soon"
-    }
-    return "\(enabledCount(for: site))/\(countableFeatures)"
+  private var enabledFeatureCount: Int {
+    selectedSiteFeatures.filter(\.isOn).count
   }
 
   private var tuningActionTitle: String {
-    if selectedSite == .youtube {
+    if selectedSite == "youtube" {
       if !screenTime.shieldingEnabled && !screenTime.canTurnOn {
         return "Finish setup"
       }
       return screenTime.shieldingEnabled ? "Turn off" : "Turn on"
     }
-    let countableFeatures = selectedSite.policyFeatures.count
+    let countableFeatures = selectedSiteFeatures.count
     guard countableFeatures > 0 else {
       return "Connect"
     }
-    return enabledCount(for: selectedSite) == countableFeatures ? "Reset all" : "Hide all"
+    return enabledFeatureCount == countableFeatures ? "Reset all" : "Hide all"
   }
 
   private func performTuningAction() {
-    if selectedSite == .youtube {
+    if selectedSite == "youtube" {
       setYoutubeProtection(!screenTime.shieldingEnabled)
       return
     }
@@ -798,12 +787,12 @@ private struct MobileTuningScreen: View {
   }
 
   private func toggleAll() {
-    let countableFeatures = selectedSite.policyFeatures.count
+    let countableFeatures = selectedSiteFeatures.count
     guard countableFeatures > 0 else {
       return
     }
-    let next = enabledCount(for: selectedSite) != countableFeatures
-    toggleSite(selectedSite, next)
+    let next = enabledFeatureCount != countableFeatures
+    setFeatures(selectedSiteFeatures.map(\.id), next)
   }
 }
 
@@ -1962,17 +1951,16 @@ private struct MobileSwitch: View {
 }
 
 private struct MobileSiteTile: View {
-  let site: MobileTuningSite
-  let countText: String
+  let site: TuneSite
   let isSelected: Bool
 
   var body: some View {
     HStack(spacing: 10) {
-      MobileAvatar(text: site.letter, size: 34, background: site.color, foreground: site.foreground, cornerRadius: 8)
+      MobileTuneBrandMark(assetName: site.brandAssetName, size: 34, cornerRadius: 8)
       VStack(alignment: .leading, spacing: 2) {
         Text(site.title)
           .font(.system(size: 14, weight: .bold))
-        Text(countText)
+        Text("\(site.enabledCount)/\(site.totalCount)")
           .font(.system(size: 12, weight: .bold))
           .foregroundStyle(TortoiseDesign.secondaryText)
       }
@@ -1985,6 +1973,73 @@ private struct MobileSiteTile: View {
       RoundedRectangle(cornerRadius: 14, style: .continuous)
         .strokeBorder(isSelected ? TortoiseDesign.accent : TortoiseDesign.hairline)
     }
+  }
+}
+
+/// Renders a site's real brand mark asset, falling back to a plain glyph if the
+/// asset isn't bundled for this target (e.g. brand art that only ships in the
+/// macOS asset catalog today).
+private struct MobileTuneBrandMark: View {
+  let assetName: String?
+  var size: CGFloat = 34
+  var cornerRadius: CGFloat = 8
+
+  private var resolvedImage: Image? {
+    guard let assetName, UIImage(named: assetName) != nil else { return nil }
+    return Image(assetName)
+  }
+
+  var body: some View {
+    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+      .fill(Color.white.opacity(0.11))
+      .frame(width: size, height: size)
+      .overlay {
+        if let resolvedImage {
+          resolvedImage
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .padding(size * 0.2)
+        } else {
+          Image(systemName: "globe")
+            .font(.system(size: size * 0.4, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+        }
+      }
+      .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+  }
+}
+
+/// A dimmed, non-interactive tile for a site that isn't tunable yet. No toggles,
+/// no fake data - just an honest placeholder until the real tuner ships.
+private struct MobileTikTokComingSoonTile: View {
+  var body: some View {
+    HStack(spacing: 10) {
+      RoundedRectangle(cornerRadius: 8, style: .continuous)
+        .fill(Color.white.opacity(0.06))
+        .frame(width: 34, height: 34)
+        .overlay {
+          Image(systemName: "hourglass")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.tertiaryText)
+        }
+      VStack(alignment: .leading, spacing: 2) {
+        Text("TikTok")
+          .font(.system(size: 14, weight: .bold))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+        Text("Coming soon")
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(TortoiseDesign.tertiaryText)
+      }
+      Spacer()
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, minHeight: 66)
+    .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 14, style: .continuous)
+        .strokeBorder(TortoiseDesign.hairline)
+    }
+    .opacity(0.55)
   }
 }
 
@@ -2027,18 +2082,33 @@ private struct MobileScopeChip: View {
 }
 
 private struct MobileTuningFeatureRow: View {
-  let feature: MobileFeature
+  let feature: TuneFeature
   @Binding var isOn: Bool
   var isEnabled = true
 
   var body: some View {
     HStack(spacing: 12) {
       VStack(alignment: .leading, spacing: 5) {
-        Text(feature.title)
-          .font(.system(size: 14, weight: .bold))
+        HStack(spacing: 6) {
+          Text(feature.title)
+            .font(.system(size: 14, weight: .bold))
+          if !feature.isEnforceable {
+            Text("Browser only")
+              .font(.system(size: 10, weight: .bold))
+              .foregroundStyle(TortoiseDesign.tertiaryText)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(Color.white.opacity(0.08), in: Capsule())
+          }
+        }
         Text(feature.detail)
           .font(.system(size: 12))
           .foregroundStyle(TortoiseDesign.secondaryText)
+        if !feature.isEnforceable {
+          Text("No hook on this iPhone yet - toggle from a connected browser.")
+            .font(.system(size: 11))
+            .foregroundStyle(TortoiseDesign.tertiaryText)
+        }
       }
       Spacer()
       MobileSwitch(isOn: $isOn, isEnabled: isEnabled)
@@ -2391,124 +2461,6 @@ private enum MobileUsageTab: String, CaseIterable, Identifiable {
     case .reddit: return "Reddit"
     case .tiktok: return "TikTok"
     }
-  }
-}
-
-private enum MobileTuningSite: String, CaseIterable, Identifiable {
-  case youtube
-  case x
-  case instagram
-  case reddit
-  case tiktok
-
-  var id: String { rawValue }
-
-  var title: String {
-    switch self {
-    case .youtube: return "YouTube"
-    case .x: return "X"
-    case .instagram: return "Instagram"
-    case .reddit: return "Reddit"
-    case .tiktok: return "TikTok"
-    }
-  }
-
-  var letter: String {
-    switch self {
-    case .youtube: return "YT"
-    case .x: return "X"
-    case .instagram: return "IG"
-    case .reddit: return "RD"
-    case .tiktok: return "TT"
-    }
-  }
-
-  var domain: String {
-    switch self {
-    case .youtube: return "youtube.com"
-    case .x: return "x.com · twitter.com"
-    case .instagram: return "instagram.com"
-    case .reddit: return "reddit.com"
-    case .tiktok: return "tiktok.com"
-    }
-  }
-
-  var color: Color {
-    switch self {
-    case .youtube: return TortoiseDesign.red
-    case .x, .tiktok: return .black
-    case .instagram: return .pink
-    case .reddit: return .orange
-    }
-  }
-
-  var foreground: Color {
-    self == .tiktok ? .cyan : .white
-  }
-
-  var features: [MobileFeature] {
-    switch self {
-    case .youtube:
-      return [
-        MobileFeature(id: "youtubeHome", title: "Hide Home Feed", detail: "Open straight to search and subscriptions - no recommendation wall.", defaultOn: true),
-        MobileFeature(id: "youtubeShorts", title: "Hide Shorts", detail: "Remove Shorts shelves, links, and the Shorts player.", defaultOn: true),
-        MobileFeature(id: "youtubeRecommendations", title: "Hide Recommended", detail: "Strip recommended videos from the watch sidebar.", defaultOn: true),
-        MobileFeature(id: "youtubeAutoplay", title: "Disable Autoplay", detail: "Stop the next video from rolling automatically.", defaultOn: true),
-        MobileFeature(id: "youtubeComments", title: "Hide Comments", detail: "Remove the comment section from watch pages.", defaultOn: false),
-        MobileFeature(id: "youtubeUsageTracking", title: "Track Time & Videos", detail: "Count active time and unique videos.", defaultOn: true),
-        MobileFeature(id: "youtubeDailyLimit", title: "Daily Time Limit", detail: "Block YouTube after your selected daily limit.", defaultOn: false)
-      ]
-    case .x:
-      return [
-        MobileFeature(id: "xSensitiveMedia", title: "Hide Sensitive Media", detail: "Hide flagged sensitive and high-confidence explicit posts.", defaultOn: true),
-        MobileFeature(id: "xVideos", title: "Hide Videos & GIFs", detail: "Remove autoplaying video and GIF players.", defaultOn: true),
-        MobileFeature(id: "xExploreTrends", title: "Hide Explore & Trends", detail: "Remove trend modules and Explore entry points.", defaultOn: true),
-        MobileFeature(id: "xPhotos", title: "Hide Tweet Photos", detail: "Remove inline photos while keeping text.", defaultOn: false),
-        MobileFeature(id: "xMediaCards", title: "Hide Media Cards", detail: "Remove rich link cards with large previews.", defaultOn: false)
-      ]
-    case .instagram:
-      return [
-        MobileFeature(id: "instagramReels", title: "Hide Reels", detail: "Remove Reels trays, links, and the Reels player.", defaultOn: true),
-        MobileFeature(id: "instagramExplore", title: "Hide Explore", detail: "Remove Explore and redirect it back to your feed.", defaultOn: true),
-        MobileFeature(id: "instagramSuggested", title: "Hide Suggested Posts", detail: "Remove recommended and promoted posts.", defaultOn: true),
-        MobileFeature(id: "instagramStories", title: "Hide Stories", detail: "Remove the stories tray at the top of the feed.", defaultOn: false)
-      ]
-    case .reddit:
-      return [
-        MobileFeature(id: "redditPopularAll", title: "Hide Popular & All", detail: "Remove r/popular and r/all and redirect home.", defaultOn: true),
-        MobileFeature(id: "redditRecommendations", title: "Hide Recommendations", detail: "Remove recommended community modules.", defaultOn: true),
-        MobileFeature(id: "redditNSFW", title: "Hide NSFW Posts & Communities", detail: "Remove mature posts and adult media.", defaultOn: true),
-        MobileFeature(id: "redditMedia", title: "Hide Media Posts", detail: "Remove image and video posts, keep text.", defaultOn: false),
-        MobileFeature(id: "redditSidebars", title: "Hide Sidebars", detail: "Remove right-rail sidebars and panels.", defaultOn: false)
-      ]
-    case .tiktok:
-      return [
-        MobileFeature(id: "tt_foryou", title: "Hide For You Feed", detail: "Open to Following instead of the For You loop.", defaultOn: true),
-        MobileFeature(id: "tt_live", title: "Hide LIVE", detail: "Remove LIVE entry points and shelves.", defaultOn: true),
-        MobileFeature(id: "tt_explore", title: "Hide Explore", detail: "Remove the Explore tab.", defaultOn: false),
-        MobileFeature(id: "tt_track", title: "Track Time", detail: "Count active time across connected profiles.", defaultOn: true),
-        MobileFeature(id: "tt_limit", title: "Daily Time Limit · 20m", detail: "Block TikTok after your daily limit.", defaultOn: false)
-      ]
-    }
-  }
-
-  var policyFeatures: [MobileFeature] {
-    features.filter(\.isPolicyBacked)
-  }
-
-  var policyFeatureIDs: [String] {
-    policyFeatures.map(\.id)
-  }
-}
-
-private struct MobileFeature: Identifiable {
-  let id: String
-  let title: String
-  let detail: String
-  let defaultOn: Bool
-
-  var isPolicyBacked: Bool {
-    TortoisePolicy.browserFeatureKeys.contains(id)
   }
 }
 
