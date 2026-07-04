@@ -612,3 +612,21 @@ git commit -m "Render iOS Devices screen from shared DevicesHub; drop duplicate 
 **Type consistency:** `DeviceKind`, `DeviceHubRow`, `DevicesHub.rows(devices:currentDeviceID:now:)`, `DevicesHub.connectedCount(_:)`, `TortoiseDevice.{deviceKind,isBrowserProfile,displayName,initials,brandAssetName,lastSeenDate}`, and `ConnectionStatus.resolve(lastSeenAt:isEnforcingLatestPolicy:isPausedByUser:now:)` are used with identical signatures across tasks. `HubStatusStyle` is macOS-view-scoped; iOS defines its own `MobileHubStatusStyle` twin (Task 4 Step 1) — noted so the duplication is intentional, not an accident (both map the same 3 cases; a later shared-UI phase could unify).
 
 **Out of scope (correctly deferred):** Add flow, browser-connect transport convergence, per-device pause, real per-device enforcement signal, TikTok, Tune screen, legacy-enum removal.
+
+## Whole-branch review outcome (Phase 2a)
+
+Verdict: **merge-ready with fixes.** No Critical. Core objective met — one shared classification/status/freshness model consumed by both Devices screens, no fake rows, no removed-but-referenced symbols, status styling mirrored cross-platform.
+
+Carry forward:
+
+**Important (documented deferrals):**
+1. **Mac two-source browser seam.** The hub nests *account* browser-profile devices (`snapshot.devices.filter(\.isBrowserProfile)`) while the kept "Mac browsers" card renders *local* `store.browserConnectors` (native-messaging). If a browser is connected via BOTH transports it shows twice, and the header `connectionCount` (hub-only) under-reports locally-connected browsers. **2c fixes this** by folding the local list into the hub (one source). Until then it is user-visible on Mac if both transports are live — confirm dormant or add an interim de-dup guard (suppress the local card for brands already present as account profiles) if 2c slips.
+2. **`isEnforcingLatestPolicy: true` hardcode** (`DevicesHubModel.swift`). `TortoiseDevice` has no policy-version field yet, so `.catchingUp` can't fire and a fresh device shows `.on` even if behind on policy — looser than spec §11. **Phase 3** wires device-reported policy version vs current `settingsVersion`.
+
+**Minor polish (fold into 2b/2c/Phase 3):**
+- Unify the current-device badge word ("CURRENT" iOS vs "THIS ONE" Mac).
+- Unify device-row icon tint (Mac monochrome vs iOS accent) → monochrome per spec §10.
+- Map `.attention` reasons to distinct words (`.setupIncomplete`/`.stale`/`.catchingUp`) instead of all "Tap".
+- Render `brandAssetName` (real brand marks) instead of the generic `globe`.
+- Add cheap `DevicesHub` tests: multi-brand → two browser rows; all-attention profiles → browser aggregates to `.attention` (not `.off`).
+- Expand the browser brand list when less-common browsers matter (`opera`/`vivaldi`/`chromium` — note `"chromium".contains("chrome")` is false — currently fall to `.other`).
