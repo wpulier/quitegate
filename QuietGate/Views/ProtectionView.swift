@@ -19,25 +19,17 @@ struct ProtectionView: View {
       accountSummary
 
       VStack(alignment: .leading, spacing: 12) {
-        QGSectionLabel(text: "Mac")
+        QGSectionLabel(text: "Devices")
         QGCard {
-          macConnections
+          hubDeviceList
         }
       }
 
+      // TODO(2c): fold local browserConnectors into hubRows
       VStack(alignment: .leading, spacing: 12) {
-        QGSectionLabel(text: "iPhone")
+        QGSectionLabel(text: "Mac browsers")
         QGCard {
-          iphoneConnections
-        }
-      }
-
-      if !otherConnections.isEmpty {
-        VStack(alignment: .leading, spacing: 12) {
-          QGSectionLabel(text: "Other connections")
-          QGCard {
-            otherConnectionList
-          }
+          macBrowsers
         }
       }
 
@@ -94,13 +86,38 @@ struct ProtectionView: View {
   }
 
   @ViewBuilder
-  private var macConnections: some View {
+  private var hubDeviceList: some View {
+    VStack(spacing: 0) {
+      ForEach(Array(hubRows.enumerated()), id: \.element.id) { index, row in
+        if index > 0 {
+          ProductDivider()
+            .padding(.vertical, 14)
+        }
+        VStack(alignment: .leading, spacing: 0) {
+          HubDeviceRow(row: row)
+
+          if !row.profiles.isEmpty {
+            VStack(spacing: 0) {
+              ForEach(Array(row.profiles.enumerated()), id: \.element.id) { profileIndex, profile in
+                if profileIndex > 0 {
+                  ProductDivider()
+                    .padding(.vertical, 10)
+                }
+                HubDeviceRow(row: profile)
+              }
+            }
+            .padding(.leading, 50)
+            .padding(.top, 12)
+          }
+        }
+      }
+    }
+  }
+
+  // TODO(2c): fold local browserConnectors into hubRows
+  @ViewBuilder
+  private var macBrowsers: some View {
     VStack(alignment: .leading, spacing: 0) {
-      macDeviceList
-
-      ProductDivider()
-        .padding(.vertical, 16)
-
       PlatformSubsectionHeader(
         systemImage: "globe",
         title: "Mac browsers",
@@ -120,110 +137,6 @@ struct ProtectionView: View {
     }
   }
 
-  @ViewBuilder
-  private var macDeviceList: some View {
-    let devices = macDevices
-    if devices.isEmpty {
-      DeviceConnectionRow(
-        systemImage: "desktopcomputer",
-        title: "This Mac",
-        subtitle: accountStore.isSignedIn ? "Waiting for device registration." : "Sign in to connect this Mac.",
-        status: accountStore.macConnectionStatus,
-        tint: accountStore.isSignedIn ? QGDesign.accent : QGDesign.secondaryText
-      )
-    } else {
-      VStack(spacing: 0) {
-        ForEach(Array(devices.enumerated()), id: \.element.id) { index, device in
-          if index > 0 {
-            ProductDivider()
-              .padding(.vertical, 14)
-          }
-          DeviceConnectionRow(
-            systemImage: deviceSystemImage(device),
-            title: macDeviceTitle(device),
-            subtitle: macDeviceSubtitle(device),
-            status: deviceStatus(device),
-            tint: deviceTint(device)
-          )
-        }
-      }
-    }
-  }
-
-  @ViewBuilder
-  private var iphoneConnections: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      iphoneDeviceList
-
-      ProductDivider()
-        .padding(.vertical, 16)
-
-      PlatformSubsectionHeader(
-        systemImage: "safari",
-        title: "iPhone browsers",
-        subtitle: "iPhone browser coverage is synced by the iPhone app, not separate Mac profiles."
-      )
-
-      DeviceConnectionRow(
-        systemImage: "safari",
-        title: "Safari on iPhone",
-        subtitle: iphoneBrowserSubtitle,
-        status: iphoneBrowserStatus,
-        tint: iphoneBrowserTint
-      )
-      .padding(.top, 12)
-    }
-  }
-
-  @ViewBuilder
-  private var iphoneDeviceList: some View {
-    let devices = iphoneDevices
-    if devices.isEmpty {
-      DeviceConnectionRow(
-        systemImage: "iphone",
-        title: "iPhone",
-        subtitle: accountStore.isSignedIn ? "Install QuietGate on iPhone to sync iOS blocking and usage." : "Sign in to connect an iPhone.",
-        status: accountStore.isSignedIn ? "Not connected" : "Sign in",
-        tint: QGDesign.secondaryText
-      )
-    } else {
-      VStack(spacing: 0) {
-        ForEach(Array(devices.enumerated()), id: \.element.id) { index, device in
-          if index > 0 {
-            ProductDivider()
-              .padding(.vertical, 14)
-          }
-          DeviceConnectionRow(
-            systemImage: deviceSystemImage(device),
-            title: iphoneDeviceTitle(device),
-            subtitle: deviceSubtitle(device),
-            status: deviceStatus(device),
-            tint: deviceTint(device)
-          )
-        }
-      }
-    }
-  }
-
-  @ViewBuilder
-  private var otherConnectionList: some View {
-    VStack(spacing: 0) {
-      ForEach(Array(otherConnections.enumerated()), id: \.element.id) { index, device in
-        if index > 0 {
-          ProductDivider()
-            .padding(.vertical, 14)
-        }
-        DeviceConnectionRow(
-          systemImage: deviceSystemImage(device),
-          title: deviceTitle(device),
-          subtitle: deviceSubtitle(device),
-          status: deviceStatus(device),
-          tint: deviceTint(device)
-        )
-      }
-    }
-  }
-
   private var connectButton: some View {
     Button {
       if let primaryConnectAction {
@@ -240,41 +153,16 @@ struct ProtectionView: View {
     .disabled(primaryConnectAction == nil || store.isWorking)
   }
 
-  private var accountDevices: [TortoiseDevice] {
-    var devicesByID = Dictionary(uniqueKeysWithValues: accountStore.snapshot.devices.map { ($0.id, $0) })
-    if let current = accountStore.snapshot.device {
-      devicesByID[current.id] = current
+  private var hubRows: [DeviceHubRow] {
+    var devices = accountStore.snapshot.devices
+    if let current = accountStore.snapshot.device, !devices.contains(where: { $0.id == current.id }) {
+      devices.append(current)
     }
-    return devicesByID.values.sorted { lhs, rhs in
-      let lhsDate = lhs.lastSeenAt.flatMap(Self.date(from:)) ?? .distantPast
-      let rhsDate = rhs.lastSeenAt.flatMap(Self.date(from:)) ?? .distantPast
-      return lhsDate > rhsDate
-    }
-  }
-
-  private var macDevices: [TortoiseDevice] {
-    accountDevices.filter(isMacDevice)
-  }
-
-  private var iphoneDevices: [TortoiseDevice] {
-    accountDevices.filter(isIPhoneDevice)
-  }
-
-  private var otherConnections: [TortoiseDevice] {
-    accountDevices.filter { device in
-      !isMacDevice(device) && !isIPhoneDevice(device)
-    }
-  }
-
-  private var macSubtitle: String {
-    if appBlockingStore.enforcementEnabled {
-      return "Tortoise running · app blocking active"
-    }
-    return "Tortoise running · app blocking paused"
+    return DevicesHub.rows(devices: devices, currentDeviceID: accountStore.snapshot.device?.id, now: Date())
   }
 
   private var connectionCount: Int {
-    macDevices.count + iphoneDevices.count + otherConnections.count + macBrowserGroups.filter(\.isConnected).count
+    DevicesHub.connectedCount(hubRows) + macBrowserGroups.filter(\.isConnected).count
   }
 
   private var macBrowserGroups: [BrowserProfileGroup] {
@@ -389,126 +277,6 @@ struct ProtectionView: View {
     }
   }
 
-  private func deviceSystemImage(_ device: TortoiseDevice) -> String {
-    switch normalizedPlatform(device) {
-    case "ios":
-      return "iphone"
-    case "macos", "mac":
-      return "desktopcomputer"
-    case "chrome", "chrome_extension":
-      return "globe"
-    case "firefox":
-      return "flame"
-    default:
-      return "macbook.and.iphone"
-    }
-  }
-
-  private func deviceTitle(_ device: TortoiseDevice) -> String {
-    let name = device.name?.trimmingCharacters(in: .whitespacesAndNewlines)
-    let platform = platformLabel(device)
-    return "\(name?.isEmpty == false ? name! : "Tortoise device") · \(platform)"
-  }
-
-  private func macDeviceTitle(_ device: TortoiseDevice) -> String {
-    let name = device.name?.trimmingCharacters(in: .whitespacesAndNewlines)
-    if accountStore.snapshot.device?.id == device.id {
-      guard let name, !name.isEmpty else {
-        return "This Mac"
-      }
-      return "This Mac · \(name)"
-    }
-    return "\(name?.isEmpty == false ? name! : "Mac") · Mac"
-  }
-
-  private func macDeviceSubtitle(_ device: TortoiseDevice) -> String {
-    accountStore.snapshot.device?.id == device.id ? macSubtitle : deviceSubtitle(device)
-  }
-
-  private func iphoneDeviceTitle(_ device: TortoiseDevice) -> String {
-    let name = device.name?.trimmingCharacters(in: .whitespacesAndNewlines)
-    return "\(name?.isEmpty == false ? name! : "iPhone") · iOS"
-  }
-
-  private func deviceSubtitle(_ device: TortoiseDevice) -> String {
-    let version = device.appVersion?.trimmingCharacters(in: .whitespacesAndNewlines)
-    let seen = device.lastSeenAt.flatMap(Self.date(from:)).map(Self.relativeDate) ?? "No health check yet"
-    if let version, !version.isEmpty {
-      return "App \(version) · \(seen)"
-    }
-    return seen
-  }
-
-  private func deviceStatus(_ device: TortoiseDevice) -> String {
-    guard let date = device.lastSeenAt.flatMap(Self.date(from:)) else {
-      return "Setup needed"
-    }
-    return Date().timeIntervalSince(date) < 24 * 3600 ? "Connected" : "Stale"
-  }
-
-  private func deviceTint(_ device: TortoiseDevice) -> Color {
-    deviceStatus(device) == "Connected" ? QGDesign.green : QGDesign.orange
-  }
-
-  private var iphoneBrowserSubtitle: String {
-    if iphoneDevices.isEmpty {
-      return "Connect an iPhone to sync Safari and iOS web usage."
-    }
-    return "Safari tuning and iOS web usage sync through the iPhone app."
-  }
-
-  private var iphoneBrowserStatus: String {
-    if iphoneDevices.isEmpty {
-      return "Not connected"
-    }
-    return iphoneDevices.contains { deviceStatus($0) == "Connected" } ? "Connected" : "Stale"
-  }
-
-  private var iphoneBrowserTint: Color {
-    iphoneBrowserStatus == "Connected" ? QGDesign.green : QGDesign.secondaryText
-  }
-
-  private func isMacDevice(_ device: TortoiseDevice) -> Bool {
-    ["macos", "mac"].contains(normalizedPlatform(device))
-  }
-
-  private func isIPhoneDevice(_ device: TortoiseDevice) -> Bool {
-    normalizedPlatform(device) == "ios"
-  }
-
-  private func normalizedPlatform(_ device: TortoiseDevice) -> String {
-    (device.platform ?? "").lowercased()
-  }
-
-  private func platformLabel(_ device: TortoiseDevice) -> String {
-    switch normalizedPlatform(device) {
-    case "ios":
-      return "iOS"
-    case "macos", "mac":
-      return "Mac"
-    case "chrome_extension", "chrome":
-      return "Chrome"
-    case "firefox_extension", "firefox":
-      return "Firefox"
-    case "safari_extension", "safari":
-      return "Safari"
-    default:
-      return device.platform?.isEmpty == false
-        ? device.platform!.replacingOccurrences(of: "_", with: " ").capitalized
-        : "Device"
-    }
-  }
-
-  private static func date(from value: String) -> Date? {
-    ISO8601DateFormatter().date(from: value)
-  }
-
-  private static func relativeDate(_ date: Date) -> String {
-    let formatter = RelativeDateTimeFormatter()
-    formatter.unitsStyle = .full
-    return "Seen \(formatter.localizedString(for: date, relativeTo: Date()))"
-  }
-
   @MainActor
   private func refreshStatus() async {
     guard !refreshInFlight else {
@@ -533,32 +301,62 @@ struct ProtectionView: View {
   }
 }
 
-private struct DeviceConnectionRow: View {
-  let systemImage: String
-  let title: String
-  let subtitle: String
-  let status: String
-  let tint: Color
+private struct HubDeviceRow: View {
+  let row: DeviceHubRow
 
   var body: some View {
     HStack(spacing: 13) {
-      Image(systemName: systemImage)
+      Image(systemName: HubStatusStyle.systemImage(for: row.kind))
         .font(.system(size: 18, weight: .semibold))
-        .foregroundStyle(tint)
+        .foregroundStyle(QGDesign.secondaryText)
         .frame(width: 38, height: 38)
-        .background(tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
       VStack(alignment: .leading, spacing: 3) {
-        Text(title)
-          .font(.system(size: 14, weight: .bold))
-          .foregroundStyle(QGDesign.primaryText)
-        Text(subtitle)
-          .font(.system(size: 12))
-          .foregroundStyle(QGDesign.secondaryText)
+        HStack(spacing: 7) {
+          Text(row.title)
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(QGDesign.primaryText)
+          if row.isCurrentDevice {
+            Text("THIS ONE").font(.system(size: 9, weight: .bold)).foregroundStyle(QGDesign.secondaryText)
+          }
+        }
+        if !row.profiles.isEmpty {
+          Text("\(row.profiles.count) profile\(row.profiles.count == 1 ? "" : "s")")
+            .font(.system(size: 12)).foregroundStyle(QGDesign.secondaryText)
+        }
       }
-
       Spacer()
-      QGPill(text: status, tint: tint)
+      HStack(spacing: 7) {
+        Text(HubStatusStyle.label(for: row.status))
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(HubStatusStyle.color(for: row.status))
+        Circle().fill(HubStatusStyle.color(for: row.status)).frame(width: 8, height: 8)
+      }
+    }
+  }
+}
+
+enum HubStatusStyle {
+  static func label(for status: ConnectionStatus) -> String {
+    switch status {
+    case .on: return "On"
+    case .attention: return "Tap"
+    case .off: return "Off"
+    }
+  }
+  static func color(for status: ConnectionStatus) -> Color {
+    switch status {
+    case .on: return QGDesign.green
+    case .attention: return QGDesign.orange
+    case .off: return QGDesign.secondaryText
+    }
+  }
+  static func systemImage(for kind: DeviceKind) -> String {
+    switch kind {
+    case .mac: return "desktopcomputer"
+    case .iphone: return "iphone"
+    case .browser: return "globe"       // TODO: real brand mark via brandAssetName
+    case .other: return "laptopcomputer"
     }
   }
 }
