@@ -113,6 +113,7 @@
 		CCBCC872C054269985C4CF02 /* LegacyProviderStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */; };
 		CDC82C8CA4638D7E8C941CDF /* reddit.js in Resources */ = {isa = PBXBuildFile; fileRef = 0334F1007E06A8523AC503FE /* reddit.js */; };
 		CDDB24BD953FEEF35024EC01 /* icon-16.png in Resources */ = {isa = PBXBuildFile; fileRef = AF79EB6986C1E3B20DD6D3CC /* icon-16.png */; };
+		CDE2360F6B637182D8E13D1C /* TuningSyncInvariantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */; };
 		CEF336BB6E39309C54BF13CE /* platform-controls.js in Resources */ = {isa = PBXBuildFile; fileRef = 3A31CD2DF903336604545760 /* platform-controls.js */; };
 		CEFFC1561E651D5CF6FE2BEE /* instagram.js in Resources */ = {isa = PBXBuildFile; fileRef = D9ACEF795C443D321B1601E5 /* instagram.js */; };
 		CFB2092CDEC79C1B8474E74D /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 1A7E1E0E78487A031EB52298 /* ClerkKitUI */; };
@@ -280,6 +281,7 @@
 		A63BF32250707E748199B397 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA358B98B5250BFDA5D0FA8E /* adult-domains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "adult-domains.json"; sourceTree = "<group>"; };
 		AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoisePolicyCatalogTests.swift; sourceTree = "<group>"; };
+		AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningSyncInvariantTests.swift; sourceTree = "<group>"; };
 		AF79EB6986C1E3B20DD6D3CC /* icon-16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-16.png"; sourceTree = "<group>"; };
 		AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningCatalog.swift; sourceTree = "<group>"; };
 		B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallationStore.swift; sourceTree = "<group>"; };
@@ -632,6 +634,7 @@
 				59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */,
 				AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */,
 				757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */,
+				AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */,
 				9CBD2ED50203707F1688198C /* TestSupport */,
 			);
 			path = QuietGateTests;
@@ -1021,6 +1024,7 @@
 				13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */,
 				F1A977F94DC0C35C6CC5A6AF /* TortoisePolicyCatalogTests.swift in Sources */,
 				9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */,
+				CDE2360F6B637182D8E13D1C /* TuningSyncInvariantTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
