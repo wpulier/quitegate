@@ -313,6 +313,16 @@ git commit -m "iOS Blocking: real timed/locked focus sessions (replace fake butt
 
 **Out of scope (deferred):** authoritative expiry when the app is SUSPENDED via a `DeviceActivitySchedule` session window + `intervalDidEnd` revert (3b-2b) — until then, a session that expires while the app is killed reverts on next foreground (fail-safe: the block persists slightly past expiry, never ends early); folding Blocking (adult/apps/websites) into the one Tune surface + removing the fake concept-blocking/hardcoded apps/fake site defaults (3b-3); cross-device sessions (future); Mac augment knobs (3c).
 
+## Whole-branch review outcome (Phase 3b-2a)
+
+**Adversarial precommitment audit (Opus)** enumerated every enforcement-state mutator (mode/shield, session, targets, Safari policy, daily limit) across all tabs + app-restart. Session lifecycle + most surfaces were correctly sealed, but it found **2 more reachable bypasses**, now FIXED (commit 366b2d1) + verified:
+- **Critical — YouTube daily-limit stepper** raised the limit mid-lock → `writeSafariPolicy` weakened enforcement. Fixed: stepper buttons `.disabled` + `adjustDailyLimit` guards `!sessionLockedActive`.
+- **Important — policy-sync onChanges** applied a weaker cloud/Mac-edited policy that synced down during a local lock. Fixed: both policy `onChange` handlers skip while locked (iOS Safari policy frozen at locked-start), with a `.onChange(of: sessionLockedActive)` catch-up re-applying the current policy on release. `setAccessMode` also guarded.
+
+**Result: precommitment is airtight** — no local UI path (stepper, mode, tuning toggles, targets) and no synced cloud policy change can weaken a locked iOS session; it survives relaunch and releases exactly at its wall-clock end.
+
+**Deferred:** 3b-2b (authoritative expiry when the app is SUSPENDED via a DeviceActivity session window) — until then a session that expires while the app is killed reverts on next foreground (fail-safe: blocks slightly past expiry, never ends early).
+
 ## Residual risks to confirm
 
 1. **`setMode` self-guard ordering (Task 2 Step 4):** guarding `setMode` with `canChangeMode` must not block `startSession`'s own mode application. The plan sets `session` before calling `setMode`; since a freshly-created session's guard evaluates against the NEW session (which IS locked-active for a locked start), `setMode` could refuse its own start. The plan's fallback is a private un-guarded `applyMode(_:)` that `startSession` calls instead of the public `setMode`. The implementer must pick the ordering that both (a) lets a legitimate start apply the mode and (b) blocks external mode changes during a locked session — flag if the chosen approach needs review.
