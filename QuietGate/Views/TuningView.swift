@@ -6,7 +6,7 @@ struct TuningView: View {
   @EnvironmentObject private var store: ProtectionStore
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
   @EnvironmentObject private var accountStore: MacAccountStore
-  @State private var selectedSite = "youtube"
+  @State private var selectedSite = TuningCatalog.youtubeSiteID
   @State private var addSheetPresented = false
 
   private var tunePolicy: TortoisePolicy? { accountStore.snapshot.policy?.policy }

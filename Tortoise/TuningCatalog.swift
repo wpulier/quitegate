@@ -4,6 +4,9 @@ import Foundation
 /// owns each, where each can be enforced, and what each mode preset turns on.
 /// Shared by macOS, iOS, and iOS Safari enforcement.
 enum TuningCatalog {
+  /// The YouTube site id, referenced by both Tune screens for their Screen-Time card.
+  static let youtubeSiteID = "youtube"
+
   struct Site {
     let id: String
     let title: String

@@ -193,7 +193,7 @@ private struct TortoiseMobileShell: View {
 
   @State private var section: MobileSection
   @State private var usageTab = MobileUsageTab.all
-  @State private var selectedSite = "youtube"
+  @State private var selectedSite = TuningCatalog.youtubeSiteID
   @State private var conceptStates: [String: Bool] = ["porn": true, "gambling": false, "news": false]
   @StateObject private var screenTime = IOSYouTubeScreenTimeController()
 
@@ -248,7 +248,9 @@ private struct TortoiseMobileShell: View {
         }
       }
       .onChange(of: model.snapshot.policy?.policy.browser?.features, initial: true) { _, _ in
-        screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: model.snapshot.policy?.policy))
+        if let policy = model.snapshot.policy?.policy {
+          screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: policy))
+        }
       }
 
       bottomTabBar
@@ -686,7 +688,7 @@ private struct MobileTuningScreen: View {
           }
         }
 
-        if selectedSite == "youtube" {
+        if selectedSite == TuningCatalog.youtubeSiteID {
           MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
 
           MobileCard {
@@ -780,7 +782,7 @@ private struct MobileTuningScreen: View {
   }
 
   private var tuningActionTitle: String {
-    if selectedSite == "youtube" {
+    if selectedSite == TuningCatalog.youtubeSiteID {
       if !screenTime.shieldingEnabled && !screenTime.canTurnOn {
         return "Finish setup"
       }
@@ -794,7 +796,7 @@ private struct MobileTuningScreen: View {
   }
 
   private func performTuningAction() {
-    if selectedSite == "youtube" {
+    if selectedSite == TuningCatalog.youtubeSiteID {
       setYoutubeProtection(!screenTime.shieldingEnabled)
       return
     }
