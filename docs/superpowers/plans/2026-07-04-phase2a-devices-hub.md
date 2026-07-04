@@ -45,6 +45,7 @@ Phase 2 (Devices) ships as three sub-plans, each independently testable:
 **Files:**
 - Create: `Tortoise/DevicePresentation.swift`
 - Modify: `project.yml` (add the file to the `QuietGate` target's `sources:`)
+- Modify: `Tortoise/ContentView.swift` (trim the colliding members from the existing `private extension TortoiseDevice` — see Step 6; required so iOS compiles with the new shared extension)
 - Test: `QuietGateTests/DevicePresentationTests.swift`
 
 **Interfaces:**
@@ -215,15 +216,19 @@ final class DevicePresentationTests: XCTestCase {
 Run: `xcodebuild -project QuietGate.xcodeproj -scheme QuietGate -configuration Debug -destination 'platform=macOS' -derivedDataPath build/DerivedData test`
 Expected: `DevicePresentationTests` — 6 tests PASS. If the JSON helper fails to decode, check `TortoiseDevice`'s `CodingKeys` (`Tortoise/TortoiseModels.swift:263-270`) — it maps `last_seen_at`→`lastSeenAt` etc.; align the test payload keys.
 
-- [ ] **Step 6: Verify iOS compiles**
+- [ ] **Step 6: Resolve the iOS collision — trim the duplicate `private extension TortoiseDevice`**
+
+`Tortoise/ContentView.swift:2420-2492` has a `private extension TortoiseDevice` that also declares `displayName`, `initials`, and `isBrowserProfile` — the exact names the new shared extension provides. Swift treats same-type, same-named extension members as an invalid redeclaration within a module even across access levels, so iOS won't compile with both. **Remove ONLY those three now-shared members** from that private extension; **keep** the three iOS-only display members it also defines (`platformLabel`, `systemImage`, `statusSubtitle`) and their `private` helpers (`normalizedPlatform`, `lastSeenText`). After the edit the private extension defines exactly: `platformLabel`, `systemImage`, `statusSubtitle`, `private normalizedPlatform`, `private lastSeenText`. The call sites (`~300/861-864/921/926/2410-2415`) keep compiling — `displayName`/`initials`/`isBrowserProfile` now resolve to the shared extension, the other three to the trimmed one. (These remaining iOS-only helpers are removed in Task 4 when their call sites become hub rows.)
+
+- [ ] **Step 7: Verify iOS compiles**
 
 Run: `xcodebuild -project QuietGate.xcodeproj -scheme Tortoise -configuration Debug -destination 'generic/platform=iOS Simulator' build`
 Expected: `BUILD SUCCEEDED`
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add Tortoise/DevicePresentation.swift project.yml QuietGate.xcodeproj QuietGateTests/DevicePresentationTests.swift
+git add Tortoise/DevicePresentation.swift project.yml QuietGate.xcodeproj QuietGateTests/DevicePresentationTests.swift Tortoise/ContentView.swift
 git commit -m "Add shared TortoiseDevice classification (DevicePresentation)"
 ```
 
@@ -566,9 +571,9 @@ In `MobileDevicesScreen`, replace `otherDevices` / `browserRows` / `connectionCo
 
 Render `hubRows` (nesting `row.profiles`) using a mobile status-dot row that mirrors the mac `HubStatusStyle` (define a local `MobileHubStatusStyle` with the same On/Tap/Off + green/orange/secondary mapping, since `HubStatusStyle` is macOS-view-file-scoped). Set the header connection count to `DevicesHub.connectedCount(hubRows)`. Keep the existing "This iPhone" Screen-Time status row (`MobileIOSDeviceStatusRow`) — it carries iOS-specific enforcement detail that the generic row doesn't.
 
-- [ ] **Step 2: Delete the duplicated classification extension**
+- [ ] **Step 2: Remove the remaining iOS-only display helpers**
 
-Remove the `private extension TortoiseDevice { ... }` block (`Tortoise/ContentView.swift:2420-2492`) and update the `MobileDevice`/`MobileBrowserProfile` initializers that referenced `device.platformLabel`/`device.statusSubtitle`/`device.initials` to use the shared `TortoiseDevice` members from `DevicePresentation.swift` (same names: `displayName`, `initials`) or the hub rows directly. Keep the `ISO8601DateFormatter.tortoise`/`.tortoiseNoFractions` helpers only if still referenced elsewhere; if not, remove them too (the shared `DevicePresentationFormatters` supersedes them). Search first: `grep -n "tortoiseNoFractions\|\.platformLabel\|\.statusSubtitle" Tortoise/ContentView.swift`.
+Task 1 already trimmed the colliding members out of the `private extension TortoiseDevice`, leaving only `platformLabel`, `systemImage`, `statusSubtitle` (+ `private normalizedPlatform`, `lastSeenText`). Once the `MobileDeviceRow` / `MobileBrowserProfile` call sites (~861-864, 2409-2417) are replaced by hub-row rendering in Step 1, those three become unused — remove the trimmed `private extension TortoiseDevice` block and the now-unused `ISO8601DateFormatter.tortoise` / `.tortoiseNoFractions` helpers (the shared `DevicePresentationFormatters` supersedes them). Verify nothing else references them first: `grep -n "\.platformLabel\|\.statusSubtitle\|device\.systemImage\|tortoiseNoFractions" Tortoise/ContentView.swift` should return only the call sites you are replacing.
 
 - [ ] **Step 3: Leave the Add button as a labeled placeholder**
 
