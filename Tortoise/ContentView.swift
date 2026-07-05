@@ -194,7 +194,6 @@ private struct TortoiseMobileShell: View {
   @State private var section: MobileSection
   @State private var usageTab = MobileUsageTab.all
   @State private var selectedSite = TuningCatalog.youtubeSiteID
-  @State private var conceptStates: [String: Bool] = ["porn": true, "gambling": false, "news": false]
   @StateObject private var screenTime = IOSYouTubeScreenTimeController()
   @Environment(\.scenePhase) private var scenePhase
 
@@ -288,7 +287,6 @@ private struct TortoiseMobileShell: View {
     case .blocking:
       MobileBlockingScreen(
         accessMode: currentAccessMode,
-        conceptStates: $conceptStates,
         isSyncing: model.isSyncing,
         screenTime: screenTime,
         selectMode: setAccessMode,
@@ -558,7 +556,6 @@ private struct MobileUsageScreen: View {
 
 private struct MobileBlockingScreen: View {
   let accessMode: MobileAccessMode
-  @Binding var conceptStates: [String: Bool]
   let isSyncing: Bool
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   let selectMode: (MobileAccessMode) -> Void
@@ -628,25 +625,6 @@ private struct MobileBlockingScreen: View {
               screenTime.startSession(mode: .strict, duration: 2 * 3600, locked: true)
             }
             .disabled(screenTime.sessionLockedActive)
-          }
-        }
-      }
-
-      MobileSectionLabel("Concept blocking")
-      MobileCard {
-        VStack(spacing: 0) {
-          ForEach(MobileConcept.allCases) { concept in
-            MobileConceptRow(
-              concept: concept,
-              isOn: Binding(
-                get: { conceptStates[concept.rawValue, default: concept == .porn] },
-                set: { conceptStates[concept.rawValue] = $0 }
-              )
-            )
-            if concept != .news {
-              MobileDivider()
-                .padding(.vertical, 13)
-            }
           }
         }
       }
@@ -804,7 +782,7 @@ private struct MobileTuningScreen: View {
                   get: { feature.isOn },
                   set: { setFeature(feature.id, $0) }
                 ),
-                isEnabled: feature.isEnforceable && !model.isSyncing && !screenTime.sessionLockedActive
+                isEnabled: !model.isSyncing && !screenTime.sessionLockedActive
               )
             }
           }
@@ -818,9 +796,8 @@ private struct MobileTuningScreen: View {
   }
 
   /// Only the features this surface (iOS Safari) can actually enforce. The bulk
-  /// "Hide all" / "Reset all" action must stay within this subset so it never
-  /// silently flips a feature whose row switch is disabled for being
-  /// non-enforceable here (see `MobileTuningFeatureRow`'s `isEnabled`).
+  /// "Hide all" / "Reset all" action must stay within this subset defensively,
+  /// even though every iOS Safari feature is enforceable today.
   private var enforceableSiteFeatures: [TuneFeature] {
     selectedSiteFeatures.filter(\.isEnforceable)
   }
@@ -1970,36 +1947,6 @@ private struct MobileSessionButton: View {
   }
 }
 
-private struct MobileConceptRow: View {
-  let concept: MobileConcept
-  @Binding var isOn: Bool
-
-  var body: some View {
-    HStack(spacing: 13) {
-      Image(systemName: concept.systemImage)
-        .foregroundStyle(concept.tint)
-        .frame(width: 38, height: 38)
-        .background(concept.tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-      VStack(alignment: .leading, spacing: 4) {
-        HStack(spacing: 7) {
-          Text(concept.title)
-            .font(.system(size: 14, weight: .bold))
-          if concept == .porn {
-            Text("LOCKED IN STRICT")
-              .font(.system(size: 9, weight: .bold))
-              .foregroundStyle(TortoiseDesign.purple)
-          }
-        }
-        Text(concept.detail)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-      }
-      Spacer()
-      MobileSwitch(isOn: $isOn, isEnabled: concept == .porn)
-    }
-  }
-}
-
 private struct MobileSwitch: View {
   @Binding var isOn: Bool
   var isEnabled = true
@@ -2163,26 +2110,11 @@ private struct MobileTuningFeatureRow: View {
   var body: some View {
     HStack(spacing: 12) {
       VStack(alignment: .leading, spacing: 5) {
-        HStack(spacing: 6) {
-          Text(feature.title)
-            .font(.system(size: 14, weight: .bold))
-          if !feature.isEnforceable {
-            Text("Browser only")
-              .font(.system(size: 10, weight: .bold))
-              .foregroundStyle(TortoiseDesign.tertiaryText)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 2)
-              .background(Color.white.opacity(0.08), in: Capsule())
-          }
-        }
+        Text(feature.title)
+          .font(.system(size: 14, weight: .bold))
         Text(feature.detail)
           .font(.system(size: 12))
           .foregroundStyle(TortoiseDesign.secondaryText)
-        if !feature.isEnforceable {
-          Text("No hook on this iPhone yet - toggle from a connected browser.")
-            .font(.system(size: 11))
-            .foregroundStyle(TortoiseDesign.tertiaryText)
-        }
       }
       Spacer()
       MobileSwitch(isOn: $isOn, isEnabled: isEnabled)
@@ -2472,46 +2404,6 @@ private extension IOSEnforcementAuthorizationMode {
       return "iphone"
     case .child:
       return "person.2"
-    }
-  }
-}
-
-private enum MobileConcept: String, CaseIterable, Identifiable {
-  case porn
-  case gambling
-  case news
-
-  var id: String { rawValue }
-
-  var title: String {
-    switch self {
-    case .porn: return "Pornography"
-    case .gambling: return "Gambling"
-    case .news: return "News & doomscroll"
-    }
-  }
-
-  var detail: String {
-    switch self {
-    case .porn: return "Blocks adult domains, adult-host media, and explicit pages."
-    case .gambling: return "Blocks sportsbook, casino, and betting domains."
-    case .news: return "Blocks news aggregators while a session runs."
-    }
-  }
-
-  var systemImage: String {
-    switch self {
-    case .porn: return "figure.mixed.cardio"
-    case .gambling: return "dice"
-    case .news: return "newspaper"
-    }
-  }
-
-  var tint: Color {
-    switch self {
-    case .porn: return TortoiseDesign.red
-    case .gambling: return TortoiseDesign.orange
-    case .news: return TortoiseDesign.accent
     }
   }
 }
