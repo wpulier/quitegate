@@ -6,14 +6,6 @@ struct ControlView: View {
   @EnvironmentObject private var store: ProtectionStore
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
   @EnvironmentObject private var accountStore: MacAccountStore
-  @State private var localAppStates: [String: Bool] = [
-    "Slack": true,
-    "Discord": true,
-    "Steam": true,
-    "Messages": false,
-    "Mail": false,
-    "Spotify": false
-  ]
   @State private var pendingCategoryIDs: Set<BlockCategoryID> = []
   @State private var pendingSiteDomains: Set<String> = []
   @State private var addingCustomDomain = false
@@ -217,18 +209,61 @@ struct ControlView: View {
           ))
         }
 
-        VStack(spacing: 0) {
-          ForEach(distractingApps) { app in
-            AppBlockingToggleRow(
-              app: app,
-              isOn: appBinding(for: app)
-            )
-            if app.id != distractingApps.last?.id {
-              ProductDivider()
-                .padding(.vertical, 10)
+        if appBlockingStore.blockedApplications.isEmpty {
+          Text("No apps blocked yet — add one below.")
+            .font(.system(size: 12))
+            .foregroundStyle(QGDesign.secondaryText)
+        } else {
+          VStack(spacing: 0) {
+            ForEach(appBlockingStore.blockedApplications) { rule in
+              AppBlockingToggleRow(
+                displayName: rule.displayName,
+                avatar: avatar(for: rule.displayName),
+                isOn: blockedAppBinding(for: rule),
+                removeAction: { appBlockingStore.removeBlockedApplication(rule.bundleIdentifier) }
+              )
+              if rule.id != appBlockingStore.blockedApplications.last?.id {
+                ProductDivider()
+                  .padding(.vertical, 10)
+              }
             }
           }
         }
+
+        addAppMenu
+      }
+    }
+  }
+
+  private var addAppMenu: some View {
+    Group {
+      if appBlockingStore.availableApplications.isEmpty {
+        Text("Scanning installed apps…")
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.secondaryText)
+      } else if addableApplications.isEmpty {
+        Text("Every scanned app is already blocked.")
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.secondaryText)
+      } else {
+        Menu {
+          ForEach(addableApplications) { app in
+            Button(app.displayName) {
+              appBlockingStore.addBlockedApplication(app)
+              Task {
+                await accountStore.pushLocalPolicy(
+                  using: clerk,
+                  protectionStore: store,
+                  appBlockingStore: appBlockingStore
+                )
+              }
+            }
+          }
+        } label: {
+          Label("Add app", systemImage: "plus")
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
       }
     }
   }
@@ -364,15 +399,9 @@ struct ControlView: View {
     ]
   }
 
-  private var distractingApps: [DistractingAppModel] {
-    [
-      DistractingAppModel(name: "Slack", avatar: "S", color: Color(red: 0.290, green: 0.082, blue: 0.294)),
-      DistractingAppModel(name: "Discord", avatar: "D", color: Color(red: 0.345, green: 0.396, blue: 0.949)),
-      DistractingAppModel(name: "Steam", avatar: "St", color: Color(red: 0.106, green: 0.157, blue: 0.220)),
-      DistractingAppModel(name: "Messages", avatar: "M", color: QGDesign.green),
-      DistractingAppModel(name: "Mail", avatar: "Ma", color: Color(red: 0.114, green: 0.560, blue: 1.000)),
-      DistractingAppModel(name: "Spotify", avatar: "Sp", color: Color(red: 0.114, green: 0.725, blue: 0.329))
-    ]
+  private var addableApplications: [RunningApplicationSnapshot] {
+    let blockedIDs = Set(appBlockingStore.blockedApplications.map(\.bundleIdentifier))
+    return appBlockingStore.availableApplications.filter { !blockedIDs.contains($0.bundleIdentifier) }
   }
 
   private var displayedSites: [BlockedSiteRule] {
@@ -449,17 +478,11 @@ struct ControlView: View {
     }
   }
 
-  private func appBinding(for app: DistractingAppModel) -> Binding<Bool> {
+  private func blockedAppBinding(for rule: BlockedApplicationRule) -> Binding<Bool> {
     Binding {
-      actualBlockedApp(named: app.name)?.isEnabled ?? localAppStates[app.name, default: false]
+      rule.isEnabled
     } set: { enabled in
-      if let actual = actualBlockedApp(named: app.name) {
-        appBlockingStore.setBlockedApplication(actual.bundleIdentifier, enabled: enabled)
-      } else if enabled, let available = availableApp(named: app.name) {
-        appBlockingStore.addBlockedApplication(available)
-      } else {
-        localAppStates[app.name] = enabled
-      }
+      appBlockingStore.setBlockedApplication(rule.bundleIdentifier, enabled: enabled)
       Task {
         await accountStore.pushLocalPolicy(
           using: clerk,
@@ -467,18 +490,6 @@ struct ControlView: View {
           appBlockingStore: appBlockingStore
         )
       }
-    }
-  }
-
-  private func actualBlockedApp(named name: String) -> BlockedApplicationRule? {
-    appBlockingStore.blockedApplications.first {
-      $0.displayName.localizedCaseInsensitiveContains(name)
-    }
-  }
-
-  private func availableApp(named name: String) -> RunningApplicationSnapshot? {
-    appBlockingStore.availableApplications.first {
-      $0.displayName.localizedCaseInsensitiveContains(name)
     }
   }
 
@@ -603,17 +614,25 @@ private struct ConceptBlockingRow: View {
 }
 
 private struct AppBlockingToggleRow: View {
-  let app: DistractingAppModel
+  let displayName: String
+  let avatar: String
   @Binding var isOn: Bool
+  let removeAction: () -> Void
 
   var body: some View {
     HStack(spacing: 12) {
-      QGAvatar(text: app.avatar, size: 34, background: app.color, foreground: .white, cornerRadius: 8)
-      Text(app.name)
+      QGAvatar(text: avatar, size: 34, cornerRadius: 8)
+      Text(displayName)
         .font(.system(size: 14, weight: .bold))
         .foregroundStyle(QGDesign.primaryText)
       Spacer()
       QGSwitch(isOn: $isOn)
+      Button(action: removeAction) {
+        Image(systemName: "xmark")
+          .font(.system(size: 11, weight: .bold))
+      }
+      .buttonStyle(.plain)
+      .foregroundStyle(QGDesign.secondaryText)
     }
   }
 }
@@ -666,9 +685,3 @@ private struct ConceptRowModel: Identifiable {
   let binding: Binding<Bool>
 }
 
-private struct DistractingAppModel: Identifiable {
-  var id: String { name }
-  let name: String
-  let avatar: String
-  let color: Color
-}
