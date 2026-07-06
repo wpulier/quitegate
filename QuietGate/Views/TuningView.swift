@@ -30,10 +30,14 @@ struct TuningView: View {
         subtitle: "Strip the noisy parts of a site without blocking it. Applies in every connected browser profile."
       )
 
+      accessModeSection
+
       siteGrid
       selectedSiteHeader
       scopeCard
       featuresCard
+
+      sessionCard
 
       if let extensionBridgeMessage = store.extensionBridgeMessage {
         Label(extensionBridgeMessage, systemImage: "info.circle")
@@ -224,6 +228,155 @@ struct TuningView: View {
       .compactMap(\.first)
     let value = String(letters).uppercased()
     return value.isEmpty ? "W" : value
+  }
+
+  private var accessModeSection: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      QGSectionLabel(text: "Access mode")
+      LazyVGrid(
+        columns: [GridItem(.adaptive(minimum: 230), spacing: 12)],
+        alignment: .leading,
+        spacing: 12
+      ) {
+        ForEach(AccessMode.allCases) { mode in
+          Button {
+            guard !store.timedSessionLockedActive else { return }
+            Task {
+              await accountStore.setAccessMode(
+                mode,
+                using: clerk,
+                protectionStore: store,
+                appBlockingStore: appBlockingStore
+              )
+            }
+          } label: {
+            ModeChoiceCard(mode: mode, isSelected: store.accessMode == mode)
+          }
+          .buttonStyle(.plain)
+          .disabled(!store.blockingControlsReady || store.isWorking || store.timedSessionLockedActive)
+        }
+      }
+      if let reason = store.blockingCapabilityUnavailableReason {
+        Label(reason, systemImage: "lock")
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.secondaryText)
+      }
+    }
+  }
+
+  private var sessionCard: some View {
+    QGCard {
+      VStack(alignment: .leading, spacing: 16) {
+        HStack(alignment: .top) {
+          VStack(alignment: .leading, spacing: 5) {
+            Text("Commit to a session")
+              .font(.system(size: 16, weight: .bold))
+              .foregroundStyle(QGDesign.primaryText)
+            Text(sessionDetail)
+              .font(.system(size: 13))
+              .foregroundStyle(QGDesign.secondaryText)
+          }
+          Spacer()
+          Text(store.timedSessionActive ? store.timedSessionStatusLine : "Returns to Open when the timer ends")
+            .font(.system(size: 12))
+            .foregroundStyle(QGDesign.secondaryText)
+        }
+
+        HStack(spacing: 10) {
+          sessionButton(title: "Focus · 25m", mode: .focus, duration: 25 * 60)
+          sessionButton(title: "Focus · 1h", mode: .focus, duration: 60 * 60)
+          sessionButton(title: "Lock Strict · 2h", mode: .strict, duration: 2 * 3600, locked: true, systemImage: "lock")
+
+          if store.timedSessionActive && !store.timedSessionLockedActive {
+            Button(role: .destructive) {
+              Task { await store.endTimedSession() }
+            } label: {
+              Text("End")
+            }
+            .buttonStyle(QGPrimaryButtonStyle(tint: QGDesign.red))
+          }
+        }
+      }
+    }
+  }
+
+  private var sessionDetail: String {
+    if store.timedSessionActive {
+      return store.timedSessionLockedActive
+        ? "A locked Strict session can't be ended, weakened, or quit early - that's the point."
+        : "Your focus session is running. End it early or let it return to Open."
+    }
+    return "Lock in a block of time. A locked Strict session can't be ended, weakened, or quit early - that's the point."
+  }
+
+  private func sessionButton(
+    title: String,
+    mode: AccessMode,
+    duration: TimeInterval,
+    locked: Bool = false,
+    systemImage: String? = nil
+  ) -> some View {
+    Button {
+      Task {
+        await store.startTimedSession(mode: mode, duration: duration, locked: locked)
+      }
+    } label: {
+      if let systemImage {
+        Label(title, systemImage: systemImage)
+      } else {
+        Text(title)
+      }
+    }
+    .buttonStyle(QGPrimaryButtonStyle(tint: locked ? QGDesign.purple : QGDesign.accent))
+    .disabled(!store.blockingControlsReady || store.isWorking || store.timedSessionLockedActive)
+  }
+}
+
+private struct ModeChoiceCard: View {
+  let mode: AccessMode
+  let isSelected: Bool
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 14) {
+      HStack {
+        Image(systemName: mode.systemImage)
+          .font(.system(size: 16, weight: .semibold))
+          .foregroundStyle(isSelected ? QGDesign.accent : QGDesign.secondaryText)
+        Spacer()
+        if isSelected {
+          Image(systemName: "checkmark.circle.fill")
+            .foregroundStyle(QGDesign.accent)
+        }
+      }
+
+      VStack(alignment: .leading, spacing: 5) {
+        Text(mode.title)
+          .font(.system(size: 16, weight: .bold))
+          .foregroundStyle(QGDesign.primaryText)
+        Text(detail)
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.secondaryText)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
+    .background(QGDesign.panel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 12, style: .continuous)
+        .strokeBorder(isSelected ? QGDesign.accent : QGDesign.strongHairline)
+    }
+  }
+
+  private var detail: String {
+    switch mode {
+    case .open:
+      return "No Tortoise rules applied. Everything is available."
+    case .focus:
+      return "Adult blocking on. Feeds, Shorts, Reels & recommendations hidden."
+    case .strict:
+      return "Everything tuned to intentional use. Daily limits enforced."
+    }
   }
 }
 
