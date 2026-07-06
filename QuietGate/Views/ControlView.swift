@@ -144,7 +144,7 @@ struct ControlView: View {
 
   private var conceptSection: some View {
     VStack(alignment: .leading, spacing: 12) {
-      QGSectionLabel(text: "Concept blocking")
+      QGSectionLabel(text: "Adult sites")
       QGCard {
         VStack(spacing: 0) {
           ForEach(Array(conceptRows.enumerated()), id: \.element.id) { index, row in
@@ -295,16 +295,22 @@ struct ControlView: View {
             )
         }
 
-        VStack(spacing: 0) {
-          ForEach(displayedSites) { site in
-            BlockedWebsiteRow(
-              site: site,
-              isPending: pendingSiteDomains.contains(site.domain),
-              deleteAction: { deleteSite(site.domain) }
-            )
-            if site.id != displayedSites.last?.id {
-              ProductDivider()
-                .padding(.vertical, 10)
+        if displayedSites.isEmpty {
+          Text("No blocked sites yet — add a domain above.")
+            .font(.system(size: 12))
+            .foregroundStyle(QGDesign.secondaryText)
+        } else {
+          VStack(spacing: 0) {
+            ForEach(displayedSites) { site in
+              BlockedWebsiteRow(
+                site: site,
+                isPending: pendingSiteDomains.contains(site.domain),
+                deleteAction: { deleteSite(site.domain) }
+              )
+              if site.id != displayedSites.last?.id {
+                ProductDivider()
+                  .padding(.vertical, 10)
+              }
             }
           }
         }
@@ -373,28 +379,6 @@ struct ControlView: View {
         detail: "Blocks adult domains, adult-host media, and high-confidence explicit pages across every connected browser.",
         isActionable: true,
         binding: categoryBinding(.adultContent)
-      ),
-      ConceptRowModel(
-        categoryID: .adultContent,
-        icon: "dice",
-        iconTint: QGDesign.orange,
-        iconBackground: QGDesign.orange.opacity(0.16),
-        title: "Gambling & betting",
-        badge: nil,
-        detail: "Blocks sportsbook, casino, and betting domains.",
-        isActionable: false,
-        binding: Binding(get: { false }, set: { _ in })
-      ),
-      ConceptRowModel(
-        categoryID: .adultContent,
-        icon: "newspaper",
-        iconTint: QGDesign.accent,
-        iconBackground: QGDesign.accent.opacity(0.16),
-        title: "News & doomscroll sites",
-        badge: nil,
-        detail: "Blocks major news aggregators while a session is running.",
-        isActionable: false,
-        binding: Binding(get: { false }, set: { _ in })
       )
     ]
   }
@@ -405,15 +389,7 @@ struct ControlView: View {
   }
 
   private var displayedSites: [BlockedSiteRule] {
-    if !store.blockedSites.isEmpty {
-      return store.blockedSites
-    }
-    return [
-      BlockedSiteRule(domain: "espn.com"),
-      BlockedSiteRule(domain: "cnn.com"),
-      BlockedSiteRule(domain: "amazon.com"),
-      BlockedSiteRule(domain: "news.ycombinator.com")
-    ]
+    store.blockedSites
   }
 
   private func categoryBinding(_ id: BlockCategoryID) -> Binding<Bool> {
