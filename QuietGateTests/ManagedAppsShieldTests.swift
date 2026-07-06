@@ -127,4 +127,31 @@ final class ManagedAppsShieldTests: XCTestCase {
     XCTAssertFalse(ManagedAppsShield.isEnforcementActive(
       youtubeSelected: false, managedAppsSelected: false, adultFilterOn: false))
   }
+
+  // MARK: IOSEnforcementSnapshot.managedAppsLimitMinutes
+
+  func testSnapshotDefaultsManagedAppsLimitToNil() {
+    XCTAssertNil(IOSEnforcementSnapshot.empty.managedAppsLimitMinutes)
+  }
+
+  func testSnapshotRoundTripsManagedAppsLimit() throws {
+    var snapshot = IOSEnforcementSnapshot.empty
+    snapshot.managedAppsLimitMinutes = 45
+    let data = try JSONEncoder().encode(snapshot)
+    let decoded = try JSONDecoder().decode(IOSEnforcementSnapshot.self, from: data)
+    XCTAssertEqual(decoded.managedAppsLimitMinutes, 45)
+  }
+
+  func testLegacySnapshotJSONWithoutLimitDecodesToNil() throws {
+    // A snapshot persisted before Stage 2 has no managedAppsLimitMinutes key; the
+    // JSON below carries exactly the non-defaulted required keys.
+    let legacy = """
+    {"mode":"open","authorizationMode":"individual","shieldingEnabled":false,\
+    "dailyLimitMinutes":30,"adultWebFilterEnabled":false,"safariExtensionEnabled":false,\
+    "selectedApplicationCount":0,"selectedCategoryCount":0,"selectedWebDomainCount":0,\
+    "scheduleActive":false}
+    """
+    let decoded = try JSONDecoder().decode(IOSEnforcementSnapshot.self, from: Data(legacy.utf8))
+    XCTAssertNil(decoded.managedAppsLimitMinutes)
+  }
 }

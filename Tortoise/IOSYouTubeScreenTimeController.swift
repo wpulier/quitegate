@@ -48,6 +48,21 @@ final class IOSEnforcementController: ObservableObject {
     }
   }
 
+  /// Stage 2: combined managed-apps daily limit (minutes). `nil` = off. Clamped
+  /// 5–480 when set. Advisory OPEN governor — `applyCurrentMode()` re-arms the
+  /// `.tortoiseManagedAppsDaily` monitor. (Assigning within didSet does not
+  /// re-fire the observer, so the clamp converges — same pattern as
+  /// `dailyLimitMinutes`.)
+  @Published var managedAppsLimitMinutes: Int? {
+    didSet {
+      if let minutes = managedAppsLimitMinutes {
+        managedAppsLimitMinutes = ManagedAppsShield.clampManagedAppsLimitMinutes(minutes)
+      }
+      persistState()
+      applyCurrentMode()
+    }
+  }
+
   @Published var safariExtensionAcknowledged: Bool {
     didSet {
       persistState()
@@ -71,6 +86,7 @@ final class IOSEnforcementController: ObservableObject {
 
   private let immediateStore = ManagedSettingsStore(named: .tortoiseImmediate)
   private let managedAppsStore = ManagedSettingsStore(named: .tortoiseManagedApps)
+  private let managedAppsLimitStore = ManagedSettingsStore(named: .tortoiseManagedAppsLimit)
   private let activityCenter = DeviceActivityCenter()
   private var isApplying = false
   private var policyFeatures: [String: Bool] = [:]
@@ -84,6 +100,7 @@ final class IOSEnforcementController: ObservableObject {
     authorizationMode = persisted.authorizationMode
     enforcementMode = persisted.enforcementMode
     dailyLimitMinutes = persisted.dailyLimitMinutes
+    managedAppsLimitMinutes = persisted.managedAppsLimitMinutes
     safariExtensionAcknowledged = persisted.safariExtensionAcknowledged
     loadSafariSetupSnapshot()
     refreshAuthorizationState()
@@ -118,6 +135,19 @@ final class IOSEnforcementController: ObservableObject {
     if categories > 0 { parts.append("\(categories) categor\(categories == 1 ? "y" : "ies")") }
     if domains > 0 { parts.append("\(domains) web domain\(domains == 1 ? "" : "s")") }
     return parts.joined(separator: " · ") + " blocked in Focus & Strict"
+  }
+
+  var managedAppsLimitEnabled: Bool { managedAppsLimitMinutes != nil }
+
+  /// Value shown in the stepper — defaults to 30 when the limit is off.
+  var managedAppsLimitDisplayMinutes: Int { managedAppsLimitMinutes ?? 30 }
+
+  /// Honest one-line copy for the Apps-card limit control.
+  var managedAppsLimitSummary: String {
+    guard let minutes = managedAppsLimitMinutes else {
+      return "No daily limit"
+    }
+    return "Allowed \(minutes)m/day in Open · blocked in Focus & Strict"
   }
 
   var coverageSummary: String {
@@ -158,7 +188,7 @@ final class IOSEnforcementController: ObservableObject {
       return .repairRequired
     }
 
-    if authorizationState != .approved || !hasSelection {
+    if authorizationState != .approved || (!hasSelection && !hasManagedAppsSelection) {
       return .setupRequired
     }
 
@@ -439,6 +469,30 @@ final class IOSEnforcementController: ObservableObject {
     applyCurrentMode()
   }
 
+  /// Turns the combined managed-apps daily limit on (default 30m) or off. Advisory
+  /// OPEN governor; disabled while a locked session is active (the apps are blocked
+  /// outright then, so the limit is moot — spec §4/§7).
+  func setManagedAppsLimitEnabled(_ enabled: Bool) {
+    guard !sessionLockedActive else { return }
+    if enabled {
+      if managedAppsLimitMinutes == nil {
+        managedAppsLimitMinutes = 30
+      }
+    } else {
+      managedAppsLimitMinutes = nil
+    }
+  }
+
+  /// Raises/lowers the limit by `delta` minutes (clamped 5–480). Clears any
+  /// already-applied limit shield first so the change takes effect immediately
+  /// (raising regains access; `applyCurrentMode()` re-arms at the new threshold).
+  /// No-op when the limit is off or a locked session is active.
+  func adjustManagedAppsLimit(by delta: Int) {
+    guard !sessionLockedActive, let current = managedAppsLimitMinutes else { return }
+    managedAppsLimitStore.clearAllSettings()
+    managedAppsLimitMinutes = ManagedAppsShield.clampManagedAppsLimitMinutes(current + delta)
+  }
+
   func startSession(mode: IOSEnforcementMode, duration: TimeInterval, locked: Bool) {
     guard !sessionLockedActive else { return }          // can't override a locked session
     let mode = mode == .open ? .focus : mode
@@ -590,15 +644,25 @@ final class IOSEnforcementController: ObservableObject {
       updateStatusMessage()
     }
 
-    applyManagedAppsShield()
+    let managedAppsShielded = applyManagedAppsShield()
+    reconcileManagedAppsLimitMonitoring()
 
     let shouldEnforce = shieldingEnabled && enforcementMode != .open && canApplyShielding
     if !shouldEnforce {
       IOSEnforcementShieldApplier.clearAllStores()
       activityCenter.stopMonitoring([.tortoiseDaily])
       scheduleActive = false
-      syncHealth = "Open mode"
-      writeSafariPolicy(mode: .open)
+      // Independence fix: the Strict adult filter rides MODE, not the YouTube
+      // selection — re-apply it after clearAllStores() wiped immediateStore, and
+      // write the REAL-mode Safari policy (not a forced `.open`), so Strict's
+      // adult web/media filter holds even with no YouTube target picked.
+      reconcileAdultWebFilter()
+      writeSafariPolicy()
+      let adultActive = ManagedAppsShield.shouldApplyAdultFilter(
+        mode: enforcementMode, adultEnabled: shieldingEnabled)
+      syncHealth = (managedAppsShielded || adultActive)
+        ? "Screen Time and Safari policy current"
+        : "Open mode"
       saveSnapshot(lastError: lastError)
       return
     }
@@ -620,7 +684,8 @@ final class IOSEnforcementController: ObservableObject {
   /// selection — independent of the YouTube `selection`, so managed apps are
   /// shielded even when no YouTube target is picked. The system unions this store
   /// with the YouTube shield automatically.
-  private func applyManagedAppsShield() {
+  @discardableResult
+  private func applyManagedAppsShield() -> Bool {
     let shouldShield = ManagedAppsShield.shouldShield(mode: enforcementMode)
       && authorizationState.isApproved
       && hasManagedAppsSelection
@@ -629,6 +694,61 @@ final class IOSEnforcementController: ObservableObject {
     } else {
       managedAppsStore.clearAllSettings()
     }
+    return shouldShield
+  }
+
+  /// Stage 2: arms/re-arms the combined managed-apps daily-limit monitor in its OWN
+  /// DeviceActivity (`.tortoiseManagedAppsDaily`) so it runs regardless of mode —
+  /// the limit is an OPEN governor (in Focus/Strict the Stage 1 shield already
+  /// blocks the apps, making the limit shield a harmless redundant union). Armed
+  /// only when the limit is enabled, the selection is non-empty, and Screen Time is
+  /// authorized; otherwise the monitor is stopped and `.tortoiseManagedAppsLimit`
+  /// cleared so no stale limit shield survives (spec §11).
+  private func reconcileManagedAppsLimitMonitoring() {
+    let shouldArm = ManagedAppsShield.shouldArmManagedAppsLimit(
+      limitEnabled: managedAppsLimitMinutes != nil,
+      hasSelection: hasManagedAppsSelection
+    ) && authorizationState.isApproved
+
+    guard shouldArm, let minutes = managedAppsLimitMinutes else {
+      activityCenter.stopMonitoring([.tortoiseManagedAppsDaily])
+      managedAppsLimitStore.clearAllSettings()
+      return
+    }
+
+    let schedule = DeviceActivitySchedule(
+      intervalStart: DateComponents(hour: 0, minute: 0),
+      intervalEnd: DateComponents(hour: 23, minute: 59, second: 59),
+      repeats: true
+    )
+    let event = DeviceActivityEvent(
+      applications: managedAppsSelection.applicationTokens,
+      categories: managedAppsSelection.categoryTokens,
+      webDomains: managedAppsSelection.webDomainTokens,
+      threshold: DateComponents(minute: minutes)
+    )
+    do {
+      try activityCenter.startMonitoring(
+        .tortoiseManagedAppsDaily,
+        during: schedule,
+        events: [.managedAppsDailyLimit: event]
+      )
+      lastError = nil
+    } catch {
+      lastError = error.localizedDescription
+    }
+  }
+
+  /// Stage 2 independence fix: applies the OS-level adult web/media content filter
+  /// to `immediateStore` driven PURELY by mode (Strict + adult on) — independent of
+  /// the YouTube `selection`. Called on the non-enforce branch (where
+  /// `clearAllStores()` wiped the filter) so Strict's adult filter holds with no
+  /// YouTube target. On the enforce branch `applySelection(...)` already sets it.
+  private func reconcileAdultWebFilter() {
+    let apply = ManagedAppsShield.shouldApplyAdultFilter(
+      mode: enforcementMode, adultEnabled: shieldingEnabled)
+    immediateStore.webContent.blockedByFilter = apply ? .auto() : nil
+    immediateStore.media.denyExplicitContent = apply ? true : nil
   }
 
   private func startDailyMonitoring() {
@@ -699,6 +819,7 @@ final class IOSEnforcementController: ObservableObject {
     snapshot.lastSafariPolicyAppliedAt = lastSafariPolicyAppliedAt
     snapshot.lastSetupCheckAt = lastSetupCheckAt
     snapshot.session = session
+    snapshot.managedAppsLimitMinutes = managedAppsLimitMinutes
     if let previousMode = IOSEnforcementSharedStore.loadSnapshot().lastSafariPolicyMode {
       snapshot.lastSafariPolicyMode = previousMode
     }
@@ -707,11 +828,11 @@ final class IOSEnforcementController: ObservableObject {
 
   private func updateStatusMessage() {
     switch authorizationState {
-    case .approved where shieldingEnabled && enforcementMode == .strict && hasSelection:
+    case .approved where shieldingEnabled && enforcementMode == .strict && (hasSelection || hasManagedAppsSelection):
       statusMessage = "Strict is active. Selected apps/sites are shielded, Safari tuners are on, and the daily limit monitor is running."
-    case .approved where shieldingEnabled && hasSelection:
+    case .approved where shieldingEnabled && (hasSelection || hasManagedAppsSelection):
       statusMessage = "Focus is active. Selected apps/sites are shielded and Safari tuners are synced."
-    case .approved where hasSelection:
+    case .approved where (hasSelection || hasManagedAppsSelection):
       statusMessage = "Ready. Turn on iOS enforcement to shield selected apps/sites and sync Safari tuners."
     case .approved:
       statusMessage = "Screen Time is approved. Select apps, categories, youtube.com, and other Safari domains next."
@@ -733,6 +854,7 @@ final class IOSEnforcementController: ObservableObject {
       enforcementMode: enforcementMode,
       shieldingEnabled: shieldingEnabled,
       dailyLimitMinutes: dailyLimitMinutes,
+      managedAppsLimitMinutes: managedAppsLimitMinutes,
       safariExtensionAcknowledged: safariExtensionAcknowledged
     )
     guard let data = try? JSONEncoder().encode(state) else {
@@ -756,6 +878,7 @@ final class IOSEnforcementController: ObservableObject {
       enforcementMode: .open,
       shieldingEnabled: false,
       dailyLimitMinutes: 30,
+      managedAppsLimitMinutes: nil,
       safariExtensionAcknowledged: false
     )
   }
@@ -795,5 +918,6 @@ private struct PersistedIOSEnforcementState: Codable {
   let enforcementMode: IOSEnforcementMode
   let shieldingEnabled: Bool
   let dailyLimitMinutes: Int
+  let managedAppsLimitMinutes: Int?
   let safariExtensionAcknowledged: Bool
 }

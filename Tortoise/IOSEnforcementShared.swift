@@ -93,6 +93,10 @@ struct IOSEnforcementSnapshot: Codable, Equatable {
   var lastSafariPolicyAppliedAt: Date? = nil
   var lastSetupCheckAt: Date? = nil
   var session: IOSSessionState? = nil
+  /// Stage 2: combined managed-apps daily limit (minutes). `nil` = off. Persisted
+  /// so the DeviceActivity monitor extension can gate the limit shield. `Int?` is
+  /// cross-platform safe — no `FamilyControls`/`ManagedSettings` type leaks here.
+  var managedAppsLimitMinutes: Int? = nil
 
   var hasSelectedTargets: Bool {
     selectedApplicationCount > 0 || selectedCategoryCount > 0 || selectedWebDomainCount > 0
@@ -403,6 +407,16 @@ extension ManagedSettingsStore.Name {
   /// touches it.
   static let tortoiseManagedApps = Self("tortoise.managedApps")
 
+  /// Stage 2: the combined managed-apps DAILY-LIMIT shield store. Written by the
+  /// DeviceActivity monitor extension when the Open-mode combined threshold is
+  /// reached; the OS UNIONS it with `.tortoiseManagedApps` (Stage 1) and the
+  /// YouTube `.tortoiseImmediate` shield automatically. Like `.tortoiseManagedApps`
+  /// it is deliberately NOT in `tortoiseEnforcementStores` — it is owned by its own
+  /// reconcile paths (`reconcileManagedAppsLimitMonitoring()` disarm + the
+  /// extension's `intervalDidStart`/`intervalDidEnd`), so the YouTube
+  /// `clearAllStores()` sweep never touches it.
+  static let tortoiseManagedAppsLimit = Self("tortoise.managedApps.limit")
+
   static let tortoiseEnforcementStores: [Self] = [
     .tortoiseImmediate,
     .tortoiseSchedule,
@@ -412,9 +426,18 @@ extension ManagedSettingsStore.Name {
 
 extension DeviceActivityName {
   static let tortoiseDaily = Self("tortoise.daily")
+
+  /// Stage 2: the managed-apps limit runs on its OWN DeviceActivity so it is
+  /// independent of the YouTube `.tortoiseDaily` start/stop lifecycle and can run
+  /// in Open mode (where `.tortoiseDaily` is stopped).
+  static let tortoiseManagedAppsDaily = Self("tortoise.managedApps.daily")
 }
 
 extension DeviceActivityEvent.Name {
   static let tortoiseDailyLimit = Self("tortoise.youtube.dailyLimit")
+
+  /// Stage 2: combined managed-apps daily-limit threshold event. Routed by NAME in
+  /// the extension to `.tortoiseManagedAppsLimit`.
+  static let managedAppsDailyLimit = Self("tortoise.managedApps.dailyLimit")
 }
 #endif
