@@ -27,8 +27,9 @@ final class ProtectionStoreTests: XCTestCase {
   }
 
   func testPublicNavigationDoesNotExposeLegacyHistoryOrDNSSetup() {
-    XCTAssertEqual(AppSection.allCases, [.devices, .blocking, .tuning, .usage])
-    XCTAssertEqual(AppSection.allCases.map(\.title), ["Devices", "Blocking", "Tuning", "Usage"])
+    XCTAssertEqual(AppSection.allCases, [.devices, .tuning, .usage])
+    XCTAssertEqual(AppSection.allCases.map(\.title), ["Devices", "Tune", "Usage"])
+    XCTAssertFalse(AppSection.allCases.map(\.title).contains("Blocking"))
     XCTAssertFalse(AppSection.allCases.map(\.title).contains("History"))
     XCTAssertFalse(AppSection.allCases.map(\.title).contains("Activity"))
   }
