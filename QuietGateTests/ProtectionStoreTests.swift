@@ -37,11 +37,7 @@ final class ProtectionStoreTests: XCTestCase {
   func testReadinessActionLabelsAvoidManualCheckAndAccountCopy() {
     let labels = [
       ReadinessAction.refreshProtectionStatus.title,
-      ReadinessAction.openLegacyProviderAccount.title,
-      ReadinessAction.openLegacyMacPermissionSetup.title,
-      ReadinessAction.createLegacyMacPermissionProfile.title,
       ReadinessAction.checkThisMac.title,
-      ReadinessAction.checkLegacyMacConnection.title,
     ]
 
     XCTAssertFalse(labels.contains("Check Again"))
@@ -877,7 +873,6 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(store.profileID, "")
     XCTAssertFalse(store.hasAPIKey)
     XCTAssertFalse(store.legacyProviderRulesSyncPending)
-    XCTAssertFalse(store.legacyProviderControlConnected)
     XCTAssertNil(store.legacyProviderVerifiedProfileID)
     XCTAssertNil(store.generatedAppleProfileURL)
     XCTAssertEqual(store.defaultBlockingProvider.id, .browserHelpers)
@@ -1258,24 +1253,6 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(bridge.writtenSettings.last?.features["instagramReels"], false)
     XCTAssertEqual(bridge.writtenSettings.last?.features["instagramMessages"], false)
     XCTAssertEqual(bridge.writtenSettings.last?.features["instagramNotifications"], false)
-  }
-
-  func testNextDNSAppleSetupURLPrefillsSavedProfileID() {
-    let store = ProtectionStore(
-      defaults: isolatedDefaults(),
-      keychain: MemorySecretStore(),
-      makeClient: { _ in FakeLegacyProviderService(parentalControl: ParentalControl()) },
-      resolverService: FakeResolverStatusService(),
-      extensionBridge: FakeBrowserExtensionBridge()
-    )
-
-    XCTAssertEqual(store.legacyProviderMacSetupURL.absoluteString, "https://apple.nextdns.io/")
-
-    store.profileID = " abc123 "
-
-    XCTAssertEqual(store.trimmedProfileID, "abc123")
-    XCTAssertEqual(
-      store.legacyProviderMacSetupURL.absoluteString, "https://apple.nextdns.io/?configuration=abc123")
   }
 
   func testAppleDNSProfileGeneratorBuildsNextDNSPayload() throws {

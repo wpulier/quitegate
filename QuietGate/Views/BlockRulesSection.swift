@@ -5,7 +5,6 @@ struct BlockRulesSection: View {
   @State private var pendingCategoryIDs: Set<BlockCategoryID> = []
   @State private var pendingSiteDomains: Set<String> = []
   @State private var addingCustomDomain = false
-  @State private var resolvingHiddenRestrictions = false
   let openProtection: () -> Void
 
   init(openProtection: @escaping () -> Void = {}) {
@@ -14,19 +13,6 @@ struct BlockRulesSection: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
-      if store.legacyBlockingProviderEnabled,
-         let hiddenRestrictions = store.legacyManagedRestrictionsText {
-        HiddenRestrictionsNotice(
-          restrictions: hiddenRestrictions,
-          isWorking: resolvingHiddenRestrictions || store.isWorking,
-          action: turnOffHiddenRestrictions
-        )
-      }
-
-      if legacySyncPending {
-        CheckingBlocksNotice()
-      }
-
       if store.browserSettingsApplyNeeded {
         BrowserChangesNotice(
           title: store.browserSettingsApplyTitle,
@@ -36,8 +22,7 @@ struct BlockRulesSection: View {
         )
       }
 
-      if !legacySyncPending,
-         let attentionTitle = store.blockApplicationAttentionTitle,
+      if let attentionTitle = store.blockApplicationAttentionTitle,
          let attentionDetail = store.blockApplicationAttentionDetail {
         BlocksNeedSetupNotice(
           title: attentionTitle,
@@ -68,9 +53,7 @@ struct BlockRulesSection: View {
 
       ProductPanel(
         title: "What gets blocked",
-        subtitle: store.legacyBlockingProviderEnabled
-          ? "These switches change what Tortoise blocks on this Mac."
-          : "These switches change what Tortoise blocks in connected browsers."
+        subtitle: "These switches change what Tortoise blocks in connected browsers."
       ) {
         VStack(alignment: .leading, spacing: 0) {
           ForEach(store.blockCategories) { rule in
@@ -168,10 +151,6 @@ struct BlockRulesSection: View {
     return "\(enabledCount) blocked now. \(totalCount) saved."
   }
 
-  private var legacySyncPending: Bool {
-    store.legacyProviderSyncPending
-  }
-
   private func toggleCategory(_ id: BlockCategoryID, enabled: Bool) {
     guard !pendingCategoryIDs.contains(id) else {
       return
@@ -224,19 +203,6 @@ struct BlockRulesSection: View {
     }
   }
 
-  private func turnOffHiddenRestrictions() {
-    guard !resolvingHiddenRestrictions else {
-      return
-    }
-    resolvingHiddenRestrictions = true
-    Task {
-      await store.refresh()
-      await MainActor.run {
-        resolvingHiddenRestrictions = false
-      }
-    }
-  }
-
   private func categoryRule(_ id: BlockCategoryID) -> BlockCategoryRule {
     store.blockCategories.first { $0.id == id } ?? BlockCategoryRule(id: id, isEnabled: false)
   }
@@ -244,41 +210,6 @@ struct BlockRulesSection: View {
   private func blockedSite(_ domain: String) -> BlockedSiteRule {
     store.blockedSites.first { $0.domain == domain }
       ?? BlockedSiteRule(domain: domain, isEnabled: false)
-  }
-}
-
-private struct HiddenRestrictionsNotice: View {
-  let restrictions: String
-  let isWorking: Bool
-  let action: () -> Void
-
-  var body: some View {
-    ProductCallout(
-      title: "Another web setting is still on",
-      detail: "Still active: \(restrictions). Turn it off here if you want Tortoise to be the only setting changing web results.",
-      systemImage: "exclamationmark.triangle.fill",
-      tint: .orange
-    ) {
-      Button(action: action) {
-        Label(
-          isWorking ? "Checking" : "Turn Off Extra Setting",
-          systemImage: isWorking ? "arrow.triangle.2.circlepath" : "power"
-        )
-      }
-      .buttonStyle(.borderedProminent)
-      .disabled(isWorking)
-    }
-  }
-}
-
-private struct CheckingBlocksNotice: View {
-  var body: some View {
-    ProductCallout(
-      title: "Applying your change",
-      detail: "This usually finishes in about a minute. Browser tabs that were already open can take a little longer to catch up.",
-      systemImage: "clock.arrow.circlepath",
-      tint: .blue
-    )
   }
 }
 

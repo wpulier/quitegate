@@ -1,10 +1,6 @@
 import Foundation
 
 enum ReadinessCheckID: String, Codable, CaseIterable {
-  case websiteBlocking
-  case legacyProviderAccount
-  case legacyMacPermission
-  case legacyMacConnection
   case browserConnection
   case browserSettings
 }
@@ -31,14 +27,9 @@ enum ReadinessState: Equatable {
 }
 
 enum ReadinessAction: Equatable {
-  case allowSavedProviderCredentialAccess
   case refreshProtectionStatus
-  case openLegacyProviderAccount
-  case openLegacyMacPermissionSetup
-  case createLegacyMacPermissionProfile
   case openSystemProfiles
   case checkThisMac
-  case checkLegacyMacConnection
   case installLocalBlockerBackup
   case launchChromeTunerSession
   case openChromeDownload
@@ -52,14 +43,9 @@ enum ReadinessAction: Equatable {
 
   var title: String {
     switch self {
-    case .allowSavedProviderCredentialAccess: return "Allow Access"
     case .refreshProtectionStatus: return "Update Status"
-    case .openLegacyProviderAccount: return "Open Setup"
-    case .openLegacyMacPermissionSetup: return "Open Settings"
-    case .createLegacyMacPermissionProfile: return "Prepare Settings"
     case .openSystemProfiles: return "Approve"
     case .checkThisMac: return "Update This Mac"
-    case .checkLegacyMacConnection: return "Update Connection"
     case .installLocalBlockerBackup: return "Set Up Backup"
     case .launchChromeTunerSession: return "Connect Chrome"
     case .openChromeDownload: return "Get Chrome"
@@ -75,14 +61,9 @@ enum ReadinessAction: Equatable {
 
   var systemImage: String {
     switch self {
-    case .allowSavedProviderCredentialAccess: return "key"
     case .refreshProtectionStatus: return "arrow.clockwise"
-    case .openLegacyProviderAccount: return "person.crop.circle"
-    case .openLegacyMacPermissionSetup: return "apple.logo"
-    case .createLegacyMacPermissionProfile: return "doc.badge.plus"
     case .openSystemProfiles: return "checkmark.seal"
     case .checkThisMac: return "checklist"
-    case .checkLegacyMacConnection: return "network"
     case .installLocalBlockerBackup: return "lock.shield"
     case .launchChromeTunerSession: return "play.circle"
     case .openChromeDownload: return "arrow.down.circle"

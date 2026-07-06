@@ -92,7 +92,6 @@
 		934BFCCF424ABDC856E8802A /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */; };
 		9444DFB359EE2591B289F97C /* youtube.js in Resources */ = {isa = PBXBuildFile; fileRef = FFE207828E8229CD9EEAD9E8 /* youtube.js */; };
 		97040AFC5CEF7EBFD33A5F42 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
-		981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */; };
 		9A5F16211C9C251AC64CEB9B /* AddDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD6AA363596C6AF0195D1DE /* AddDestination.swift */; };
 		9A8666296BEEB907320D6EA4 /* TortoiseShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9BDA4A9C17A0C410438DA4C0 /* DevicePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */; };
@@ -240,7 +239,6 @@
 		273DAEE65592F418FA16396A /* IOSSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSession.swift; sourceTree = "<group>"; };
 		2B1BA60040AB9CCA5A5F955A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		2CB16BD2B65FAC73392D34C8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
-		32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProtectionStore+LegacyProviderState.swift"; sourceTree = "<group>"; };
 		353BA3A44AEE95CEB3D0C75A /* TortoiseShieldConfiguration.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TortoiseShieldConfiguration.entitlements; sourceTree = "<group>"; };
 		390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseAPIClient.swift; sourceTree = "<group>"; };
 		395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSEnforcementShared.swift; sourceTree = "<group>"; };
@@ -483,7 +481,6 @@
 				42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */,
 				DC52F9B0A5882A50FB5BA117 /* LegacyProviderReadbackError.swift */,
 				8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */,
-				32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */,
 			);
 			path = LegacyProviderConnector;
 			sourceTree = "<group>";
@@ -1164,7 +1161,6 @@
 				60DF86842AE89751B08E4B23 /* PlatformControlsChecker.swift in Sources */,
 				9D5CAE4FB45940791F38CBF5 /* ProductComponents.swift in Sources */,
 				32AEA6C71C4467C6940FA138 /* ProtectionMode.swift in Sources */,
-				981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */,
 				25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */,
 				416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */,
 				FA6A7FF6019A0D43AF72EA84 /* QRCode.swift in Sources */,
