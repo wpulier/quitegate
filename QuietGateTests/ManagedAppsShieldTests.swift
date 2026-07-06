@@ -57,4 +57,74 @@ final class ManagedAppsShieldTests: XCTestCase {
   func testLockedAllowsGrow() {
     XCTAssertTrue(ManagedAppsShield.canApplyEdit(lockedActive: true, isShrink: false))
   }
+
+  // MARK: clampManagedAppsLimitMinutes(_:)
+
+  func testClampBelowMinimumRaisesToFive() {
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(0), 5)
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(4), 5)
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(-30), 5)
+  }
+
+  func testClampAboveMaximumLowersToFourEighty() {
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(481), 480)
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(10_000), 480)
+  }
+
+  func testClampWithinRangeIsUnchanged() {
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(5), 5)
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(30), 30)
+    XCTAssertEqual(ManagedAppsShield.clampManagedAppsLimitMinutes(480), 480)
+  }
+
+  // MARK: shouldArmManagedAppsLimit(limitEnabled:hasSelection:)
+
+  func testArmsOnlyWhenEnabledAndSelectionPresent() {
+    XCTAssertTrue(ManagedAppsShield.shouldArmManagedAppsLimit(limitEnabled: true, hasSelection: true))
+  }
+
+  func testDoesNotArmWhenDisabled() {
+    XCTAssertFalse(ManagedAppsShield.shouldArmManagedAppsLimit(limitEnabled: false, hasSelection: true))
+  }
+
+  func testDoesNotArmWhenSelectionEmpty() {
+    XCTAssertFalse(ManagedAppsShield.shouldArmManagedAppsLimit(limitEnabled: true, hasSelection: false))
+  }
+
+  // MARK: shouldApplyAdultFilter(mode:adultEnabled:)
+
+  func testAdultFilterAppliesOnlyInStrictWhenEnabled() {
+    XCTAssertTrue(ManagedAppsShield.shouldApplyAdultFilter(mode: .strict, adultEnabled: true))
+  }
+
+  func testAdultFilterOffWhenAdultDisabledEvenInStrict() {
+    XCTAssertFalse(ManagedAppsShield.shouldApplyAdultFilter(mode: .strict, adultEnabled: false))
+  }
+
+  func testAdultFilterOffInOpenAndFocus() {
+    XCTAssertFalse(ManagedAppsShield.shouldApplyAdultFilter(mode: .open, adultEnabled: true))
+    XCTAssertFalse(ManagedAppsShield.shouldApplyAdultFilter(mode: .focus, adultEnabled: true))
+  }
+
+  // MARK: isEnforcementActive(youtubeSelected:managedAppsSelected:adultFilterOn:)
+
+  func testEnforcementActiveWhenYouTubeSelected() {
+    XCTAssertTrue(ManagedAppsShield.isEnforcementActive(
+      youtubeSelected: true, managedAppsSelected: false, adultFilterOn: false))
+  }
+
+  func testEnforcementActiveWhenManagedAppsSelected() {
+    XCTAssertTrue(ManagedAppsShield.isEnforcementActive(
+      youtubeSelected: false, managedAppsSelected: true, adultFilterOn: false))
+  }
+
+  func testEnforcementActiveWhenAdultFilterOn() {
+    XCTAssertTrue(ManagedAppsShield.isEnforcementActive(
+      youtubeSelected: false, managedAppsSelected: false, adultFilterOn: true))
+  }
+
+  func testEnforcementInactiveWhenNothingActive() {
+    XCTAssertFalse(ManagedAppsShield.isEnforcementActive(
+      youtubeSelected: false, managedAppsSelected: false, adultFilterOn: false))
+  }
 }

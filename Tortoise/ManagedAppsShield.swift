@@ -37,4 +37,32 @@ enum ManagedAppsShield {
     }
     return true
   }
+
+  /// Clamps a raw daily-limit value to the supported 5–480 minute range (mirrors
+  /// the YouTube `dailyLimitMinutes` bounds).
+  static func clampManagedAppsLimitMinutes(_ minutes: Int) -> Int {
+    min(max(minutes, 5), 480)
+  }
+
+  /// The combined managed-apps daily-limit monitor is armed only when the limit
+  /// is enabled AND at least one target is selected. (Mode is irrelevant — the
+  /// limit is an OPEN governor and is redundant-harmless in Focus/Strict.)
+  static func shouldArmManagedAppsLimit(limitEnabled: Bool, hasSelection: Bool) -> Bool {
+    limitEnabled && hasSelection
+  }
+
+  /// The adult web/media filter applies only in Strict with adult blocking on —
+  /// independent of any app/site selection.
+  static func shouldApplyAdultFilter(mode: IOSEnforcementMode, adultEnabled: Bool) -> Bool {
+    mode == .strict && adultEnabled
+  }
+
+  /// Enforcement is "active" (for status reporting) when any of the enforcement
+  /// sources is engaged: a YouTube selection, a managed-apps selection, or the
+  /// adult filter. Decouples status from requiring a *YouTube* selection.
+  static func isEnforcementActive(
+    youtubeSelected: Bool, managedAppsSelected: Bool, adultFilterOn: Bool
+  ) -> Bool {
+    youtubeSelected || managedAppsSelected || adultFilterOn
+  }
 }
