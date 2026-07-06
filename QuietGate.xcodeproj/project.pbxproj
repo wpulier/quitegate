@@ -88,7 +88,6 @@
 		8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */; };
 		918CCE47CA5D5E2589A1C008 /* BrowserBlockingProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */; };
 		9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */; };
-		92597E236D5AC38BCEA2124C /* LegacyProviderStatusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */; };
 		92C3376EF7E3986A71EC3341 /* BrowserTuningFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD4CB5D18C983E5D2C8EB2D /* BrowserTuningFeature.swift */; };
 		934BFCCF424ABDC856E8802A /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */; };
 		9444DFB359EE2591B289F97C /* youtube.js in Resources */ = {isa = PBXBuildFile; fileRef = FFE207828E8229CD9EEAD9E8 /* youtube.js */; };
@@ -100,7 +99,6 @@
 		9C0969F1393ACEF71E35F1C2 /* x.js in Resources */ = {isa = PBXBuildFile; fileRef = EF5C810052C9446E2726C089 /* x.js */; };
 		9D1A79FE21717C9735E835CD /* blocked.html in Resources */ = {isa = PBXBuildFile; fileRef = 3A9AB2A8842D93C15B5EECEC /* blocked.html */; };
 		9D5CAE4FB45940791F38CBF5 /* ProductComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */; };
-		9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875814D47F22199A45571212 /* LegacyProviderClientTests.swift */; };
 		A0EED63B1E0BD682F4107F9B /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */; };
 		A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */; };
 		A1E86D97B6260061856CF6BA /* LegacyProviderModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */; };
@@ -279,7 +277,6 @@
 		6D288C7A057311BB070BB9CA /* BlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockingProvider.swift; sourceTree = "<group>"; };
 		6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessCheck.swift; sourceTree = "<group>"; };
 		6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBlockingProvider.swift; sourceTree = "<group>"; };
-		74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderStatusServiceTests.swift; sourceTree = "<group>"; };
 		757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningCatalogTests.swift; sourceTree = "<group>"; };
 		77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockingStore.swift; sourceTree = "<group>"; };
 		796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMacBlockingProviderTests.swift; sourceTree = "<group>"; };
@@ -288,7 +285,6 @@
 		7DDB3D0AA0D5EE6D889967A5 /* TortoiseSafariExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseSafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainNormalizer.swift; sourceTree = "<group>"; };
 		8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderStatusService.swift; sourceTree = "<group>"; };
-		875814D47F22199A45571212 /* LegacyProviderClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderClientTests.swift; sourceTree = "<group>"; };
 		885DC37A991A432C1E950CB1 /* blocked.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = blocked.css; sourceTree = "<group>"; };
 		892825147CC27E6727E35275 /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = background.js; sourceTree = "<group>"; };
 		899CA3F2232649843D526BBF /* PlatformControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsTests.swift; sourceTree = "<group>"; };
@@ -675,8 +671,6 @@
 				03346809F4EA38D985C2D3F5 /* DevicesHubModelTests.swift */,
 				6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */,
 				7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */,
-				875814D47F22199A45571212 /* LegacyProviderClientTests.swift */,
-				74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */,
 				796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */,
 				899CA3F2232649843D526BBF /* PlatformControlsTests.swift */,
 				BB64C9620DA049F321B8E848 /* PresetUnificationTests.swift */,
@@ -1078,8 +1072,6 @@
 				ADD9141DBB7430FE5A38B428 /* DevicesHubModelTests.swift in Sources */,
 				8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */,
 				4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */,
-				9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */,
-				92597E236D5AC38BCEA2124C /* LegacyProviderStatusServiceTests.swift in Sources */,
 				CAB87C4B96F2644084DC7581 /* LocalMacBlockingProviderTests.swift in Sources */,
 				5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */,
 				25B59FDB054E488CDBBE2BDE /* PresetUnificationTests.swift in Sources */,
