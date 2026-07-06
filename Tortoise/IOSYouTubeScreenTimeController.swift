@@ -183,12 +183,22 @@ final class IOSEnforcementController: ObservableObject {
     return "\(session.locked ? "Locked " : "")\(session.mode.rawValue.capitalized) session · \(mins)m left"
   }
 
+  /// True when any enforcement surface is active: a YouTube selection, a
+  /// managed-apps selection, or the Strict adult web filter.
+  private var enforcementActive: Bool {
+    ManagedAppsShield.isEnforcementActive(
+      youtubeSelected: hasSelection,
+      managedAppsSelected: hasManagedAppsSelection,
+      adultFilterOn: ManagedAppsShield.shouldApplyAdultFilter(mode: enforcementMode, adultEnabled: shieldingEnabled)
+    )
+  }
+
   var connectionState: IOSEnforcementConnectionState {
     if authorizationState == .denied || lastError != nil || safariExtensionState == .failed {
       return .repairRequired
     }
 
-    if authorizationState != .approved || (!hasSelection && !hasManagedAppsSelection) {
+    if authorizationState != .approved || !enforcementActive {
       return .setupRequired
     }
 
@@ -828,11 +838,11 @@ final class IOSEnforcementController: ObservableObject {
 
   private func updateStatusMessage() {
     switch authorizationState {
-    case .approved where shieldingEnabled && enforcementMode == .strict && (hasSelection || hasManagedAppsSelection):
+    case .approved where shieldingEnabled && enforcementMode == .strict && enforcementActive:
       statusMessage = "Strict is active. Selected apps/sites are shielded, Safari tuners are on, and the daily limit monitor is running."
-    case .approved where shieldingEnabled && (hasSelection || hasManagedAppsSelection):
+    case .approved where shieldingEnabled && enforcementActive:
       statusMessage = "Focus is active. Selected apps/sites are shielded and Safari tuners are synced."
-    case .approved where (hasSelection || hasManagedAppsSelection):
+    case .approved where enforcementActive:
       statusMessage = "Ready. Turn on iOS enforcement to shield selected apps/sites and sync Safari tuners."
     case .approved:
       statusMessage = "Screen Time is approved. Select apps, categories, youtube.com, and other Safari domains next."
