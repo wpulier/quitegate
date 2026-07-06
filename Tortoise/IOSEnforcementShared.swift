@@ -217,6 +217,7 @@ struct SafariBrowserProfile: Codable, Equatable {
 
 enum IOSEnforcementSharedStore {
   private static let selectionKey = "TortoiseIOSEnforcementSelection"
+  private static let managedAppsSelectionKey = "TortoiseIOSManagedAppsSelection"
   private static let snapshotKey = "TortoiseIOSEnforcementSnapshot"
   private static let safariPolicyKey = "TortoiseIOSSafariPolicy"
   static let siteUsageKey = "TortoiseSiteUsageBySite"
@@ -237,6 +238,21 @@ enum IOSEnforcementSharedStore {
       return
     }
     defaults.set(data, forKey: selectionKey)
+  }
+
+  static func loadManagedAppsSelection() -> FamilyActivitySelection {
+    guard let data = defaults.data(forKey: managedAppsSelectionKey),
+          let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
+      return FamilyActivitySelection()
+    }
+    return selection
+  }
+
+  static func saveManagedAppsSelection(_ selection: FamilyActivitySelection) {
+    guard let data = try? JSONEncoder().encode(selection) else {
+      return
+    }
+    defaults.set(data, forKey: managedAppsSelectionKey)
   }
   #endif
 
@@ -344,6 +360,23 @@ enum IOSEnforcementShieldApplier {
     store.media.denyExplicitContent = adultWebFilterEnabled ? true : nil
   }
 
+  /// Writes ONLY the shield fields from `selection` into `store` — no adult web/
+  /// media filter (that stays on the YouTube/Strict `applySelection` path). Used
+  /// for the general "Apps" store so the two shields union cleanly.
+  static func applyShield(
+    _ selection: FamilyActivitySelection,
+    to store: ManagedSettingsStore
+  ) {
+    store.shield.applications = selection.applicationTokens.nilIfEmpty
+    store.shield.webDomains = selection.webDomainTokens.nilIfEmpty
+    store.shield.applicationCategories = selection.categoryTokens.isEmpty
+      ? nil
+      : .specific(selection.categoryTokens)
+    store.shield.webDomainCategories = selection.categoryTokens.isEmpty
+      ? nil
+      : .specific(selection.categoryTokens)
+  }
+
   static func clearAllStores() {
     for name in ManagedSettingsStore.Name.tortoiseEnforcementStores {
       ManagedSettingsStore(named: name).clearAllSettings()
@@ -361,6 +394,14 @@ extension ManagedSettingsStore.Name {
   static let tortoiseImmediate = Self("tortoise.immediate")
   static let tortoiseSchedule = Self("tortoise.schedule")
   static let tortoiseLimit = Self("tortoise.limit")
+
+  /// The general "Apps" (Screen-Time) shield lives in its OWN store so the system
+  /// UNIONS it with the YouTube shield in `.tortoiseImmediate` automatically —
+  /// no manual merge. Deliberately NOT part of `tortoiseEnforcementStores`: this
+  /// store is owned solely by `applyManagedAppsShield()`, which reconciles it on
+  /// every `applyCurrentMode()`, so the YouTube `clearAllStores()` sweep never
+  /// touches it.
+  static let tortoiseManagedApps = Self("tortoise.managedApps")
 
   static let tortoiseEnforcementStores: [Self] = [
     .tortoiseImmediate,

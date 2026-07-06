@@ -14,6 +14,10 @@ final class IOSEnforcementController: ObservableObject {
     }
   }
 
+  /// The general "Apps" selection (separate from the YouTube `selection`). Edited
+  /// only via `setManagedAppsSelection(_:)` so the locked-session freeze holds.
+  @Published private(set) var managedAppsSelection: FamilyActivitySelection = FamilyActivitySelection()
+
   @Published var shieldingEnabled: Bool {
     didSet {
       persistState()
@@ -66,6 +70,7 @@ final class IOSEnforcementController: ObservableObject {
   @Published private(set) var session: IOSSessionState?
 
   private let immediateStore = ManagedSettingsStore(named: .tortoiseImmediate)
+  private let managedAppsStore = ManagedSettingsStore(named: .tortoiseManagedApps)
   private let activityCenter = DeviceActivityCenter()
   private var isApplying = false
   private var policyFeatures: [String: Bool] = [:]
@@ -74,6 +79,7 @@ final class IOSEnforcementController: ObservableObject {
   init() {
     let persisted = Self.loadState()
     selection = IOSEnforcementSharedStore.loadSelection()
+    managedAppsSelection = IOSEnforcementSharedStore.loadManagedAppsSelection()
     shieldingEnabled = persisted.shieldingEnabled
     authorizationMode = persisted.authorizationMode
     enforcementMode = persisted.enforcementMode
@@ -91,6 +97,27 @@ final class IOSEnforcementController: ObservableObject {
     !selection.applicationTokens.isEmpty ||
       !selection.categoryTokens.isEmpty ||
       !selection.webDomainTokens.isEmpty
+  }
+
+  var hasManagedAppsSelection: Bool {
+    !managedAppsSelection.applicationTokens.isEmpty ||
+      !managedAppsSelection.categoryTokens.isEmpty ||
+      !managedAppsSelection.webDomainTokens.isEmpty
+  }
+
+  /// Honest one-line state for the "Apps" card. Omits any zero count.
+  var managedAppsSummary: String {
+    guard hasManagedAppsSelection else {
+      return "Choose apps to block in Focus & Strict."
+    }
+    let apps = managedAppsSelection.applicationTokens.count
+    let categories = managedAppsSelection.categoryTokens.count
+    let domains = managedAppsSelection.webDomainTokens.count
+    var parts: [String] = []
+    if apps > 0 { parts.append("\(apps) app\(apps == 1 ? "" : "s")") }
+    if categories > 0 { parts.append("\(categories) categor\(categories == 1 ? "y" : "ies")") }
+    if domains > 0 { parts.append("\(domains) web domain\(domains == 1 ? "" : "s")") }
+    return parts.joined(separator: " · ") + " blocked in Focus & Strict"
   }
 
   var coverageSummary: String {
@@ -390,6 +417,28 @@ final class IOSEnforcementController: ObservableObject {
     shieldingEnabled = false
   }
 
+  /// Applies a new managed-apps selection. While a locked session is active the
+  /// selection may only GROW — any shrink/clear (a committed token dropped) is
+  /// refused (precommitment). Unlocked, any edit is accepted. On acceptance the
+  /// selection is persisted and the shield re-applied through `applyCurrentMode()`.
+  func setManagedAppsSelection(_ newValue: FamilyActivitySelection) {
+    let shrinks =
+      ManagedAppsShield.isShrink(
+        old: managedAppsSelection.applicationTokens, new: newValue.applicationTokens) ||
+      ManagedAppsShield.isShrink(
+        old: managedAppsSelection.categoryTokens, new: newValue.categoryTokens) ||
+      ManagedAppsShield.isShrink(
+        old: managedAppsSelection.webDomainTokens, new: newValue.webDomainTokens)
+
+    guard ManagedAppsShield.canApplyEdit(lockedActive: sessionLockedActive, isShrink: shrinks) else {
+      return
+    }
+
+    managedAppsSelection = newValue
+    IOSEnforcementSharedStore.saveManagedAppsSelection(newValue)
+    applyCurrentMode()
+  }
+
   func startSession(mode: IOSEnforcementMode, duration: TimeInterval, locked: Bool) {
     guard !sessionLockedActive else { return }          // can't override a locked session
     let mode = mode == .open ? .focus : mode
@@ -541,6 +590,8 @@ final class IOSEnforcementController: ObservableObject {
       updateStatusMessage()
     }
 
+    applyManagedAppsShield()
+
     let shouldEnforce = shieldingEnabled && enforcementMode != .open && canApplyShielding
     if !shouldEnforce {
       IOSEnforcementShieldApplier.clearAllStores()
@@ -562,6 +613,22 @@ final class IOSEnforcementController: ObservableObject {
     writeSafariPolicy()
     saveSnapshot(lastError: lastError)
     syncHealth = "Screen Time and Safari policy current"
+  }
+
+  /// Reconciles the general "Apps" shield in its own `.tortoiseManagedApps` store.
+  /// Governed by MODE (Focus/Strict) + authorization + a non-empty managed-apps
+  /// selection — independent of the YouTube `selection`, so managed apps are
+  /// shielded even when no YouTube target is picked. The system unions this store
+  /// with the YouTube shield automatically.
+  private func applyManagedAppsShield() {
+    let shouldShield = ManagedAppsShield.shouldShield(mode: enforcementMode)
+      && authorizationState.isApproved
+      && hasManagedAppsSelection
+    if shouldShield {
+      IOSEnforcementShieldApplier.applyShield(managedAppsSelection, to: managedAppsStore)
+    } else {
+      managedAppsStore.clearAllSettings()
+    }
   }
 
   private func startDailyMonitoring() {
