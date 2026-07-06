@@ -654,6 +654,16 @@ final class IOSEnforcementController: ObservableObject {
       updateStatusMessage()
     }
 
+    // Single top-of-pass reset so a resolved error clears on the next pass. Gated on
+    // approval: while unauthorized the monitor-arm reconciles below early-return without
+    // touching `lastError`, so an unconditional reset here would wipe a sticky auth-request
+    // failure set by `requestAuthorization()`. Within an approved pass each arm now sets
+    // `lastError` only on FAILURE (never clears on success), so no monitor's success can
+    // erase another monitor's failure.
+    if authorizationState.isApproved {
+      lastError = nil
+    }
+
     let managedAppsShielded = applyManagedAppsShield()
     reconcileManagedAppsLimitMonitoring()
 
@@ -743,7 +753,6 @@ final class IOSEnforcementController: ObservableObject {
         during: schedule,
         events: [.managedAppsDailyLimit: event]
       )
-      lastError = nil
     } catch {
       lastError = error.localizedDescription
     }
@@ -783,7 +792,6 @@ final class IOSEnforcementController: ObservableObject {
         events: [.tortoiseDailyLimit: event]
       )
       scheduleActive = true
-      lastError = nil
     } catch {
       scheduleActive = false
       lastError = error.localizedDescription

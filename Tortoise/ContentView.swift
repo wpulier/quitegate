@@ -715,9 +715,9 @@ private struct MobileTuningScreen: View {
                 isOn: Binding(
                   get: { screenTime.managedAppsLimitEnabled },
                   set: { screenTime.setManagedAppsLimitEnabled($0) }
-                )
+                ),
+                isEnabled: !screenTime.sessionLockedActive
               )
-              .disabled(screenTime.sessionLockedActive)
             }
 
             if screenTime.managedAppsLimitEnabled {
