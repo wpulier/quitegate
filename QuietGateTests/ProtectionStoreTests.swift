@@ -2199,6 +2199,23 @@ final class ProtectionStoreTests: XCTestCase {
     XCTAssertEqual(secondBridge.writtenSettings.last?.options.explicitHideStyle, .post)
   }
 
+  /// Regression guard for the Mac Tune "hide style" segmented control (spec §6.3):
+  /// the exact case order and titles it renders must match the design intent.
+  func testExplicitHideStyleTitlesMatchTuneUISpec() {
+    XCTAssertEqual(ExplicitHideStyle.allCases, [.post, .media, .placeholder])
+    XCTAssertEqual(
+      ExplicitHideStyle.allCases.map(\.title),
+      ["Whole post", "Media only", "Placeholder"]
+    )
+  }
+
+  /// Regression guard for the Mac Tune "daily limit" stepper (spec §6.3): the
+  /// stepper's range and default must match the values the UI is built around.
+  func testYouTubeDailyLimitRangeAndDefaultMatchTuneUISpec() {
+    XCTAssertEqual(BrowserTuningOptions.youtubeDailyLimitRange, 5...480)
+    XCTAssertEqual(BrowserTuningOptions.defaultYouTubeDailyLimitMinutes, 30)
+  }
+
   func testYouTubeDailyLimitMinutesPersistClampAndSyncBrowserSettings() {
     let defaults = isolatedDefaults()
     let bridge = FakeBrowserExtensionBridge()

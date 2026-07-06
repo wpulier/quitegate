@@ -173,6 +173,19 @@ struct TuningView: View {
             isEnabled: !store.timedSessionLockedActive
           )
         }
+
+        if selectedSite == TuningCatalog.youtubeSiteID {
+          if !selectedSiteFeatures.isEmpty {
+            ProductDivider()
+              .padding(.vertical, 13)
+          }
+          YouTubeDailyLimitRow(
+            minutes: store.tuningOptions.youtubeDailyLimitMinutes,
+            range: BrowserTuningOptions.youtubeDailyLimitRange,
+            isEnabled: !store.timedSessionLockedActive,
+            onChange: setYouTubeDailyLimitMinutes
+          )
+        }
       }
     }
   }
@@ -365,6 +378,15 @@ struct TuningView: View {
               }
             }
           }
+
+          ProductDivider()
+            .padding(.vertical, 12)
+
+          ExplicitHideStyleRow(
+            selected: store.tuningOptions.explicitHideStyle,
+            isEnabled: !store.timedSessionLockedActive,
+            onSelect: setExplicitHideStyle
+          )
         }
       }
     }
@@ -566,6 +588,28 @@ struct TuningView: View {
       await MainActor.run {
         _ = pendingCategoryIDs.remove(id)
       }
+    }
+  }
+
+  private func setYouTubeDailyLimitMinutes(_ minutes: Int) {
+    store.setYouTubeDailyLimitMinutes(minutes)
+    Task {
+      await accountStore.pushLocalPolicy(
+        using: clerk,
+        protectionStore: store,
+        appBlockingStore: appBlockingStore
+      )
+    }
+  }
+
+  private func setExplicitHideStyle(_ style: ExplicitHideStyle) {
+    store.setExplicitHideStyle(style)
+    Task {
+      await accountStore.pushLocalPolicy(
+        using: clerk,
+        protectionStore: store,
+        appBlockingStore: appBlockingStore
+      )
     }
   }
 
@@ -882,6 +926,107 @@ private struct TuningFeatureRow: View {
       Spacer(minLength: 14)
       QGSwitch(isOn: $isOn, isEnabled: isEnabled)
     }
+  }
+}
+
+/// The YouTube-only daily time-limit stepper. Reads the real, persisted minutes
+/// value from `store.tuningOptions` - never a hardcoded placeholder.
+private struct YouTubeDailyLimitRow: View {
+  let minutes: Int
+  let range: ClosedRange<Int>
+  let isEnabled: Bool
+  let onChange: (Int) -> Void
+
+  var body: some View {
+    HStack(spacing: 14) {
+      VStack(alignment: .leading, spacing: 5) {
+        Text("Daily limit")
+          .font(.system(size: 15, weight: .bold))
+          .foregroundStyle(QGDesign.primaryText)
+        Text("Caps YouTube to \(minutes)m of watch time per day.")
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.secondaryText)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      Spacer(minLength: 14)
+      Stepper(
+        value: Binding(
+          get: { minutes },
+          set: { onChange($0) }
+        ),
+        in: range,
+        step: 5
+      ) {
+        Text("\(minutes)m")
+          .font(.system(size: 14, weight: .semibold))
+          .foregroundStyle(QGDesign.primaryText)
+          .monospacedDigit()
+          .frame(minWidth: 44, alignment: .trailing)
+      }
+      .disabled(!isEnabled)
+      .opacity(isEnabled ? 1 : 0.45)
+      .fixedSize()
+    }
+  }
+}
+
+/// A Tune-level option: how flagged explicit content is hidden across every
+/// connected browser (not tied to a single site). Reads the real persisted
+/// style from `store.tuningOptions`.
+private struct ExplicitHideStyleRow: View {
+  let selected: ExplicitHideStyle
+  let isEnabled: Bool
+  let onSelect: (ExplicitHideStyle) -> Void
+
+  var body: some View {
+    HStack(spacing: 14) {
+      VStack(alignment: .leading, spacing: 5) {
+        Text("Hide style")
+          .font(.system(size: 15, weight: .bold))
+          .foregroundStyle(QGDesign.primaryText)
+        Text("How flagged explicit content is hidden across every connected browser.")
+          .font(.system(size: 12))
+          .foregroundStyle(QGDesign.secondaryText)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      Spacer(minLength: 14)
+      ExplicitHideStyleSegmented(selected: selected, isEnabled: isEnabled, onSelect: onSelect)
+    }
+  }
+}
+
+/// A lightweight segmented control over `ExplicitHideStyle.allCases`, styled to
+/// match the app's design tokens rather than the system segmented control.
+private struct ExplicitHideStyleSegmented: View {
+  let selected: ExplicitHideStyle
+  let isEnabled: Bool
+  let onSelect: (ExplicitHideStyle) -> Void
+
+  var body: some View {
+    HStack(spacing: 3) {
+      ForEach(ExplicitHideStyle.allCases) { style in
+        Button {
+          guard isEnabled, style != selected else { return }
+          onSelect(style)
+        } label: {
+          Text(style.title)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(style == selected ? QGDesign.primaryText : QGDesign.secondaryText)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+              style == selected ? QGDesign.elevatedPanel : Color.clear,
+              in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+            )
+        }
+        .buttonStyle(.plain)
+      }
+    }
+    .padding(3)
+    .background(QGDesign.field, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+    .opacity(isEnabled ? 1 : 0.45)
   }
 }
 
