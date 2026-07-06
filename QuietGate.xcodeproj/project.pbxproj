@@ -52,6 +52,7 @@
 		43A9D7F3392A03ACE68C6E6D /* MacTortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504A95B1313F6EF8FB7F3DFB /* MacTortoiseAPIClient.swift */; };
 		43F84451FEF86A8C4DC50B48 /* DevicePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */; };
 		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
+		46CC89FC6E9F2A33E84D9B54 /* ManagedAppsShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */; };
 		4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */; };
 		4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */; };
 		501413D7BFE38F77E24AC402 /* ConnectionStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 992885591B8276341DD0BDF4 /* ConnectionStatusTests.swift */; };
@@ -85,6 +86,7 @@
 		81E1909BBF8897470F85EE1E /* AccountHubModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2880C0251EB92FD791228DF /* AccountHubModel.swift */; };
 		83E70B835C2060EE16A968CD /* BrowserExtensionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */; };
 		892955A4A477E4376F3DF52A /* DevicePresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8035DE489271EB4A91BB265 /* DevicePresentationTests.swift */; };
+		8A7AF896F29A4020AAFFD280 /* ManagedAppsShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */; };
 		8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */; };
 		918CCE47CA5D5E2589A1C008 /* BrowserBlockingProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */; };
 		9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */; };
@@ -117,6 +119,7 @@
 		BFD740EBC2EE5EFF07CE5F3E /* ApplicationBlockingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */; };
 		C02C20F3AAC030400E98F91E /* QRCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09838947772A802ABC8CD02 /* QRCodeTests.swift */; };
 		C1D287B08C8955F1FA73E60A /* LegacyProviderContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */; };
+		C4FB34486DA6C0A2C152DA64 /* ManagedAppsShieldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81156D2F66A05B6CD2EB542 /* ManagedAppsShieldTests.swift */; };
 		C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */; };
 		C70AE39FFB9F88BC00B96A16 /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */; };
 		C7C2B7BB062E39732B904A97 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
@@ -343,6 +346,7 @@
 		E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuietGateApp.swift; sourceTree = "<group>"; };
 		E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9FBF3C8239B50B37B2CFBC3 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
+		EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedAppsShield.swift; sourceTree = "<group>"; };
 		EF5C810052C9446E2726C089 /* x.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = x.js; sourceTree = "<group>"; };
 		F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderMacServices.swift; sourceTree = "<group>"; };
 		F110EF06D260E09967CD6F85 /* quietgate-native-host */ = {isa = PBXFileReference; path = "quietgate-native-host"; sourceTree = "<group>"; };
@@ -350,6 +354,7 @@
 		F2880C0251EB92FD791228DF /* AccountHubModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountHubModel.swift; sourceTree = "<group>"; };
 		F5274600C358B81EB9056536 /* blocker.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = blocker.js; sourceTree = "<group>"; };
 		F7B1B9C63A5C2FCE2369A3F7 /* x.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = x.css; sourceTree = "<group>"; };
+		F81156D2F66A05B6CD2EB542 /* ManagedAppsShieldTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedAppsShieldTests.swift; sourceTree = "<group>"; };
 		F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsChecker.swift; sourceTree = "<group>"; };
 		FAAD2800D37E56C9AD1C4513 /* TortoiseDeviceActivityMonitor.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseDeviceActivityMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FFE207828E8229CD9EEAD9E8 /* youtube.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = youtube.js; sourceTree = "<group>"; };
@@ -669,6 +674,7 @@
 				6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */,
 				7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */,
 				796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */,
+				F81156D2F66A05B6CD2EB542 /* ManagedAppsShieldTests.swift */,
 				899CA3F2232649843D526BBF /* PlatformControlsTests.swift */,
 				BB64C9620DA049F321B8E848 /* PresetUnificationTests.swift */,
 				59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */,
@@ -711,6 +717,7 @@
 				273DAEE65592F418FA16396A /* IOSSession.swift */,
 				C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */,
 				CEFA98961060B02E33E4F2E5 /* IOSYouTubeScreenTimeController.swift */,
+				EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */,
 				E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */,
 				9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */,
 				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
@@ -1070,6 +1077,7 @@
 				8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */,
 				4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */,
 				CAB87C4B96F2644084DC7581 /* LocalMacBlockingProviderTests.swift in Sources */,
+				C4FB34486DA6C0A2C152DA64 /* ManagedAppsShieldTests.swift in Sources */,
 				5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */,
 				25B59FDB054E488CDBBE2BDE /* PresetUnificationTests.swift in Sources */,
 				071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */,
@@ -1099,6 +1107,7 @@
 				4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */,
 				033ED0398C4323B5E6FD7513 /* IOSYouTubeScreenTimeController.swift in Sources */,
 				A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */,
+				46CC89FC6E9F2A33E84D9B54 /* ManagedAppsShield.swift in Sources */,
 				C70AE39FFB9F88BC00B96A16 /* QRCode.swift in Sources */,
 				339528CD0C5C0D639462B725 /* SiteUsageModels.swift in Sources */,
 				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
@@ -1156,6 +1165,7 @@
 				67A953314D5B55EA2D0ACED0 /* LoginItemService.swift in Sources */,
 				787C9B97CFD44F022DB47709 /* MacAccountStore.swift in Sources */,
 				43A9D7F3392A03ACE68C6E6D /* MacTortoiseAPIClient.swift in Sources */,
+				8A7AF896F29A4020AAFFD280 /* ManagedAppsShield.swift in Sources */,
 				CBE8CB4AEED57AE891EDF9E5 /* MenuBarContentView.swift in Sources */,
 				AD444AE42F87DCA8F0927C2C /* PlatformControls.swift in Sources */,
 				60DF86842AE89751B08E4B23 /* PlatformControlsChecker.swift in Sources */,

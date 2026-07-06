@@ -53,6 +53,8 @@ targets:
         type: file
       - path: Tortoise/IOSSession.swift
         type: file
+      - path: Tortoise/ManagedAppsShield.swift
+        type: file
       - path: ChromeExtension
         buildPhase: resources
         type: folder
