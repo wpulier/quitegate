@@ -17,7 +17,7 @@ struct ContentView: View {
           model: model,
           clerk: clerk,
           initialSection: TortoiseScreenshot.initialSection,
-          showsGuidedSetup: TortoiseScreenshot.initialSection == .blocking,
+          showsGuidedSetup: TortoiseScreenshot.initialSection == .tuning,
           refresh: {}
         )
       } else if clerk.session == nil {
@@ -224,7 +224,7 @@ private struct TortoiseMobileShell: View {
             screenTime: screenTime,
             syncMessage: model.syncMessage,
             retrySync: refresh,
-            fixSetup: { section = .blocking }
+            fixSetup: { section = .tuning }
           )
           if showsGuidedSetup && screenTime.connectionState != .connected {
             MobileIOSGuidedSetupCard(screenTime: screenTime)
@@ -284,14 +284,6 @@ private struct TortoiseMobileShell: View {
         screenTime: screenTime,
         setDailyLimit: setDailyLimit
       )
-    case .blocking:
-      MobileBlockingScreen(
-        accessMode: currentAccessMode,
-        isSyncing: model.isSyncing,
-        screenTime: screenTime,
-        selectMode: setAccessMode,
-        setDailyLimit: setDailyLimit
-      )
     case .tuning:
       MobileTuningScreen(
         selectedSite: $selectedSite,
@@ -328,7 +320,7 @@ private struct TortoiseMobileShell: View {
   private func setAccessMode(_ mode: MobileAccessMode) {
     guard !screenTime.sessionLockedActive else { return }
     if mode != .open && !screenTime.canTurnOn {
-      section = .blocking
+      section = .tuning
       screenTime.refreshSetupStatus()
       return
     }
@@ -363,7 +355,7 @@ private struct TortoiseMobileShell: View {
     guard !screenTime.sessionLockedActive else { return }
 
     if enabled && !screenTime.canTurnOn {
-      section = .blocking
+      section = .tuning
       screenTime.refreshSetupStatus()
       return
     }
@@ -557,95 +549,6 @@ private struct MobileUsageScreen: View {
   }
 }
 
-private struct MobileBlockingScreen: View {
-  let accessMode: MobileAccessMode
-  let isSyncing: Bool
-  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
-  let selectMode: (MobileAccessMode) -> Void
-  let setDailyLimit: (Int) -> Void
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
-      MobileHeader(
-        kicker: nil,
-        title: "Blocking",
-        subtitle: "Set your mode, commit a session, and choose what's blocked on this iPhone."
-      )
-
-      VStack(spacing: 10) {
-        ForEach(MobileAccessMode.allCases) { mode in
-          Button {
-            selectMode(mode)
-          } label: {
-            MobileModeRow(mode: mode, isSelected: accessMode == mode)
-          }
-          .buttonStyle(.plain)
-          .disabled(isSyncing || screenTime.sessionLockedActive)
-        }
-      }
-
-      MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
-
-      MobileCard {
-        VStack(alignment: .leading, spacing: 14) {
-          Text("Commit to a session")
-            .font(.system(size: 16, weight: .bold))
-            .foregroundStyle(TortoiseDesign.primaryText)
-          Text("A locked Strict session can't be ended or weakened early - that's the point.")
-            .font(.system(size: 13))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-
-          if screenTime.sessionActive {
-            HStack(spacing: 10) {
-              Text(screenTime.sessionStatusLine)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(TortoiseDesign.primaryText)
-              Spacer(minLength: 8)
-              if screenTime.sessionLockedActive {
-                Label("Locked until it ends", systemImage: "lock.fill")
-                  .font(.system(size: 12, weight: .bold))
-                  .foregroundStyle(TortoiseDesign.secondaryText)
-              } else {
-                Button("End session") {
-                  screenTime.endSession()
-                }
-                .font(.system(size: 12, weight: .bold))
-                .buttonStyle(.bordered)
-              }
-            }
-          }
-
-          HStack(spacing: 8) {
-            MobileSessionButton("Focus · 25m") {
-              screenTime.startSession(mode: .focus, duration: 25 * 60, locked: false)
-            }
-            .disabled(screenTime.sessionLockedActive)
-            MobileSessionButton("Focus · 1h") {
-              screenTime.startSession(mode: .focus, duration: 60 * 60, locked: false)
-            }
-            .disabled(screenTime.sessionLockedActive)
-            MobileSessionButton("Lock Strict · 2h", systemImage: "lock") {
-              screenTime.startSession(mode: .strict, duration: 2 * 3600, locked: true)
-            }
-            .disabled(screenTime.sessionLockedActive)
-          }
-        }
-      }
-
-      MobileCard {
-        HStack(alignment: .top, spacing: 12) {
-          Image(systemName: "iphone.gen3")
-            .foregroundStyle(TortoiseDesign.accent)
-          Text("On iPhone, blocks run through the Tortoise app and Screen Time. Keep Tortoise allowed in Settings > Screen Time for full enforcement.")
-            .font(.system(size: 13))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-      }
-    }
-  }
-}
-
 private struct MobileTuningScreen: View {
   @Binding var selectedSite: String
   @ObservedObject var model: AccountHubModel
@@ -677,8 +580,8 @@ private struct MobileTuningScreen: View {
     VStack(alignment: .leading, spacing: 18) {
       MobileHeader(
         kicker: nil,
-        title: "Tuning",
-        subtitle: "Strip the noisy parts of a site. Applies to the accounts and devices each app is signed into."
+        title: "Tune",
+        subtitle: "Set your mode, commit a session, and strip the noisy parts of each site."
       )
 
       VStack(spacing: 10) {
@@ -2268,7 +2171,6 @@ private enum MobileHubStatusStyle {
 
 private enum MobileSection: String, CaseIterable, Identifiable {
   case usage
-  case blocking
   case tuning
   case devices
 
@@ -2277,8 +2179,7 @@ private enum MobileSection: String, CaseIterable, Identifiable {
   var title: String {
     switch self {
     case .usage: return "Usage"
-    case .blocking: return "Blocking"
-    case .tuning: return "Tuning"
+    case .tuning: return "Tune"
     case .devices: return "Devices"
     }
   }
@@ -2286,7 +2187,6 @@ private enum MobileSection: String, CaseIterable, Identifiable {
   var systemImage: String {
     switch self {
     case .usage: return "chart.bar"
-    case .blocking: return "shield.lefthalf.filled"
     case .tuning: return "slider.horizontal.3"
     case .devices: return "macbook.and.iphone"
     }
