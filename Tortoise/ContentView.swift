@@ -17,7 +17,7 @@ struct ContentView: View {
           model: model,
           clerk: clerk,
           initialSection: TortoiseScreenshot.initialSection,
-          showsGuidedSetup: TortoiseScreenshot.initialSection == .blocking,
+          showsGuidedSetup: TortoiseScreenshot.initialSection == .tuning,
           refresh: {}
         )
       } else if clerk.session == nil {
@@ -224,7 +224,7 @@ private struct TortoiseMobileShell: View {
             screenTime: screenTime,
             syncMessage: model.syncMessage,
             retrySync: refresh,
-            fixSetup: { section = .blocking }
+            fixSetup: { section = .tuning }
           )
           if showsGuidedSetup && screenTime.connectionState != .connected {
             MobileIOSGuidedSetupCard(screenTime: screenTime)
@@ -284,19 +284,14 @@ private struct TortoiseMobileShell: View {
         screenTime: screenTime,
         setDailyLimit: setDailyLimit
       )
-    case .blocking:
-      MobileBlockingScreen(
-        accessMode: currentAccessMode,
-        isSyncing: model.isSyncing,
-        screenTime: screenTime,
-        selectMode: setAccessMode,
-        setDailyLimit: setDailyLimit
-      )
     case .tuning:
       MobileTuningScreen(
         selectedSite: $selectedSite,
         model: model,
         screenTime: screenTime,
+        accessMode: currentAccessMode,
+        isSyncing: model.isSyncing,
+        selectMode: setAccessMode,
         browserProfiles: browserProfiles,
         setFeature: setTuningFeature,
         setFeatures: setTuningFeatures,
@@ -325,7 +320,7 @@ private struct TortoiseMobileShell: View {
   private func setAccessMode(_ mode: MobileAccessMode) {
     guard !screenTime.sessionLockedActive else { return }
     if mode != .open && !screenTime.canTurnOn {
-      section = .blocking
+      section = .tuning
       screenTime.refreshSetupStatus()
       return
     }
@@ -360,7 +355,7 @@ private struct TortoiseMobileShell: View {
     guard !screenTime.sessionLockedActive else { return }
 
     if enabled && !screenTime.canTurnOn {
-      section = .blocking
+      section = .tuning
       screenTime.refreshSetupStatus()
       return
     }
@@ -554,19 +549,39 @@ private struct MobileUsageScreen: View {
   }
 }
 
-private struct MobileBlockingScreen: View {
+private struct MobileTuningScreen: View {
+  @Binding var selectedSite: String
+  @ObservedObject var model: AccountHubModel
+  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   let accessMode: MobileAccessMode
   let isSyncing: Bool
-  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   let selectMode: (MobileAccessMode) -> Void
+  let browserProfiles: [MobileBrowserProfile]
+  let setFeature: (String, Bool) -> Void
+  let setFeatures: ([String], Bool) -> Void
+  let setYoutubeProtection: (Bool) -> Void
   let setDailyLimit: (Int) -> Void
+
+  private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
+
+  private var tuneSites: [TuneSite] {
+    TuneScreen.sites(policy: tunePolicy, surface: .iosSafari)
+  }
+
+  private var selectedTuneSite: TuneSite? {
+    tuneSites.first { $0.id == selectedSite }
+  }
+
+  private var selectedSiteFeatures: [TuneFeature] {
+    TuneScreen.features(forSiteID: selectedSite, policy: tunePolicy, surface: .iosSafari)
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       MobileHeader(
         kicker: nil,
-        title: "Blocking",
-        subtitle: "Set your mode, commit a session, and choose what's blocked on this iPhone."
+        title: "Tune",
+        subtitle: "Set your mode, commit a session, and strip the noisy parts of each site."
       )
 
       VStack(spacing: 10) {
@@ -580,8 +595,6 @@ private struct MobileBlockingScreen: View {
           .disabled(isSyncing || screenTime.sessionLockedActive)
         }
       }
-
-      MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
 
       MobileCard {
         VStack(alignment: .leading, spacing: 14) {
@@ -639,41 +652,6 @@ private struct MobileBlockingScreen: View {
             .fixedSize(horizontal: false, vertical: true)
         }
       }
-    }
-  }
-}
-
-private struct MobileTuningScreen: View {
-  @Binding var selectedSite: String
-  @ObservedObject var model: AccountHubModel
-  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
-  let browserProfiles: [MobileBrowserProfile]
-  let setFeature: (String, Bool) -> Void
-  let setFeatures: ([String], Bool) -> Void
-  let setYoutubeProtection: (Bool) -> Void
-  let setDailyLimit: (Int) -> Void
-
-  private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
-
-  private var tuneSites: [TuneSite] {
-    TuneScreen.sites(policy: tunePolicy, surface: .iosSafari)
-  }
-
-  private var selectedTuneSite: TuneSite? {
-    tuneSites.first { $0.id == selectedSite }
-  }
-
-  private var selectedSiteFeatures: [TuneFeature] {
-    TuneScreen.features(forSiteID: selectedSite, policy: tunePolicy, surface: .iosSafari)
-  }
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
-      MobileHeader(
-        kicker: nil,
-        title: "Tuning",
-        subtitle: "Strip the noisy parts of a site. Applies to the accounts and devices each app is signed into."
-      )
 
       LazyVGrid(
         columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
@@ -2193,7 +2171,6 @@ private enum MobileHubStatusStyle {
 
 private enum MobileSection: String, CaseIterable, Identifiable {
   case usage
-  case blocking
   case tuning
   case devices
 
@@ -2202,8 +2179,7 @@ private enum MobileSection: String, CaseIterable, Identifiable {
   var title: String {
     switch self {
     case .usage: return "Usage"
-    case .blocking: return "Blocking"
-    case .tuning: return "Tuning"
+    case .tuning: return "Tune"
     case .devices: return "Devices"
     }
   }
@@ -2211,7 +2187,6 @@ private enum MobileSection: String, CaseIterable, Identifiable {
   var systemImage: String {
     switch self {
     case .usage: return "chart.bar"
-    case .blocking: return "shield.lefthalf.filled"
     case .tuning: return "slider.horizontal.3"
     case .devices: return "macbook.and.iphone"
     }
