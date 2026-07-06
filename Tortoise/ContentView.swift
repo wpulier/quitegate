@@ -696,6 +696,47 @@ private struct MobileTuningScreen: View {
             }
             .padding(.top, 2)
           }
+
+          if screenTime.hasManagedAppsSelection {
+            MobileDivider()
+
+            HStack(spacing: 10) {
+              VStack(alignment: .leading, spacing: 3) {
+                Text("Daily limit")
+                  .font(.system(size: 13, weight: .bold))
+                  .foregroundStyle(TortoiseDesign.primaryText)
+                Text(screenTime.managedAppsLimitSummary)
+                  .font(.system(size: 12))
+                  .foregroundStyle(TortoiseDesign.secondaryText)
+                  .fixedSize(horizontal: false, vertical: true)
+              }
+              Spacer(minLength: 8)
+              MobileSwitch(
+                isOn: Binding(
+                  get: { screenTime.managedAppsLimitEnabled },
+                  set: { screenTime.setManagedAppsLimitEnabled($0) }
+                )
+              )
+              .disabled(screenTime.sessionLockedActive)
+            }
+
+            if screenTime.managedAppsLimitEnabled {
+              HStack(spacing: 8) {
+                Spacer()
+                MobileStepperButton(systemImage: "minus") {
+                  screenTime.adjustManagedAppsLimit(by: -5)
+                }
+                .disabled(screenTime.sessionLockedActive)
+                Text("\(screenTime.managedAppsLimitDisplayMinutes)m")
+                  .font(.system(size: 13, weight: .bold))
+                  .frame(width: 48)
+                MobileStepperButton(systemImage: "plus") {
+                  screenTime.adjustManagedAppsLimit(by: 5)
+                }
+                .disabled(screenTime.sessionLockedActive)
+              }
+            }
+          }
         }
       }
       .familyActivityPicker(isPresented: $appsPickerPresented, selection: managedAppsBinding)
