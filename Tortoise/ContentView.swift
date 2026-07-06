@@ -297,6 +297,9 @@ private struct TortoiseMobileShell: View {
         selectedSite: $selectedSite,
         model: model,
         screenTime: screenTime,
+        accessMode: currentAccessMode,
+        isSyncing: model.isSyncing,
+        selectMode: setAccessMode,
         browserProfiles: browserProfiles,
         setFeature: setTuningFeature,
         setFeatures: setTuningFeatures,
@@ -647,6 +650,9 @@ private struct MobileTuningScreen: View {
   @Binding var selectedSite: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  let accessMode: MobileAccessMode
+  let isSyncing: Bool
+  let selectMode: (MobileAccessMode) -> Void
   let browserProfiles: [MobileBrowserProfile]
   let setFeature: (String, Bool) -> Void
   let setFeatures: ([String], Bool) -> Void
@@ -674,6 +680,75 @@ private struct MobileTuningScreen: View {
         title: "Tuning",
         subtitle: "Strip the noisy parts of a site. Applies to the accounts and devices each app is signed into."
       )
+
+      VStack(spacing: 10) {
+        ForEach(MobileAccessMode.allCases) { mode in
+          Button {
+            selectMode(mode)
+          } label: {
+            MobileModeRow(mode: mode, isSelected: accessMode == mode)
+          }
+          .buttonStyle(.plain)
+          .disabled(isSyncing || screenTime.sessionLockedActive)
+        }
+      }
+
+      MobileCard {
+        VStack(alignment: .leading, spacing: 14) {
+          Text("Commit to a session")
+            .font(.system(size: 16, weight: .bold))
+            .foregroundStyle(TortoiseDesign.primaryText)
+          Text("A locked Strict session can't be ended or weakened early - that's the point.")
+            .font(.system(size: 13))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+
+          if screenTime.sessionActive {
+            HStack(spacing: 10) {
+              Text(screenTime.sessionStatusLine)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(TortoiseDesign.primaryText)
+              Spacer(minLength: 8)
+              if screenTime.sessionLockedActive {
+                Label("Locked until it ends", systemImage: "lock.fill")
+                  .font(.system(size: 12, weight: .bold))
+                  .foregroundStyle(TortoiseDesign.secondaryText)
+              } else {
+                Button("End session") {
+                  screenTime.endSession()
+                }
+                .font(.system(size: 12, weight: .bold))
+                .buttonStyle(.bordered)
+              }
+            }
+          }
+
+          HStack(spacing: 8) {
+            MobileSessionButton("Focus · 25m") {
+              screenTime.startSession(mode: .focus, duration: 25 * 60, locked: false)
+            }
+            .disabled(screenTime.sessionLockedActive)
+            MobileSessionButton("Focus · 1h") {
+              screenTime.startSession(mode: .focus, duration: 60 * 60, locked: false)
+            }
+            .disabled(screenTime.sessionLockedActive)
+            MobileSessionButton("Lock Strict · 2h", systemImage: "lock") {
+              screenTime.startSession(mode: .strict, duration: 2 * 3600, locked: true)
+            }
+            .disabled(screenTime.sessionLockedActive)
+          }
+        }
+      }
+
+      MobileCard {
+        HStack(alignment: .top, spacing: 12) {
+          Image(systemName: "iphone.gen3")
+            .foregroundStyle(TortoiseDesign.accent)
+          Text("On iPhone, blocks run through the Tortoise app and Screen Time. Keep Tortoise allowed in Settings > Screen Time for full enforcement.")
+            .font(.system(size: 13))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }
 
       LazyVGrid(
         columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
