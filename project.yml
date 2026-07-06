@@ -68,16 +68,19 @@ targets:
         product: ClerkKit
       - package: Clerk
         product: ClerkKitUI
+    configFiles:
+      Debug: Secrets.xcconfig
+      Release: Secrets.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.willpulier.QuietGate
-        PRODUCT_NAME: QuietGate
+        PRODUCT_NAME: Tortoise
+        PRODUCT_MODULE_NAME: QuietGate
         INFOPLIST_FILE: QuietGate/Resources/Info.plist
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
         ENABLE_HARDENED_RUNTIME: YES
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
-        CLERK_PUBLISHABLE_KEY: ""
         TORTOISE_API_BASE_URL: "https://www.yourtortoise.com"
   Tortoise:
     type: application
@@ -103,6 +106,9 @@ targets:
       - target: TortoiseSafariExtension
         embed: true
         codeSign: true
+    configFiles:
+      Debug: Secrets.xcconfig
+      Release: Secrets.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.yourtortoise.Tortoise
@@ -115,7 +121,6 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
-        CLERK_PUBLISHABLE_KEY: ""
         TORTOISE_API_BASE_URL: "https://www.yourtortoise.com"
   TortoiseDeviceActivityMonitor:
     type: app-extension
@@ -212,7 +217,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.willpulier.QuietGateTests
         GENERATE_INFOPLIST_FILE: YES
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/QuietGate.app/Contents/MacOS/QuietGate"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Tortoise.app/Contents/MacOS/Tortoise"
         BUNDLE_LOADER: "$(TEST_HOST)"
 schemes:
   QuietGate:
