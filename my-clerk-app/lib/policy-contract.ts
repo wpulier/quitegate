@@ -35,6 +35,9 @@ export const BROWSER_TUNING_FEATURES = [
   "instagramExplore",
   "instagramSuggested",
   "instagramStories",
+  "instagramProfileSuggestions",
+  "instagramMessages",
+  "instagramNotifications",
   "redditPopularAll",
   "redditRecommendations",
   "redditNSFW",
@@ -57,6 +60,9 @@ const FOCUS_FEATURES = new Set<BrowserTuningFeature>([
   "instagramReels",
   "instagramExplore",
   "instagramSuggested",
+  "instagramProfileSuggestions",
+  "instagramMessages",
+  "instagramNotifications",
   "redditPopularAll",
   "redditRecommendations",
 ]);
@@ -123,16 +129,10 @@ const featureRecordSchema = z
         });
       }
     }
-
-    for (const key of BROWSER_TUNING_FEATURES) {
-      if (!(key in features)) {
-        context.addIssue({
-          code: "custom",
-          message: `Missing browser tuning feature: ${key}`,
-          path: [key],
-        });
-      }
-    }
+    // Missing features are intentionally NOT rejected: the transform below
+    // backfills every known feature (defaulting to false). This keeps reads of
+    // older stored policies — and writes from older clients — resilient as the
+    // feature set grows, while still rejecting genuinely unknown features above.
   })
   .transform((features) => {
     return Object.fromEntries(

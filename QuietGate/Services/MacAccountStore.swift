@@ -1,5 +1,6 @@
 import AppKit
 import ClerkKit
+import CryptoKit
 import Foundation
 
 enum MacAccountSessionState: Equatable {
@@ -319,7 +320,7 @@ final class MacAccountStore: ObservableObject {
         "setupStatus": .string("signed_in"),
         "systemName": .string("macOS"),
         "systemVersion": .string(ProcessInfo.processInfo.operatingSystemVersionString),
-        "browserSettingsVersion": .string(protectionStore.currentBrowserSettingsVersion),
+        "browserSettingsVersion": .string(Self.settingsVersionDigest(protectionStore.currentBrowserSettingsVersion)),
         "capabilities": .object(Self.macCapabilities)
       ]
     )
@@ -343,7 +344,7 @@ final class MacAccountStore: ObservableObject {
           "setupStatus": .string("signed_in"),
           "policyVersion": .int(policyEnvelope.settingsVersion),
           "mode": .string(protectionStore.accessMode.rawValue),
-          "browserSettingsVersion": .string(protectionStore.currentBrowserSettingsVersion),
+          "browserSettingsVersion": .string(Self.settingsVersionDigest(protectionStore.currentBrowserSettingsVersion)),
           "capabilities": .object(Self.macCapabilities)
         ],
         canaryStatus: [
@@ -412,6 +413,14 @@ final class MacAccountStore: ObservableObject {
     "macAppBlocking": .string("running_app_monitor"),
     "iosScreenTime": .string("not_supported_on_macos")
   ]
+
+  /// The full browser-settings fingerprint can exceed the backend's 1000-char
+  /// metadata-string limit; send a short stable hash of it instead (it still
+  /// changes whenever settings change).
+  private static func settingsVersionDigest(_ value: String) -> String {
+    let digest = SHA256.hash(data: Data(value.utf8))
+    return digest.map { String(format: "%02x", $0) }.joined()
+  }
 
   private static func date(from value: String) -> Date? {
     ISO8601DateFormatter().date(from: value)
