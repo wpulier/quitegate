@@ -102,6 +102,7 @@ final class IOSEnforcementController: ObservableObject {
     dailyLimitMinutes = persisted.dailyLimitMinutes
     managedAppsLimitMinutes = persisted.managedAppsLimitMinutes
     safariExtensionAcknowledged = persisted.safariExtensionAcknowledged
+    purgeStaleShieldStoresIfNeeded()
     repairSelfShieldIfNeeded()
     loadSafariSetupSnapshot()
     refreshAuthorizationState()
@@ -123,14 +124,32 @@ final class IOSEnforcementController: ObservableObject {
     return expanded
   }
 
+  /// ManagedSettings persist system-side until explicitly cleared, and builds
+  /// ≤3 could leave category shields (which may include Tortoise itself) in the
+  /// event-owned stores that enforcement passes never rewrite in Focus/Strict.
+  /// One-time purge of every store + all monitors; init's applyCurrentMode()
+  /// then re-arms everything fresh with category-free shields.
+  private func purgeStaleShieldStoresIfNeeded() {
+    let migrationKey = "TortoiseShieldStorePurge.v1"
+    guard !TortoiseAppGroup.defaults.bool(forKey: migrationKey) else {
+      return
+    }
+    TortoiseAppGroup.defaults.set(true, forKey: migrationKey)
+    IOSEnforcementShieldApplier.purgeAllStoresEverWritten()
+    activityCenter.stopMonitoring()
+  }
+
   /// The ShieldConfiguration extension flags the App Group when iOS asked it to
-  /// shield Tortoise itself. Clear every selection that could have caused it —
-  /// deliberately bypassing the locked-session shrink guard: staying usable
-  /// outranks precommitment when the app is blocking itself.
+  /// shield Tortoise itself. Purge every store and clear every selection that
+  /// could have caused it — deliberately bypassing the locked-session shrink
+  /// guard: staying usable outranks precommitment when the app is blocking
+  /// itself.
   private func repairSelfShieldIfNeeded() {
     guard IOSEnforcementSharedStore.consumeSelfShieldFlag() else {
       return
     }
+    IOSEnforcementShieldApplier.purgeAllStoresEverWritten()
+    activityCenter.stopMonitoring()
     selection = FamilyActivitySelection(includeEntireCategory: true)
     managedAppsSelection = FamilyActivitySelection(includeEntireCategory: true)
     IOSEnforcementSharedStore.saveSelection(selection)

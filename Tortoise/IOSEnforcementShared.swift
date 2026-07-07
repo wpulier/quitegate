@@ -397,6 +397,19 @@ enum IOSEnforcementShieldApplier {
       ManagedSettingsStore(named: name).clearAllSettings()
     }
   }
+
+  /// Clears EVERY store any Tortoise build has ever written — including the
+  /// event-owned stores (`.tortoiseSchedule`, `.tortoiseLimit`,
+  /// `.tortoiseManagedApps*`) that normal enforcement passes never rewrite.
+  /// ManagedSettings persist system-side until explicitly cleared, so a stale
+  /// category shield from an old build (which can include Tortoise itself)
+  /// survives app updates unless this runs. Used by the launch migration and
+  /// the self-shield repair.
+  static func purgeAllStoresEverWritten() {
+    for name in ManagedSettingsStore.Name.tortoiseAllStores {
+      ManagedSettingsStore(named: name).clearAllSettings()
+    }
+  }
 }
 
 extension Set {
@@ -432,6 +445,17 @@ extension ManagedSettingsStore.Name {
     .tortoiseImmediate,
     .tortoiseSchedule,
     .tortoiseLimit
+  ]
+
+  /// Every store name any shipped Tortoise build has ever written. Append-only:
+  /// if a store name is ever retired, it must STAY here so the purge can clear
+  /// what old installs left behind.
+  static let tortoiseAllStores: [Self] = [
+    .tortoiseImmediate,
+    .tortoiseSchedule,
+    .tortoiseLimit,
+    .tortoiseManagedApps,
+    .tortoiseManagedAppsLimit
   ]
 }
 
