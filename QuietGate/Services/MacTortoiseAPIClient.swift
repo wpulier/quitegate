@@ -33,6 +33,39 @@ struct MacTortoiseAPIClient {
     try await request(path: "/api/devices", token: token)
   }
 
+  func fetchSiteUsage(token: String, date: String) async throws -> SiteUsageSummarySnapshot? {
+    let envelope: SiteUsageEnvelope = try await request(
+      path: "/api/usage?date=\(date)",
+      token: token,
+      decoder: Self.usageDecoder
+    )
+    return envelope.siteUsageSummary
+  }
+
+  /// The backend emits ISO-8601 timestamps with fractional seconds
+  /// (JavaScript `toISOString()`), which Swift's plain `.iso8601`
+  /// strategy rejects — so try both.
+  private static let usageDecoder: JSONDecoder = {
+    let fractional = ISO8601DateFormatter()
+    fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let plain = ISO8601DateFormatter()
+    plain.formatOptions = [.withInternetDateTime]
+
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .custom { decoder in
+      let container = try decoder.singleValueContainer()
+      let value = try container.decode(String.self)
+      if let date = fractional.date(from: value) ?? plain.date(from: value) {
+        return date
+      }
+      throw DecodingError.dataCorruptedError(
+        in: container,
+        debugDescription: "Unrecognized date format: \(value)"
+      )
+    }
+    return decoder
+  }()
+
   func registerDevice(token: String, registration: DeviceRegistration) async throws -> DeviceEnvelope {
     try await request(path: "/api/devices", method: "POST", token: token, body: registration)
   }
@@ -49,16 +82,24 @@ struct MacTortoiseAPIClient {
   private func request<Response: Decodable>(
     path: String,
     method: String = "GET",
-    token: String
+    token: String,
+    decoder: JSONDecoder = JSONDecoder()
   ) async throws -> Response {
-    try await request(path: path, method: method, token: token, body: Optional<EmptyBody>.none)
+    try await request(
+      path: path,
+      method: method,
+      token: token,
+      body: Optional<EmptyBody>.none,
+      decoder: decoder
+    )
   }
 
   private func request<Response: Decodable, Body: Encodable>(
     path: String,
     method: String = "GET",
     token: String,
-    body: Body?
+    body: Body?,
+    decoder: JSONDecoder = JSONDecoder()
   ) async throws -> Response {
     guard let url = URL(string: path, relativeTo: baseURL) else {
       throw TortoiseAPIError.invalidResponse
@@ -79,7 +120,7 @@ struct MacTortoiseAPIClient {
       throw TortoiseAPIError.invalidResponse
     }
 
-    let envelope = try JSONDecoder().decode(ApiEnvelope<Response>.self, from: data)
+    let envelope = try decoder.decode(ApiEnvelope<Response>.self, from: data)
     if envelope.ok, let data = envelope.data {
       return data
     }
@@ -111,3 +152,7 @@ enum TortoiseAPIError: LocalizedError {
 
 private struct EmptyBody: Encodable {}
 private struct EmptyResponse: Decodable {}
+
+private struct SiteUsageEnvelope: Decodable {
+  let siteUsageSummary: SiteUsageSummarySnapshot?
+}

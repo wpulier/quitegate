@@ -26,8 +26,18 @@ export async function GET(request: NextRequest) {
     return fail(401, "unauthorized", "Unauthorized.");
   }
 
+  // Clients pass their local calendar date so "today" is the user's day,
+  // not the server's (UTC) day.
+  const requestedDate = request.nextUrl.searchParams.get("date");
+  if (requestedDate && !/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) {
+    return fail(400, "validation_error", "date must be formatted YYYY-MM-DD.");
+  }
+
   try {
-    const siteUsageSummary = await getQuietGateSiteUsageSummary(identity);
+    const siteUsageSummary = await getQuietGateSiteUsageSummary(
+      identity,
+      requestedDate ?? undefined,
+    );
     return ok({ siteUsageSummary });
   } catch (error) {
     return upstreamFailure(error);

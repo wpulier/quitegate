@@ -117,6 +117,8 @@ private struct AppHostNoopBrowserExtensionBridge: BrowserExtensionBridging {
   func extensionStatus(for browser: BrowserConnectorID) -> ChromeExtensionStatus { .empty }
   func extensionLoaded(for browser: BrowserConnectorID) -> Bool { false }
   func installNativeMessagingHost(for browser: BrowserConnectorID) throws {}
+  @discardableResult
+  func refreshInstalledNativeHostIfNeeded() -> Bool { false }
   func nativeMessagingHostInstalled(for browser: BrowserConnectorID) -> Bool { false }
   func helperSnapshot(for browser: BrowserConnectorID) -> ChromeHelperSnapshot? { nil }
   func helperState(

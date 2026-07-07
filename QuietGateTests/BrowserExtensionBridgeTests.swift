@@ -1511,6 +1511,34 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertFalse(paths.contains(firefoxProfilesURL.standardizedFileURL.path))
   }
 
+  func testRefreshInstalledNativeHostReplacesOutdatedBinary() throws {
+    let root = try temporaryDirectory()
+    let bundledHostURL = root.appendingPathComponent("bundled-host")
+    try Data("host-v1".utf8).write(to: bundledHostURL)
+
+    let bridge = BrowserExtensionBridge(
+      applicationSupportDirectory: root.appendingPathComponent("Application Support"),
+      nativeHostScriptURL: bundledHostURL,
+      nativeMessagingHostsDirectory: root.appendingPathComponent("NativeMessagingHosts"),
+      runningChromeCommandsProvider: { [] }
+    )
+
+    XCTAssertFalse(bridge.refreshInstalledNativeHostIfNeeded(), "nothing installed yet — must not install unprompted")
+
+    try bridge.installNativeMessagingHost(for: .chrome)
+    XCTAssertFalse(bridge.refreshInstalledNativeHostIfNeeded(), "installed host already matches the bundled one")
+
+    // Simulate an app update shipping a newer host binary.
+    try Data("host-v2-with-siteUsageSummary".utf8).write(to: bundledHostURL)
+    XCTAssertTrue(bridge.refreshInstalledNativeHostIfNeeded(), "outdated installed host must be replaced")
+    XCTAssertEqual(
+      try Data(contentsOf: bridge.installedNativeHostURL),
+      Data("host-v2-with-siteUsageSummary".utf8)
+    )
+    XCTAssertTrue(FileManager.default.isExecutableFile(atPath: bridge.installedNativeHostURL.path))
+    XCTAssertFalse(bridge.refreshInstalledNativeHostIfNeeded(), "second pass is a no-op")
+  }
+
   private func temporaryDirectory() throws -> URL {
     let url = FileManager.default.temporaryDirectory
       .appendingPathComponent("QuietGateTests-\(UUID().uuidString)", isDirectory: true)

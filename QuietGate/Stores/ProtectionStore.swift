@@ -409,6 +409,7 @@ final class ProtectionStore: ObservableObject {
   @Published var browserExtensionStatuses: [BrowserConnectorID: ChromeExtensionStatus] = [:]
   @Published var browserProfileWatchMessage: String?
   @Published var browserProfileWatchBrowser: BrowserConnectorID?
+  private var nativeHostRefreshChecked = false
   @Published var builtInProtectionsSnapshot: BuiltInProtectionsSnapshot = .empty
   @Published private(set) var appUpdateInfo: AppUpdateInfo?
   @Published var macOSLegacyProviderProfileInstalled = false
@@ -3758,6 +3759,10 @@ final class ProtectionStore: ObservableObject {
   }
 
   func refreshChromeExtensionStatus() {
+    if !nativeHostRefreshChecked {
+      nativeHostRefreshChecked = true
+      extensionBridge.refreshInstalledNativeHostIfNeeded()
+    }
     let settingsVersion =
       defaults.string(forKey: DefaultsKey.browserSettingsVersion) ?? currentBrowserSettingsVersion
     let now = nowProvider()

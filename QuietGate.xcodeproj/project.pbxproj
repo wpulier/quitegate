@@ -52,6 +52,7 @@
 		43A9D7F3392A03ACE68C6E6D /* MacTortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504A95B1313F6EF8FB7F3DFB /* MacTortoiseAPIClient.swift */; };
 		43F84451FEF86A8C4DC50B48 /* DevicePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */; };
 		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
+		4717093D6464D14AEADC5363 /* SiteUsageMerge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E8F0A5EFBD33EBAA817C520 /* SiteUsageMerge.swift */; };
 		4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */; };
 		4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */; };
 		501413D7BFE38F77E24AC402 /* ConnectionStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 992885591B8276341DD0BDF4 /* ConnectionStatusTests.swift */; };
@@ -153,6 +154,7 @@
 		EEA63F96F74571180223BDC4 /* BrowserBlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */; };
 		F1A977F94DC0C35C6CC5A6AF /* TortoisePolicyCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */; };
 		F2153D1403D36B605A93B55E /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = 892825147CC27E6727E35275 /* background.js */; };
+		F2C69EAD4A147CC9D3D3BA8A /* SiteUsageMergeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB61B61B851B95DBE9C93C83 /* SiteUsageMergeTests.swift */; };
 		F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD16A82D2B5139D57A101409 /* TortoiseApp.swift */; };
 		F3F16B9EC018AFC379D05E8C /* TortoiseShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D05F096844E04708BBBCAE46 /* TortoiseShieldConfiguration.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F837DCFC6B7718F165C747A1 /* IOSSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273DAEE65592F418FA16396A /* IOSSession.swift */; };
@@ -230,6 +232,7 @@
 		0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductComponents.swift; sourceTree = "<group>"; };
 		0D9ED4A798405092F95055D8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0DE2CBCB3FB5414A38AC61AF /* BrowserTuningSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTuningSettings.swift; sourceTree = "<group>"; };
+		0E8F0A5EFBD33EBAA817C520 /* SiteUsageMerge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteUsageMerge.swift; sourceTree = "<group>"; };
 		120140E7CBD7F2EECD2D2084 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		1241FE0B2B9FABFC3754F3CA /* ChromeExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ChromeExtension; sourceTree = SOURCE_ROOT; };
 		17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePresentation.swift; sourceTree = "<group>"; };
@@ -311,6 +314,7 @@
 		AA358B98B5250BFDA5D0FA8E /* adult-domains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "adult-domains.json"; sourceTree = "<group>"; };
 		AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoisePolicyCatalogTests.swift; sourceTree = "<group>"; };
 		AB03297B4ADDB28BD7E61099 /* AddDestinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddDestinationTests.swift; sourceTree = "<group>"; };
+		AB61B61B851B95DBE9C93C83 /* SiteUsageMergeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteUsageMergeTests.swift; sourceTree = "<group>"; };
 		AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningSyncInvariantTests.swift; sourceTree = "<group>"; };
 		AF79EB6986C1E3B20DD6D3CC /* icon-16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-16.png"; sourceTree = "<group>"; };
 		AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningCatalog.swift; sourceTree = "<group>"; };
@@ -473,6 +477,7 @@
 				60AE1C57CC050901354EC9E0 /* PlatformControls.swift */,
 				B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */,
 				6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */,
+				0E8F0A5EFBD33EBAA817C520 /* SiteUsageMerge.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -682,6 +687,7 @@
 				BB64C9620DA049F321B8E848 /* PresetUnificationTests.swift */,
 				59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */,
 				E09838947772A802ABC8CD02 /* QRCodeTests.swift */,
+				AB61B61B851B95DBE9C93C83 /* SiteUsageMergeTests.swift */,
 				AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */,
 				1953A6B4EF35A3EA45AD6C26 /* TuneScreenModelTests.swift */,
 				757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */,
@@ -1086,6 +1092,7 @@
 				071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */,
 				13B6E0F3C91F66EB47DD7703 /* ProtectionStoreTests.swift in Sources */,
 				C02C20F3AAC030400E98F91E /* QRCodeTests.swift in Sources */,
+				F2C69EAD4A147CC9D3D3BA8A /* SiteUsageMergeTests.swift in Sources */,
 				F1A977F94DC0C35C6CC5A6AF /* TortoisePolicyCatalogTests.swift in Sources */,
 				2A186DDCEEB6314D8C995B55 /* TuneScreenModelTests.swift in Sources */,
 				9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */,
@@ -1179,6 +1186,7 @@
 				029A084EC6564B7EE8B8E6A7 /* QuietGateApp.swift in Sources */,
 				657F2FFA32B7C076D8B89CEA /* ReadinessCheck.swift in Sources */,
 				227DB1AC963E20209757F7EF /* SettingsView.swift in Sources */,
+				4717093D6464D14AEADC5363 /* SiteUsageMerge.swift in Sources */,
 				E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */,
 				1F268A49630164ED2D7210EF /* TortoiseModels.swift in Sources */,
 				D51FBA409C543016890554AF /* TuneScreenModel.swift in Sources */,

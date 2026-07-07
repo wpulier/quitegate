@@ -21,6 +21,8 @@ protocol BrowserExtensionBridging {
   func extensionLoaded(for browser: BrowserConnectorID) -> Bool
   func installNativeMessagingHost(for browser: BrowserConnectorID) throws
   func nativeMessagingHostInstalled(for browser: BrowserConnectorID) -> Bool
+  @discardableResult
+  func refreshInstalledNativeHostIfNeeded() -> Bool
   func helperSnapshot(for browser: BrowserConnectorID) -> ChromeHelperSnapshot?
   func helperState(
     for browser: BrowserConnectorID,
@@ -291,6 +293,33 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
 
   func nativeMessagingHostInstalled() -> Bool {
     nativeMessagingHostInstalled(for: .chrome)
+  }
+
+  /// Replaces the installed native host binary when the app ships a newer
+  /// one. Without this, app updates leave a stale host behind and the
+  /// extension silently loses features (for example usage reporting).
+  @discardableResult
+  func refreshInstalledNativeHostIfNeeded() -> Bool {
+    guard fileManager.fileExists(atPath: nativeHostScriptURL.path),
+          fileManager.fileExists(atPath: installedNativeHostURL.path),
+          !fileManager.contentsEqual(
+            atPath: installedNativeHostURL.path,
+            andPath: nativeHostScriptURL.path
+          ) else {
+      return false
+    }
+
+    do {
+      try fileManager.removeItem(at: installedNativeHostURL)
+      try fileManager.copyItem(at: nativeHostScriptURL, to: installedNativeHostURL)
+      try fileManager.setAttributes(
+        [.posixPermissions: NSNumber(value: Int16(0o755))],
+        ofItemAtPath: installedNativeHostURL.path
+      )
+      return true
+    } catch {
+      return false
+    }
   }
 
   func nativeMessagingHostInstalled(for browser: BrowserConnectorID) -> Bool {

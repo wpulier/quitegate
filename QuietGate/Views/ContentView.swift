@@ -376,24 +376,34 @@ private struct QGSidebar: View {
 }
 
 struct QuietGateUsageView: View {
+  @Environment(Clerk.self) private var clerk
   @EnvironmentObject private var store: ProtectionStore
+  @EnvironmentObject private var accountStore: MacAccountStore
   @State private var selectedTab = QGUsageTab.all
 
   var body: some View {
     QGPage(maxWidth: 820) {
       QGScreenHeader(
         title: "Usage",
-        subtitle: "Today across every connected browser profile and device, on one profile."
+        subtitle: "Today across every connected browser profile and device."
       )
 
       usageTabs
       heroCard
 
-      if selectedTab == .all {
+      if selectedTab == .all, !display.apps.isEmpty {
         byAppCard
       }
 
-      accountsCard
+      if !display.accounts.isEmpty {
+        accountsCard
+      }
+    }
+    .task {
+      while !Task.isCancelled {
+        await accountStore.refreshUsage(using: clerk)
+        try? await Task.sleep(nanoseconds: 60_000_000_000)
+      }
     }
   }
 
@@ -486,7 +496,7 @@ struct QuietGateUsageView: View {
     if let summary = latestSiteSummary {
       return QGUsageDisplay(summary: summary, tab: selectedTab)
     }
-    return QGUsageDisplay.mock(tab: selectedTab)
+    return QGUsageDisplay.empty(tab: selectedTab)
   }
 
   private var helperSnapshots: [ChromeHelperSnapshot] {
@@ -499,12 +509,11 @@ struct QuietGateUsageView: View {
   }
 
   private var latestSiteSummary: SiteUsageSummarySnapshot? {
-    helperSnapshots
-      .compactMap(\.siteUsageSummary)
-      .sorted(by: { lhs, rhs in
-        (lhs.lastUpdatedAt ?? .distantPast) > (rhs.lastUpdatedAt ?? .distantPast)
-      })
-      .first
+    SiteUsageSummaryMerge.today(
+      local: helperSnapshots.compactMap(\.siteUsageSummary),
+      cloud: accountStore.snapshot.siteUsageSummary,
+      today: SiteUsageSummaryMerge.localDateKey()
+    )
   }
 }
 
@@ -617,66 +626,35 @@ private struct QGUsageDisplay {
   let apps: [QGUsageApp]
   let accounts: [QGUsageAccount]
 
-  init(summary: SiteUsageSummarySnapshot, tab: QGUsageTab) {
+  init(summary: SiteUsageSummarySnapshot, tab: QGUsageTab, now: Date = Date()) {
     let site = tab == .all ? nil : summary.sites.first { $0.siteID == tab.rawValue }
     let entries = site?.entries ?? summary.entries ?? summary.sites.flatMap(\.entries)
     let totalSeconds = site?.totalSeconds ?? summary.totalSeconds
     let webSeconds = entries.filter { !Self.isIOSEntry($0) }.reduce(0) { $0 + ($1.totalSeconds ?? 0) }
     let iosSeconds = entries.filter(Self.isIOSEntry).reduce(0) { $0 + ($1.totalSeconds ?? 0) }
+    let updatedAt = site?.lastUpdatedAt ?? summary.lastUpdatedAt
 
     hero = tab == .all ? "Today" : "\(tab.title) today"
     total = Self.duration(totalSeconds)
-    subtitle = tab == .all ? "Across connected apps and accounts" : "Today"
+    subtitle = Self.freshness(updatedAt, now: now).map { "Updated \($0)" } ?? "Today"
     activity = tab == .youtube ? "\(site?.activityCount ?? site?.videoCount ?? 0) videos" : "\(Set(entries.map(Self.accountKey)).count) accounts"
     web = webSeconds > 0 ? Self.duration(webSeconds) : "No data"
     ios = iosSeconds > 0 ? Self.duration(iosSeconds) : "No data"
     apps = tab == .all ? Self.apps(from: summary) : []
-    accounts = entries.isEmpty ? Self.mock(tab: tab).accounts : entries.map(Self.account(from:))
+    accounts = entries.map(Self.account(from:))
   }
 
-  static func mock(tab: QGUsageTab) -> QGUsageDisplay {
-    switch tab {
-    case .all:
-      return QGUsageDisplay(
-        hero: "Today",
-        total: "9h 33m",
-        subtitle: "Across 5 apps and 3 accounts",
-        activity: "3 accounts",
-        web: "8h 19m",
-        ios: "1h 14m",
-        apps: [
-          QGUsageApp(letter: "YT", name: "YouTube", time: "6h 39m", percent: 70, color: .red, foreground: .white),
-          QGUsageApp(letter: "X", name: "X", time: "1h 12m", percent: 13, color: .black, foreground: .white),
-          QGUsageApp(letter: "IG", name: "Instagram", time: "48m", percent: 8, color: .pink, foreground: .white),
-          QGUsageApp(letter: "RD", name: "Reddit", time: "33m", percent: 6, color: .orange, foreground: .white),
-          QGUsageApp(letter: "TT", name: "TikTok", time: "21m", percent: 4, color: .black, foreground: .cyan)
-        ],
-        accounts: Self.mockAccounts
-      )
-    case .youtube:
-      return QGUsageDisplay(hero: "YouTube today", total: "6h 39m", subtitle: "Today · 62 videos watched", activity: "62 videos", web: "6h 39m", ios: "No data", apps: [], accounts: [
-        QGUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "2h 46m", activity: "28 vids"),
-        QGUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "2h 46m", activity: "28 vids"),
-        QGUsageAccount(avatar: "W", name: "will", subtitle: "willpulier8@gmail.com · Chrome", time: "1h 05m", activity: "6 vids")
-      ])
-    case .x:
-      return QGUsageDisplay(hero: "X today", total: "1h 12m", subtitle: "Today", activity: "2 accounts", web: "1h 12m", ios: "No data", apps: [], accounts: [
-        QGUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "52m", activity: ""),
-        QGUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "20m", activity: "")
-      ])
-    case .instagram:
-      return QGUsageDisplay(hero: "Instagram today", total: "48m", subtitle: "Today", activity: "1 account", web: "34m", ios: "14m", apps: [], accounts: [
-        QGUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "48m", activity: "")
-      ])
-    case .reddit:
-      return QGUsageDisplay(hero: "Reddit today", total: "33m", subtitle: "Today", activity: "1 account", web: "33m", ios: "No data", apps: [], accounts: [
-        QGUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "33m", activity: "")
-      ])
-    case .tiktok:
-      return QGUsageDisplay(hero: "TikTok today", total: "21m", subtitle: "Today", activity: "1 account", web: "7m", ios: "14m", apps: [], accounts: [
-        QGUsageAccount(avatar: "W", name: "will", subtitle: "willpulier8@gmail.com · Chrome", time: "21m", activity: "")
-      ])
-    }
+  static func empty(tab: QGUsageTab) -> QGUsageDisplay {
+    QGUsageDisplay(
+      hero: tab == .all ? "Today" : "\(tab.title) today",
+      total: "0m",
+      subtitle: "No usage recorded yet today",
+      activity: tab == .youtube ? "0 videos" : "0 accounts",
+      web: "No data",
+      ios: "No data",
+      apps: [],
+      accounts: []
+    )
   }
 
   private init(
@@ -699,11 +677,6 @@ private struct QGUsageDisplay {
     self.accounts = accounts
   }
 
-  private static let mockAccounts = [
-    QGUsageAccount(avatar: "W", name: "Will", subtitle: "willpulier1999@gmail.com · Chrome", time: "4h 41m", activity: "YouTube, X, Reddit"),
-    QGUsageAccount(avatar: "WA", name: "wildstudio.ai", subtitle: "will@wildstudio.ai · Chrome", time: "3h 12m", activity: "YouTube, Instagram"),
-    QGUsageAccount(avatar: "W", name: "will", subtitle: "willpulier8@gmail.com · Chrome", time: "1h 40m", activity: "YouTube, TikTok")
-  ]
 
   private static func apps(from summary: SiteUsageSummarySnapshot) -> [QGUsageApp] {
     let total = max(summary.totalSeconds, 1)
@@ -754,6 +727,21 @@ private struct QGUsageDisplay {
       return "\(hours)h \(minutes)m"
     }
     return "\(minutes)m"
+  }
+
+  private static func freshness(_ updatedAt: Date?, now: Date) -> String? {
+    guard let updatedAt else {
+      return nil
+    }
+    let seconds = Int(now.timeIntervalSince(updatedAt))
+    if seconds < 90 {
+      return "just now"
+    }
+    let minutes = seconds / 60
+    if minutes < 60 {
+      return "\(minutes)m ago"
+    }
+    return "\(minutes / 60)h ago"
   }
 
   private static func email(in value: String) -> String? {

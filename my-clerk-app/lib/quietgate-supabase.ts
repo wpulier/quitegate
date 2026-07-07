@@ -802,10 +802,15 @@ export async function getQuietGateSiteUsageSummaryForUser(
 
 export async function getQuietGateSiteUsageSummary(
   identity?: QuietGateIdentity | null,
+  date?: string,
 ) {
   const account = await ensureQuietGateAccount(null, identity);
   const supabase = await createQuietGateDataClient(identity ?? undefined);
-  return getQuietGateSiteUsageSummaryForUser(supabase, account.user.id);
+  return getQuietGateSiteUsageSummaryForUser(
+    supabase,
+    account.user.id,
+    date ?? localDateKey(),
+  );
 }
 
 export async function recordQuietGateSiteUsage(

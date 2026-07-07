@@ -157,11 +157,15 @@ final class MacAccountStore: ObservableObject {
       )
 
       let devices = try await apiClient.fetchDevices(token: token).devices
+      let siteUsageSummary = try? await apiClient.fetchSiteUsage(
+        token: token,
+        date: SiteUsageSummaryMerge.localDateKey()
+      )
       snapshot = AccountHubSnapshot(
         policy: policyEnvelope,
         device: registeredDevice,
         devices: devices,
-        siteUsageSummary: nil,
+        siteUsageSummary: siteUsageSummary ?? snapshot.siteUsageSummary,
         lastSyncedAt: Date()
       )
       sessionState = .signedIn
@@ -173,6 +177,22 @@ final class MacAccountStore: ObservableObject {
       sessionState = .syncUnavailable(error.localizedDescription)
       syncState = .failed(error.localizedDescription)
       syncMessage = error.localizedDescription
+    }
+  }
+
+  /// Refreshes just the cross-device usage summary. Lightweight enough to
+  /// poll while the Usage screen is visible; failures keep the last summary.
+  func refreshUsage(using clerk: Clerk) async {
+    guard let session = clerk.session,
+          let token = try? await session.getToken() else {
+      return
+    }
+
+    if let summary = try? await apiClient.fetchSiteUsage(
+      token: token,
+      date: SiteUsageSummaryMerge.localDateKey()
+    ) {
+      snapshot.siteUsageSummary = summary
     }
   }
 

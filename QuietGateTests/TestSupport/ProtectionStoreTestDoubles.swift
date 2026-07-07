@@ -336,6 +336,14 @@ final class FakeBrowserExtensionBridge: BrowserExtensionBridging {
     installedBrowsers.insert(browser)
   }
 
+  var nativeHostRefreshCount = 0
+
+  @discardableResult
+  func refreshInstalledNativeHostIfNeeded() -> Bool {
+    nativeHostRefreshCount += 1
+    return false
+  }
+
   func nativeMessagingHostInstalled() -> Bool {
     nativeMessagingHostInstalled(for: .chrome)
   }
