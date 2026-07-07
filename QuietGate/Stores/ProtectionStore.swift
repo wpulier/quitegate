@@ -459,7 +459,6 @@ final class ProtectionStore: ObservableObject {
   private var categoryPreferencesHaveBeenSaved: Bool
   private var pendingLegacyProviderRuleRemovals: Set<String>
   private var activeLegacyProviderRuleDomainsCache: Set<String>?
-  private static let blockingReadbackFreshnessInterval: TimeInterval = 60
   private static let browserProfileWatchTimeout: TimeInterval = 90
   private static let browserProfilePollInterval: UInt64 = 750_000_000
 
@@ -696,66 +695,21 @@ final class ProtectionStore: ObservableObject {
     if accessMode.protectionEnabled && !adultContentBlockingEnabled {
       return "\(accessMode.title) tuning is active. Adult Content is off in Blocked Sites."
     }
-    if !legacyProviderConnectorEnabled {
-      if accessMode == .open && tunerEnabled {
-        return "Browser cleanup is customized. Website blocking is off."
-      }
-      if hasActiveBlockRules {
-        return browserBlockingConnected
-          ? "Blocks are active in connected browsers."
-          : "Blocks are saved. Connect a browser to apply them."
-      }
-      return accessMode.summary
-    }
-    if !configured && hasActiveBlockRules {
-      return "Blocks are saved. Connect Tortoise to make them active on this Mac."
-    }
     if accessMode == .open && tunerEnabled {
-      return "Blocker is off. Browser tuning is customized."
+      return "Browser cleanup is customized. Website blocking is off."
     }
-    if !configured && accessMode.protectionEnabled {
-      return "Focus mode is selected. Connect Tortoise to make blocking active on this Mac."
-    }
-    if (hasActiveBlockRules || accessMode.protectionEnabled) && !systemBlockingCapabilityFresh {
-      return "Blocking settings are saved. Tortoise needs a fresh connection check before it can promise they work."
-    }
-    if blockerProfileEnabled && !legacyMacConnectionReady {
-      if resolverStatus == nil {
-        return "Blocking is on. Check the connection to verify it applies on this Mac."
-      }
-      if legacyMacConnectionProfileMismatch {
-        return "This Mac is using a different blocking setup than the one Tortoise updates."
-      }
-      if legacyMacConnectionUsesProvider {
-        return "A blocking setup is active, but Tortoise cannot confirm it belongs to Tortoise."
-      }
-      return "Blocking is on, but this Mac has not approved Tortoise yet."
-    }
-    if !tuningOverrides.isEmpty {
-      return "\(accessMode.summary) Browser tuning is customized."
+    if hasActiveBlockRules {
+      return browserBlockingConnected
+        ? "Blocks are active in connected browsers."
+        : "Blocks are saved. Connect a browser to apply them."
     }
     return accessMode.summary
   }
 
   var settingsStatusSummary: String {
-    if !legacyProviderConnectorEnabled {
-      return browserBlockingConnected
-        ? "Tortoise is ready. \(connectedBrowserProfileScopeText ?? connectedBrowserNames.joined(separator: ", ")) connected for browser blocking and tuning."
-        : "Connect a browser to finish setup for browser blocking and site tuning."
-    }
-    if legacyProviderHardBlockReady {
-      return "Tortoise is connected and verified on this Mac."
-    }
-    if configured && !legacyProviderControlConnected {
-      return "Account details are saved. Check access before relying on blocking."
-    }
-    if configured {
-      return "Account details are saved. Allow this Mac before relying on blocking."
-    }
-    if hasAPIKey || !profileID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      return "Finish the account details to enable blocking."
-    }
-    return "Connect Tortoise before relying on blocking."
+    browserBlockingConnected
+      ? "Tortoise is ready. \(connectedBrowserProfileScopeText ?? connectedBrowserNames.joined(separator: ", ")) connected for browser blocking and tuning."
+      : "Connect a browser to finish setup for browser blocking and site tuning."
   }
 
   var currentModeTitle: String {
@@ -802,20 +756,20 @@ final class ProtectionStore: ObservableObject {
     if !configured && accessMode.protectionEnabled {
       return "Blocker needs connection"
     }
-    if configured && !legacyProviderControlConnected && (hasActiveBlockRules || accessMode.protectionEnabled) {
+    if configured && !false && (hasActiveBlockRules || accessMode.protectionEnabled) {
       return connectionState == .checking ? "Checking account access" : "Account access needed"
     }
     if blockerProfileEnabled {
       if systemBlockingCapabilityFresh {
         return "Blocker verified on this Mac"
       }
-      if legacyMacConnectionReady {
+      if false {
         return "Blocker needs fresh check"
       }
-      if legacyMacConnectionProfileMismatch {
+      if false {
         return "Different Mac permission"
       }
-      if legacyMacConnectionUsesProvider {
+      if false {
         return "Mac permission not confirmed"
       }
       if let resolverStatus {
@@ -830,89 +784,27 @@ final class ProtectionStore: ObservableObject {
   }
 
   var blockerStatusLabel: String {
-    if !legacyProviderConnectorEnabled {
-      if hasActiveBlockRules {
-        return browserBlockingConnected ? "On" : "Connect"
-      }
-      return "Off"
+    if hasActiveBlockRules {
+      return browserBlockingConnected ? "On" : "Connect"
     }
-    if !configured {
-      return "Connect"
-    }
-    guard blockerProfileEnabled else {
-      if hasActiveBlockRules || accessMode.protectionEnabled {
-        return legacyProviderControlConnected ? "Verify" : "Connect"
-      }
-      return "Off"
-    }
-    if systemBlockingCapabilityFresh {
-      return "On"
-    }
-    if legacyMacConnectionReady {
-      return "Check"
-    }
-    return resolverStatus == nil ? "Verify" : "Connect"
+    return "Off"
   }
 
   var blockerStatusDetail: String {
-    if !legacyProviderConnectorEnabled {
-      if hasActiveBlockRules {
-        return browserBlockingConnected
-          ? "Tortoise browser rules are current in connected browsers."
-          : "Tortoise saved these rules. Connect a browser to apply them."
-      }
-      return "Tortoise website blocking is off."
+    if hasActiveBlockRules {
+      return browserBlockingConnected
+        ? "Tortoise browser rules are current in connected browsers."
+        : "Tortoise saved these rules. Connect a browser to apply them."
     }
-    if !configured {
-      return "Connect the account and allow this Mac before categories and sites can block."
-    }
-    guard blockerProfileEnabled else {
-      if !legacyProviderControlConnected && (hasActiveBlockRules || accessMode.protectionEnabled) {
-        return
-          "Account details are saved, but Tortoise has not verified access yet."
-      }
-      return "Tortoise blocking is off."
-    }
-    if systemBlockingCapabilityFresh {
-      if mode == .on {
-        return accessMode.blockerSummary
-      }
-      return "Enabled individual site rules are active on this Mac."
-    }
-    if legacyMacConnectionReady {
-      return "Tortoise needs a fresh readback before it can promise blocking is active."
-    }
-    if legacyMacConnectionProfileMismatch {
-      return
-        "This Mac is using a different blocking setup than the one Tortoise updates. Finish Mac approval in Setup."
-    }
-    if legacyMacConnectionUsesProvider {
-      return
-        "This Mac is using another blocking setup, so Tortoise's rules may not apply. Finish Mac approval in Setup."
-    }
-    if let resolverStatus {
-      return
-        "This Mac reports \(resolverStatus.status). Finish Mac approval in Setup before relying on blocking."
-    }
-    if mode == .on {
-      return "Rules are on. Tortoise is updating setup status before it promises blocking applies on this Mac."
-    }
-    return
-      "Enabled individual site rules are saved. Tortoise is updating setup status before it promises blocking applies on this Mac."
+    return "Tortoise website blocking is off."
   }
 
   var blockerProfileEnabled: Bool {
-    legacyProviderControlConnected && (mode == .on || !enabledBlockedSites.isEmpty)
+    false
   }
 
   var systemBlockingCapabilityFresh: Bool {
-    if !legacyProviderConnectorEnabled {
-      return browserBlockingConnected
-    }
-    return legacyProviderHardBlockReady
-      && freshLegacyProviderControlReadback
-      && freshLegacyProviderRulesReadback
-      && freshMacConnectionReadback
+    browserBlockingConnected
   }
 
   var blockingControlsReady: Bool {
@@ -926,38 +818,17 @@ final class ProtectionStore: ObservableObject {
     if isWorking {
       return "Tortoise is updating setup status."
     }
-    if !legacyProviderConnectorEnabled {
-      if firstInstalledSupportedBrowserConnector == nil {
-        return "Install Chrome, Edge, Brave, Arc, or Firefox before using Home controls."
-      }
-      let browser = primaryBrowserConnector
-      if let selectedProfile = browser.selectedProfileLabel {
-        return "Finish the \(browser.displayName) connection for \(selectedProfile) before using Home controls."
-      }
-      if !browser.connectedProfileLabels.isEmpty {
-        return "Finish the \(browser.displayName) connection for \(Self.formattedList(browser.connectedProfileLabels)) before using Home controls."
-      }
-      return "Connect \(browser.displayName) before using Home controls."
+    if firstInstalledSupportedBrowserConnector == nil {
+      return "Install Chrome, Edge, Brave, Arc, or Firefox before using Home controls."
     }
-    if !configured {
-      return "Finish setup before using blocking controls."
+    let browser = primaryBrowserConnector
+    if let selectedProfile = browser.selectedProfileLabel {
+      return "Finish the \(browser.displayName) connection for \(selectedProfile) before using Home controls."
     }
-    if legacyProviderKeyNeedsPermission {
-      return "Allow Tortoise to read the saved setup key before using blocking controls."
+    if !browser.connectedProfileLabels.isEmpty {
+      return "Finish the \(browser.displayName) connection for \(Self.formattedList(browser.connectedProfileLabels)) before using Home controls."
     }
-    if !legacyProviderControlConnected {
-      return "Finish setup before using blocking controls."
-    }
-    if !legacyMacConnectionReady {
-      return "Finish Mac approval in Setup before using blocking controls."
-    }
-    if legacyProviderRulesSyncPending {
-      return "Tortoise is applying saved changes. Controls unlock when it finishes."
-    }
-    if !freshLegacyProviderControlReadback || !freshLegacyProviderRulesReadback || !freshMacConnectionReadback {
-      return "Tortoise is updating setup status. Controls unlock when it confirms setup is still working."
-    }
-    return "Finish setup before using blocking controls."
+    return "Connect \(browser.displayName) before using Home controls."
   }
 
   var blockingCapabilitySnapshot: BlockingCapabilitySnapshot {
@@ -1069,32 +940,6 @@ final class ProtectionStore: ObservableObject {
       "Browser extension folder: \(chromeExtensionDirectoryURL.path)",
       "Native host manifest: \(nativeMessagingManifestURL.path)",
     ]
-
-    if legacyProviderConnectorEnabled {
-      lines.append(contentsOf: [
-        "Advanced blocking connector: on",
-        "Advanced blocking configured: \(configured ? "yes" : "no")",
-        "Advanced blocking controls connected: \(legacyProviderControlConnected ? "yes" : "no")",
-        "macOS advanced blocking profile installed: \(macOSLegacyProviderProfileInstalled ? "yes" : "no")",
-        "macOS configured advanced blocking profile installed: \(macOSConfiguredLegacyProviderProfileInstalled ? "yes" : "no")",
-        "Advanced blocking profile detected: \(legacyMacConnectionProfileDetected ? "yes" : "no")",
-        "Advanced blocking profile matches Tortoise: \(legacyMacConnectionProfileMatchesConfiguredProfile ? "yes" : "no")",
-        "Advanced blocking rules checked: \(legacyProviderRulesCheckedAt?.description ?? "never")",
-        "Advanced parental controls checked: \(parentalControlCheckedAt?.description ?? "never")",
-        "Mac connection checked: \(resolverStatusCheckedAt?.description ?? "never")",
-        "Advanced Mac setup URL: \(legacyProviderMacSetupURL.absoluteString)",
-        "Generated Mac connection profile: \(generatedAppleProfileURL?.path ?? "none")",
-        "Verified active blocked domains: \(verifiedActiveBlockedDomainCount)",
-      ])
-
-      lines.append(contentsOf: [
-        "Legacy backup blocks: \(localHostsFallbackDomains.count)",
-        "Legacy backup installed: \(localHostsFallbackConnected ? "yes" : "no")",
-        "Legacy backup current: \(localHostsFallbackSynced ? "yes" : "no")",
-        "Legacy backup maintenance needed: \(localHostsFallbackMaintenanceNeeded ? "yes" : "no")",
-        "Local hosts script: \(generatedHostsScriptURL?.path ?? "none")",
-      ])
-    }
 
     return (lines + optionalDiagnosticLines).joined(separator: "\n")
   }
@@ -1400,74 +1245,21 @@ final class ProtectionStore: ObservableObject {
   }
 
   var blockCoverageSummary: String {
-    if !legacyProviderConnectorEnabled {
-      if activeBlockedDomainCount == 0 {
-        return "0 active blocks."
-      }
-      let blockText = "\(activeBlockedDomainCount) \(activeBlockedDomainCount == 1 ? "block" : "blocks")"
-      return browserBlockingConnected
-        ? "\(blockText) active in connected browsers."
-        : "\(blockText) saved. Connect a browser to apply them."
-    }
-
-    let unconfirmedCount = max(activeBlockedDomainCount - verifiedActiveBlockedDomainCount, 0)
-
-    let domainText: String
     if activeBlockedDomainCount == 0 {
-      domainText = "0 active blocks."
-    } else if verifiedActiveBlockedDomainCount == activeBlockedDomainCount {
-      let blockText =
-        "\(verifiedActiveBlockedDomainCount) \(verifiedActiveBlockedDomainCount == 1 ? "block" : "blocks")"
-      domainText = "\(blockText) active."
-    } else if verifiedActiveBlockedDomainCount > 0 {
-      let activeText =
-        "\(verifiedActiveBlockedDomainCount) \(verifiedActiveBlockedDomainCount == 1 ? "block" : "blocks")"
-      let savedText = "\(unconfirmedCount) \(unconfirmedCount == 1 ? "saved block" : "saved blocks")"
-      domainText = "\(activeText) active. \(savedText) not confirmed yet."
-    } else {
-      let blockText =
-        "\(activeBlockedDomainCount) \(activeBlockedDomainCount == 1 ? "block" : "blocks")"
-      domainText = blockApplicationAvailable
-        ? "\(blockText) saved. Not confirmed yet."
-        : "\(blockText) saved. Not blocking yet."
+      return "0 active blocks."
     }
-
-    if let hiddenRestrictions = hiddenLegacyProviderManagedRestrictionsText {
-      return "\(domainText) Still locked by account settings: \(hiddenRestrictions)."
-    }
-    return domainText
+    let blockText = "\(activeBlockedDomainCount) \(activeBlockedDomainCount == 1 ? "block" : "blocks")"
+    return browserBlockingConnected
+      ? "\(blockText) active in connected browsers."
+      : "\(blockText) saved. Connect a browser to apply them."
   }
 
   var blockApplicationAttentionTitle: String? {
-    if !legacyProviderConnectorEnabled {
-      return nil
-    }
-    if legacyProviderRulesSyncPending && legacyProviderControlConnected {
-      return "Tortoise is checking these blocks"
-    }
-    guard hasActiveBlockRules, !blockApplicationAvailable else {
-      return nil
-    }
-    return "Blocks are saved, but not active yet"
+    nil
   }
 
   var blockApplicationAttentionDetail: String? {
-    if !legacyProviderConnectorEnabled {
-      return nil
-    }
-    if legacyProviderRulesSyncPending {
-      if legacyProviderControlConnected {
-        return "Tortoise is applying the change. This can take about a minute, especially in a browser tab that was already open."
-      }
-      return "Finish setup before Tortoise can apply these saved blocks."
-    }
-    guard hasActiveBlockRules, !blockApplicationAvailable else {
-      return nil
-    }
-    if legacyProviderControlConnected && !legacyMacConnectionReady {
-      return "Finish Mac approval in Setup so this computer uses Tortoise."
-    }
-    return "Finish setup so Tortoise has a place to apply these blocks."
+    nil
   }
 
   var blockBrowserAttentionTitle: String? {
@@ -1740,31 +1532,13 @@ final class ProtectionStore: ObservableObject {
     case .all:
       return readinessChecks(scope: .blocker) + readinessChecks(scope: .tuner)
     case .blocker:
-      guard legacyProviderConnectorEnabled else {
-        return []
-      }
-      if legacyProviderSetupStarted {
-        return [
-          websiteBlockingCheck, legacyProviderAccountCheck, legacyMacPermissionCheck, legacyMacConnectionCheck,
-        ]
-      }
-      return [websiteBlockingCheck]
+      return []
     case .tuner:
       return [browserConnectionCheck, browserSettingsCheck]
     case .selectedMode:
-      guard legacyProviderConnectorEnabled else {
-        return (accessMode.protectionEnabled || tunerEnabled || hasActiveBlockRules)
-          ? readinessChecks(scope: .tuner)
-          : []
-      }
-      var checks: [ReadinessCheck] = []
-      if accessMode.protectionEnabled {
-        checks += readinessChecks(scope: .blocker)
-      }
-      if accessMode.tunerEnabled || tunerEnabled {
-        checks += readinessChecks(scope: .tuner)
-      }
-      return checks.isEmpty ? readinessChecks(scope: .tuner) : checks
+      return (accessMode.protectionEnabled || tunerEnabled || hasActiveBlockRules)
+        ? readinessChecks(scope: .tuner)
+        : []
     }
   }
 
@@ -1788,27 +1562,7 @@ final class ProtectionStore: ObservableObject {
   }
 
   private var nextStepReadinessChecks: [ReadinessCheck] {
-    if !legacyProviderConnectorEnabled {
-      return tunerEnabled || hasActiveBlockRules ? readinessChecks(scope: .tuner) : []
-    }
-    let blockerChecks = readinessChecks(scope: .blocker)
-    let tunerChecks = readinessChecks(scope: .tuner)
-    let needsBlocker = hasActiveBlockRules || accessMode.protectionEnabled || blockerProfileEnabled
-    let needsTuner = tunerEnabled
-
-    if websiteBlockingReady {
-      return []
-    }
-    if needsBlocker && needsTuner {
-      return blockerChecks + tunerChecks
-    }
-    if needsBlocker {
-      return blockerChecks
-    }
-    if needsTuner {
-      return tunerChecks
-    }
-    return blockerChecks + tunerChecks
+    tunerEnabled || hasActiveBlockRules ? readinessChecks(scope: .tuner) : []
   }
 
   private var activeBlockDestinations: [String] {
@@ -2006,26 +1760,7 @@ final class ProtectionStore: ObservableObject {
   }
 
   private var legacyProviderBlockConnectorReady: Bool {
-    configured && !legacyProviderKeyNeedsPermission && legacyMacConnectionReady
-  }
-
-  private var freshLegacyProviderControlReadback: Bool {
-    legacyProviderControlConnected && readbackIsFresh(parentalControlCheckedAt)
-  }
-
-  private var freshLegacyProviderRulesReadback: Bool {
-    readbackIsFresh(legacyProviderRulesCheckedAt)
-  }
-
-  private var freshMacConnectionReadback: Bool {
-    legacyMacConnectionReady && readbackIsFresh(resolverStatusCheckedAt)
-  }
-
-  private func readbackIsFresh(_ date: Date?) -> Bool {
-    guard let date else {
-      return false
-    }
-    return nowProvider().timeIntervalSince(date) <= Self.blockingReadbackFreshnessInterval
+    false
   }
 
   private var blockApplicationAvailable: Bool {
@@ -2175,22 +1910,7 @@ final class ProtectionStore: ObservableObject {
   }
 
   private var disabledCategoryBlockApplicationStatus: BlockApplicationStatus {
-    if !legacyProviderConnectorEnabled {
-      return BlockApplicationStatus(text: "Off in Tortoise", tone: .secondary)
-    }
-    if let hiddenRestrictions = hiddenLegacyProviderManagedRestrictionsText {
-      return BlockApplicationStatus(
-        text: "Off here - still on in account settings: \(hiddenRestrictions)",
-        tone: .warning
-      )
-    }
-    guard systemBlockingCapabilityFresh else {
-      return BlockApplicationStatus(text: "Cannot prove off", tone: .warning)
-    }
-    if legacyProviderRulesSyncPending {
-      return BlockApplicationStatus(text: "Off here - waiting for check", tone: .warning)
-    }
-    return BlockApplicationStatus(text: "Off - verified", tone: .secondary)
+    BlockApplicationStatus(text: "Off in Tortoise", tone: .secondary)
   }
 
   private var appliedStatusText: String {
@@ -2204,19 +1924,7 @@ final class ProtectionStore: ObservableObject {
   }
 
   private var unappliedBlockStatusText: String {
-    if !legacyProviderConnectorEnabled {
-      return "On in Tortoise - connect a browser"
-    }
-    if legacyProviderRulesSyncPending {
-      return legacyProviderControlConnected ? "On here - checking" : "On here - account access needed"
-    }
-    if legacyProviderControlConnected && !legacyMacConnectionReady {
-      return "On here - Mac permission needed"
-    }
-    if blockApplicationAvailable {
-      return "On here - not confirmed yet"
-    }
-    return "On here - connect Tortoise to apply"
+    "On in Tortoise - connect a browser"
   }
 
   var extensionSettingsURL: URL {
@@ -2299,38 +2007,6 @@ final class ProtectionStore: ObservableObject {
   func resetBaseline() {
     defaults.removeObject(forKey: DefaultsKey.baseline)
     errorMessage = nil
-  }
-
-  func allowSavedProviderCredentialAccess() async {
-    isWorking = true
-    let apiKey: String?
-    do {
-      apiKey = try keychain.readSecret(allowUserInteraction: true)
-    } catch {
-      isWorking = false
-      present(error)
-      return
-    }
-    isWorking = false
-
-    guard let apiKey,
-          !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    else {
-      legacyProviderKeyNeedsPermission = false
-      cachedAPIKey = nil
-      hasAPIKey = false
-      clearLegacyProviderControlVerification()
-      connectionState = .notConfigured
-      errorMessage = "Connect again, then save again."
-      return
-    }
-
-    cachedAPIKey = apiKey
-    hasAPIKey = true
-    legacyProviderKeyNeedsPermission = false
-    setupMessage = "Great, Tortoise can read the saved setup key now."
-    errorMessage = nil
-    await refresh()
   }
 
   func refreshProtectionStatus() async {
@@ -3447,20 +3123,6 @@ final class ProtectionStore: ObservableObject {
     }
   }
 
-  func createLegacyMacPermissionProfile() {
-    do {
-      let profileURL = try appleProfileGenerator.writeProfile(profileID: trimmedProfileID)
-      generatedAppleProfileURL = profileURL
-      defaults.set(profileURL.path, forKey: DefaultsKey.generatedAppleProfilePath)
-      setupMessage =
-        "Mac approval is ready. Approve Tortoise in System Settings; Tortoise will finish automatically when you return."
-      errorMessage = nil
-      open(profileURL)
-    } catch {
-      present(error)
-    }
-  }
-
   func createLocalHostsBlockerScript() {
     do {
       let scriptURL = try localHostsScriptGenerator.writeScript(domains: localHostsFallbackDomains)
@@ -3538,12 +3200,7 @@ final class ProtectionStore: ObservableObject {
   }
 
   private var systemProfilesSetupMessage: String {
-    if legacyMacConnectionProfileMismatch {
-      return
-        "Device Management is open. Approve Tortoise Blocking if needed, keep the Tortoise approval, then return here."
-    }
-    return
-      "Waiting for approval. Approve Tortoise Blocking in System Settings; Tortoise will finish automatically when you return."
+    "Waiting for approval. Approve Tortoise Blocking in System Settings; Tortoise will finish automatically when you return."
   }
 
   func openChromeExtensionsPage() {

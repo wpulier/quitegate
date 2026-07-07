@@ -52,6 +52,7 @@
 		43A9D7F3392A03ACE68C6E6D /* MacTortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504A95B1313F6EF8FB7F3DFB /* MacTortoiseAPIClient.swift */; };
 		43F84451FEF86A8C4DC50B48 /* DevicePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */; };
 		45EBDC9086E99691585FB1A3 /* AppBlockingStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22BE86B343E7C24B14B11162 /* AppBlockingStoreTests.swift */; };
+		46CC89FC6E9F2A33E84D9B54 /* ManagedAppsShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */; };
 		4717093D6464D14AEADC5363 /* SiteUsageMerge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E8F0A5EFBD33EBAA817C520 /* SiteUsageMerge.swift */; };
 		4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */; };
 		4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */; };
@@ -87,22 +88,20 @@
 		81E1909BBF8897470F85EE1E /* AccountHubModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2880C0251EB92FD791228DF /* AccountHubModel.swift */; };
 		83E70B835C2060EE16A968CD /* BrowserExtensionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */; };
 		892955A4A477E4376F3DF52A /* DevicePresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8035DE489271EB4A91BB265 /* DevicePresentationTests.swift */; };
+		8A7AF896F29A4020AAFFD280 /* ManagedAppsShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */; };
 		8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */; };
 		918CCE47CA5D5E2589A1C008 /* BrowserBlockingProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */; };
 		9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */; };
-		92597E236D5AC38BCEA2124C /* LegacyProviderStatusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */; };
 		92C3376EF7E3986A71EC3341 /* BrowserTuningFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD4CB5D18C983E5D2C8EB2D /* BrowserTuningFeature.swift */; };
 		934BFCCF424ABDC856E8802A /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */; };
 		9444DFB359EE2591B289F97C /* youtube.js in Resources */ = {isa = PBXBuildFile; fileRef = FFE207828E8229CD9EEAD9E8 /* youtube.js */; };
 		97040AFC5CEF7EBFD33A5F42 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
-		981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */; };
 		9A5F16211C9C251AC64CEB9B /* AddDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD6AA363596C6AF0195D1DE /* AddDestination.swift */; };
 		9A8666296BEEB907320D6EA4 /* TortoiseShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9BDA4A9C17A0C410438DA4C0 /* DevicePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */; };
 		9C0969F1393ACEF71E35F1C2 /* x.js in Resources */ = {isa = PBXBuildFile; fileRef = EF5C810052C9446E2726C089 /* x.js */; };
 		9D1A79FE21717C9735E835CD /* blocked.html in Resources */ = {isa = PBXBuildFile; fileRef = 3A9AB2A8842D93C15B5EECEC /* blocked.html */; };
 		9D5CAE4FB45940791F38CBF5 /* ProductComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D829A70DFA1418E3DC5F10A /* ProductComponents.swift */; };
-		9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 875814D47F22199A45571212 /* LegacyProviderClientTests.swift */; };
 		A0EED63B1E0BD682F4107F9B /* IOSEnforcementShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */; };
 		A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */; };
 		A1E86D97B6260061856CF6BA /* LegacyProviderModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */; };
@@ -122,6 +121,7 @@
 		BFD740EBC2EE5EFF07CE5F3E /* ApplicationBlockingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */; };
 		C02C20F3AAC030400E98F91E /* QRCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09838947772A802ABC8CD02 /* QRCodeTests.swift */; };
 		C1D287B08C8955F1FA73E60A /* LegacyProviderContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */; };
+		C4FB34486DA6C0A2C152DA64 /* ManagedAppsShieldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81156D2F66A05B6CD2EB542 /* ManagedAppsShieldTests.swift */; };
 		C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */; };
 		C70AE39FFB9F88BC00B96A16 /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */; };
 		C7C2B7BB062E39732B904A97 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
@@ -246,7 +246,6 @@
 		273DAEE65592F418FA16396A /* IOSSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSession.swift; sourceTree = "<group>"; };
 		2B1BA60040AB9CCA5A5F955A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		2CB16BD2B65FAC73392D34C8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
-		32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProtectionStore+LegacyProviderState.swift"; sourceTree = "<group>"; };
 		353BA3A44AEE95CEB3D0C75A /* TortoiseShieldConfiguration.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TortoiseShieldConfiguration.entitlements; sourceTree = "<group>"; };
 		390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TortoiseAPIClient.swift; sourceTree = "<group>"; };
 		395C8AF9BFC2DA7B5CD08B3E /* IOSEnforcementShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSEnforcementShared.swift; sourceTree = "<group>"; };
@@ -283,7 +282,6 @@
 		6D288C7A057311BB070BB9CA /* BlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockingProvider.swift; sourceTree = "<group>"; };
 		6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessCheck.swift; sourceTree = "<group>"; };
 		6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserBlockingProvider.swift; sourceTree = "<group>"; };
-		74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderStatusServiceTests.swift; sourceTree = "<group>"; };
 		757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningCatalogTests.swift; sourceTree = "<group>"; };
 		77BD01C9D7E7B5AC6424A45D /* AppBlockingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlockingStore.swift; sourceTree = "<group>"; };
 		796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMacBlockingProviderTests.swift; sourceTree = "<group>"; };
@@ -292,7 +290,6 @@
 		7DDB3D0AA0D5EE6D889967A5 /* TortoiseSafariExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseSafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainNormalizer.swift; sourceTree = "<group>"; };
 		8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderStatusService.swift; sourceTree = "<group>"; };
-		875814D47F22199A45571212 /* LegacyProviderClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderClientTests.swift; sourceTree = "<group>"; };
 		885DC37A991A432C1E950CB1 /* blocked.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = blocked.css; sourceTree = "<group>"; };
 		892825147CC27E6727E35275 /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = background.js; sourceTree = "<group>"; };
 		899CA3F2232649843D526BBF /* PlatformControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsTests.swift; sourceTree = "<group>"; };
@@ -355,6 +352,7 @@
 		E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuietGateApp.swift; sourceTree = "<group>"; };
 		E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9FBF3C8239B50B37B2CFBC3 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
+		EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedAppsShield.swift; sourceTree = "<group>"; };
 		EF5C810052C9446E2726C089 /* x.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = x.js; sourceTree = "<group>"; };
 		F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderMacServices.swift; sourceTree = "<group>"; };
 		F110EF06D260E09967CD6F85 /* quietgate-native-host */ = {isa = PBXFileReference; path = "quietgate-native-host"; sourceTree = "<group>"; };
@@ -362,6 +360,7 @@
 		F2880C0251EB92FD791228DF /* AccountHubModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountHubModel.swift; sourceTree = "<group>"; };
 		F5274600C358B81EB9056536 /* blocker.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = blocker.js; sourceTree = "<group>"; };
 		F7B1B9C63A5C2FCE2369A3F7 /* x.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = x.css; sourceTree = "<group>"; };
+		F81156D2F66A05B6CD2EB542 /* ManagedAppsShieldTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedAppsShieldTests.swift; sourceTree = "<group>"; };
 		F8AC2C970397E8B73F402281 /* PlatformControlsChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControlsChecker.swift; sourceTree = "<group>"; };
 		FAAD2800D37E56C9AD1C4513 /* TortoiseDeviceActivityMonitor.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TortoiseDeviceActivityMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FFE207828E8229CD9EEAD9E8 /* youtube.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = youtube.js; sourceTree = "<group>"; };
@@ -494,7 +493,6 @@
 				42714DA0B464D40BBDAAE517 /* LegacyProviderModels.swift */,
 				DC52F9B0A5882A50FB5BA117 /* LegacyProviderReadbackError.swift */,
 				8134813AE72B3C28EF965BC8 /* LegacyProviderStatusService.swift */,
-				32929C202553E35E44BF66E8 /* ProtectionStore+LegacyProviderState.swift */,
 			);
 			path = LegacyProviderConnector;
 			sourceTree = "<group>";
@@ -683,9 +681,8 @@
 				03346809F4EA38D985C2D3F5 /* DevicesHubModelTests.swift */,
 				6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */,
 				7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */,
-				875814D47F22199A45571212 /* LegacyProviderClientTests.swift */,
-				74C51CC8DD146A249146E26F /* LegacyProviderStatusServiceTests.swift */,
 				796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */,
+				F81156D2F66A05B6CD2EB542 /* ManagedAppsShieldTests.swift */,
 				899CA3F2232649843D526BBF /* PlatformControlsTests.swift */,
 				BB64C9620DA049F321B8E848 /* PresetUnificationTests.swift */,
 				59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */,
@@ -729,6 +726,7 @@
 				273DAEE65592F418FA16396A /* IOSSession.swift */,
 				C8C72A84AE275254D8601BFC /* IOSSiteUsageReporter.swift */,
 				CEFA98961060B02E33E4F2E5 /* IOSYouTubeScreenTimeController.swift */,
+				EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */,
 				E2E2E17704A5E1C00FFA11A2 /* QRCode.swift */,
 				9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */,
 				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
@@ -1087,9 +1085,8 @@
 				ADD9141DBB7430FE5A38B428 /* DevicesHubModelTests.swift in Sources */,
 				8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */,
 				4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */,
-				9E8096513749201F401116CB /* LegacyProviderClientTests.swift in Sources */,
-				92597E236D5AC38BCEA2124C /* LegacyProviderStatusServiceTests.swift in Sources */,
 				CAB87C4B96F2644084DC7581 /* LocalMacBlockingProviderTests.swift in Sources */,
+				C4FB34486DA6C0A2C152DA64 /* ManagedAppsShieldTests.swift in Sources */,
 				5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */,
 				25B59FDB054E488CDBBE2BDE /* PresetUnificationTests.swift in Sources */,
 				071696E8B0FA283D1A8660DE /* ProtectionStoreTestDoubles.swift in Sources */,
@@ -1120,6 +1117,7 @@
 				4FB20AE2A7288978724B74FA /* IOSSiteUsageReporter.swift in Sources */,
 				033ED0398C4323B5E6FD7513 /* IOSYouTubeScreenTimeController.swift in Sources */,
 				A1C8501433FBDAC7CC4E7BBD /* InstallationStore.swift in Sources */,
+				46CC89FC6E9F2A33E84D9B54 /* ManagedAppsShield.swift in Sources */,
 				C70AE39FFB9F88BC00B96A16 /* QRCode.swift in Sources */,
 				339528CD0C5C0D639462B725 /* SiteUsageModels.swift in Sources */,
 				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
@@ -1178,12 +1176,12 @@
 				67A953314D5B55EA2D0ACED0 /* LoginItemService.swift in Sources */,
 				787C9B97CFD44F022DB47709 /* MacAccountStore.swift in Sources */,
 				43A9D7F3392A03ACE68C6E6D /* MacTortoiseAPIClient.swift in Sources */,
+				8A7AF896F29A4020AAFFD280 /* ManagedAppsShield.swift in Sources */,
 				CBE8CB4AEED57AE891EDF9E5 /* MenuBarContentView.swift in Sources */,
 				AD444AE42F87DCA8F0927C2C /* PlatformControls.swift in Sources */,
 				60DF86842AE89751B08E4B23 /* PlatformControlsChecker.swift in Sources */,
 				9D5CAE4FB45940791F38CBF5 /* ProductComponents.swift in Sources */,
 				32AEA6C71C4467C6940FA138 /* ProtectionMode.swift in Sources */,
-				981A1FB11AA2538B8C27C352 /* ProtectionStore+LegacyProviderState.swift in Sources */,
 				25F885B27A73B1288C2536AF /* ProtectionStore.swift in Sources */,
 				416A5B6E30C1D99945F224B3 /* ProtectionView.swift in Sources */,
 				FA6A7FF6019A0D43AF72EA84 /* QRCode.swift in Sources */,

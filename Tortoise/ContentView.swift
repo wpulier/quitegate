@@ -562,6 +562,8 @@ private struct MobileTuningScreen: View {
   let setYoutubeProtection: (Bool) -> Void
   let setDailyLimit: (Int) -> Void
 
+  @State private var appsPickerPresented = false
+
   private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
 
   private var tuneSites: [TuneSite] {
@@ -652,6 +654,92 @@ private struct MobileTuningScreen: View {
             .fixedSize(horizontal: false, vertical: true)
         }
       }
+
+      MobileCard {
+        VStack(alignment: .leading, spacing: 14) {
+          HStack(spacing: 8) {
+            MobileSectionLabel("Apps")
+            Spacer(minLength: 8)
+            Button(screenTime.hasManagedAppsSelection ? "Edit" : "Choose apps") {
+              presentAppsPicker()
+            }
+            .font(.system(size: 12, weight: .bold))
+            .buttonStyle(.bordered)
+            .disabled(screenTime.authorizationState != .approved || screenTime.sessionLockedActive)
+          }
+
+          Text(screenTime.managedAppsSummary)
+            .font(.system(size: 13))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+            .fixedSize(horizontal: false, vertical: true)
+
+          if screenTime.hasManagedAppsSelection {
+            VStack(alignment: .leading, spacing: 10) {
+              ForEach(Array(screenTime.managedAppsSelection.applicationTokens), id: \.self) { token in
+                Label(token)
+                  .labelStyle(.titleAndIcon)
+                  .font(.system(size: 14))
+                  .foregroundStyle(TortoiseDesign.primaryText)
+              }
+              ForEach(Array(screenTime.managedAppsSelection.categoryTokens), id: \.self) { token in
+                Label(token)
+                  .labelStyle(.titleAndIcon)
+                  .font(.system(size: 14))
+                  .foregroundStyle(TortoiseDesign.primaryText)
+              }
+              if !screenTime.managedAppsSelection.webDomainTokens.isEmpty {
+                let domainCount = screenTime.managedAppsSelection.webDomainTokens.count
+                Text("\(domainCount) web domain\(domainCount == 1 ? "" : "s")")
+                  .font(.system(size: 13, weight: .semibold))
+                  .foregroundStyle(TortoiseDesign.secondaryText)
+              }
+            }
+            .padding(.top, 2)
+          }
+
+          if screenTime.hasManagedAppsSelection {
+            MobileDivider()
+
+            HStack(spacing: 10) {
+              VStack(alignment: .leading, spacing: 3) {
+                Text("Daily limit")
+                  .font(.system(size: 13, weight: .bold))
+                  .foregroundStyle(TortoiseDesign.primaryText)
+                Text(screenTime.managedAppsLimitSummary)
+                  .font(.system(size: 12))
+                  .foregroundStyle(TortoiseDesign.secondaryText)
+                  .fixedSize(horizontal: false, vertical: true)
+              }
+              Spacer(minLength: 8)
+              MobileSwitch(
+                isOn: Binding(
+                  get: { screenTime.managedAppsLimitEnabled },
+                  set: { screenTime.setManagedAppsLimitEnabled($0) }
+                ),
+                isEnabled: !screenTime.sessionLockedActive
+              )
+            }
+
+            if screenTime.managedAppsLimitEnabled {
+              HStack(spacing: 8) {
+                Spacer()
+                MobileStepperButton(systemImage: "minus") {
+                  screenTime.adjustManagedAppsLimit(by: -5)
+                }
+                .disabled(screenTime.sessionLockedActive)
+                Text("\(screenTime.managedAppsLimitDisplayMinutes)m")
+                  .font(.system(size: 13, weight: .bold))
+                  .frame(width: 48)
+                MobileStepperButton(systemImage: "plus") {
+                  screenTime.adjustManagedAppsLimit(by: 5)
+                }
+                .disabled(screenTime.sessionLockedActive)
+              }
+            }
+          }
+        }
+      }
+      .familyActivityPicker(isPresented: $appsPickerPresented, selection: managedAppsBinding)
 
       LazyVGrid(
         columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
@@ -813,6 +901,21 @@ private struct MobileTuningScreen: View {
     }
     let next = enabledEnforceableFeatureCount != countableFeatures
     setFeatures(enforceableSiteFeatures.map(\.id), next)
+  }
+
+  /// Routes every picker write through the controller's guard so the locked
+  /// session freeze holds even while the picker is open. The getter reflects the
+  /// controller's (possibly refused) authoritative selection back into the picker.
+  private var managedAppsBinding: Binding<FamilyActivitySelection> {
+    Binding(
+      get: { screenTime.managedAppsSelection },
+      set: { screenTime.setManagedAppsSelection($0) }
+    )
+  }
+
+  private func presentAppsPicker() {
+    guard !screenTime.sessionLockedActive else { return }
+    appsPickerPresented = true
   }
 }
 

@@ -93,6 +93,10 @@ struct IOSEnforcementSnapshot: Codable, Equatable {
   var lastSafariPolicyAppliedAt: Date? = nil
   var lastSetupCheckAt: Date? = nil
   var session: IOSSessionState? = nil
+  /// Stage 2: combined managed-apps daily limit (minutes). `nil` = off. Persisted
+  /// so the DeviceActivity monitor extension can gate the limit shield. `Int?` is
+  /// cross-platform safe — no `FamilyControls`/`ManagedSettings` type leaks here.
+  var managedAppsLimitMinutes: Int? = nil
 
   var hasSelectedTargets: Bool {
     selectedApplicationCount > 0 || selectedCategoryCount > 0 || selectedWebDomainCount > 0
@@ -217,6 +221,7 @@ struct SafariBrowserProfile: Codable, Equatable {
 
 enum IOSEnforcementSharedStore {
   private static let selectionKey = "TortoiseIOSEnforcementSelection"
+  private static let managedAppsSelectionKey = "TortoiseIOSManagedAppsSelection"
   private static let snapshotKey = "TortoiseIOSEnforcementSnapshot"
   private static let safariPolicyKey = "TortoiseIOSSafariPolicy"
   static let siteUsageKey = "TortoiseSiteUsageBySite"
@@ -237,6 +242,21 @@ enum IOSEnforcementSharedStore {
       return
     }
     defaults.set(data, forKey: selectionKey)
+  }
+
+  static func loadManagedAppsSelection() -> FamilyActivitySelection {
+    guard let data = defaults.data(forKey: managedAppsSelectionKey),
+          let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
+      return FamilyActivitySelection()
+    }
+    return selection
+  }
+
+  static func saveManagedAppsSelection(_ selection: FamilyActivitySelection) {
+    guard let data = try? JSONEncoder().encode(selection) else {
+      return
+    }
+    defaults.set(data, forKey: managedAppsSelectionKey)
   }
   #endif
 
@@ -344,6 +364,23 @@ enum IOSEnforcementShieldApplier {
     store.media.denyExplicitContent = adultWebFilterEnabled ? true : nil
   }
 
+  /// Writes ONLY the shield fields from `selection` into `store` — no adult web/
+  /// media filter (that stays on the YouTube/Strict `applySelection` path). Used
+  /// for the general "Apps" store so the two shields union cleanly.
+  static func applyShield(
+    _ selection: FamilyActivitySelection,
+    to store: ManagedSettingsStore
+  ) {
+    store.shield.applications = selection.applicationTokens.nilIfEmpty
+    store.shield.webDomains = selection.webDomainTokens.nilIfEmpty
+    store.shield.applicationCategories = selection.categoryTokens.isEmpty
+      ? nil
+      : .specific(selection.categoryTokens)
+    store.shield.webDomainCategories = selection.categoryTokens.isEmpty
+      ? nil
+      : .specific(selection.categoryTokens)
+  }
+
   static func clearAllStores() {
     for name in ManagedSettingsStore.Name.tortoiseEnforcementStores {
       ManagedSettingsStore(named: name).clearAllSettings()
@@ -362,6 +399,24 @@ extension ManagedSettingsStore.Name {
   static let tortoiseSchedule = Self("tortoise.schedule")
   static let tortoiseLimit = Self("tortoise.limit")
 
+  /// The general "Apps" (Screen-Time) shield lives in its OWN store so the system
+  /// UNIONS it with the YouTube shield in `.tortoiseImmediate` automatically —
+  /// no manual merge. Deliberately NOT part of `tortoiseEnforcementStores`: this
+  /// store is owned solely by `applyManagedAppsShield()`, which reconciles it on
+  /// every `applyCurrentMode()`, so the YouTube `clearAllStores()` sweep never
+  /// touches it.
+  static let tortoiseManagedApps = Self("tortoise.managedApps")
+
+  /// Stage 2: the combined managed-apps DAILY-LIMIT shield store. Written by the
+  /// DeviceActivity monitor extension when the Open-mode combined threshold is
+  /// reached; the OS UNIONS it with `.tortoiseManagedApps` (Stage 1) and the
+  /// YouTube `.tortoiseImmediate` shield automatically. Like `.tortoiseManagedApps`
+  /// it is deliberately NOT in `tortoiseEnforcementStores` — it is owned by its own
+  /// reconcile paths (`reconcileManagedAppsLimitMonitoring()` disarm + the
+  /// extension's `intervalDidStart`/`intervalDidEnd`), so the YouTube
+  /// `clearAllStores()` sweep never touches it.
+  static let tortoiseManagedAppsLimit = Self("tortoise.managedApps.limit")
+
   static let tortoiseEnforcementStores: [Self] = [
     .tortoiseImmediate,
     .tortoiseSchedule,
@@ -371,9 +426,18 @@ extension ManagedSettingsStore.Name {
 
 extension DeviceActivityName {
   static let tortoiseDaily = Self("tortoise.daily")
+
+  /// Stage 2: the managed-apps limit runs on its OWN DeviceActivity so it is
+  /// independent of the YouTube `.tortoiseDaily` start/stop lifecycle and can run
+  /// in Open mode (where `.tortoiseDaily` is stopped).
+  static let tortoiseManagedAppsDaily = Self("tortoise.managedApps.daily")
 }
 
 extension DeviceActivityEvent.Name {
   static let tortoiseDailyLimit = Self("tortoise.youtube.dailyLimit")
+
+  /// Stage 2: combined managed-apps daily-limit threshold event. Routed by NAME in
+  /// the extension to `.tortoiseManagedAppsLimit`.
+  static let managedAppsDailyLimit = Self("tortoise.managedApps.dailyLimit")
 }
 #endif
