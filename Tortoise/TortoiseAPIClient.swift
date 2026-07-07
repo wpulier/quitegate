@@ -50,8 +50,8 @@ struct TortoiseAPIClient {
     try await request(path: "/api/devices", token: token)
   }
 
-  func fetchSiteUsage(token: String) async throws -> SiteUsageEnvelope {
-    try await request(path: "/api/usage", token: token)
+  func fetchSiteUsage(token: String, date: String = SiteUsageDates.localDateKey()) async throws -> SiteUsageEnvelope {
+    try await request(path: "/api/usage?date=\(date)", token: token)
   }
 
   func registerDevice(token: String, registration: DeviceRegistration) async throws -> DeviceEnvelope {

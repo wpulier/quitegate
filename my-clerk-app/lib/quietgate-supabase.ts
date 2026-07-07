@@ -843,5 +843,11 @@ export async function recordQuietGateSiteUsage(
     input,
   );
 
-  return getQuietGateSiteUsageSummaryForUser(supabase, account.user.id);
+  // Summarize for the reporting device's local day, not the server's.
+  const reportDate = input.sites.find((site) => site.date)?.date;
+  return getQuietGateSiteUsageSummaryForUser(
+    supabase,
+    account.user.id,
+    reportDate ?? localDateKey(),
+  );
 }

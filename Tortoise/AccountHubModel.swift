@@ -104,6 +104,19 @@ final class AccountHubModel: ObservableObject {
     }
   }
 
+  /// Refreshes just the cross-device usage summary. Lightweight enough to
+  /// poll while the Usage screen is visible; failures keep the last summary.
+  func refreshUsage(using clerk: Clerk) async {
+    guard let session = clerk.session,
+          let token = try? await session.getToken() else {
+      return
+    }
+
+    if let summary = try? await apiClient.fetchSiteUsage(token: token).siteUsageSummary {
+      snapshot.siteUsageSummary = summary
+    }
+  }
+
   @discardableResult
   func updatePolicy(
     using clerk: Clerk,

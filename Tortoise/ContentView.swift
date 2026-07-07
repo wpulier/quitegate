@@ -282,21 +282,27 @@ private struct TortoiseMobileShell: View {
         selectedTab: $usageTab,
         model: model,
         screenTime: screenTime,
-        setDailyLimit: setDailyLimit
+        setDailyLimit: setDailyLimit,
+        refreshUsage: { await model.refreshUsage(using: clerk) }
       )
     case .tuning:
       MobileTuningScreen(
         selectedSite: $selectedSite,
         model: model,
         screenTime: screenTime,
-        accessMode: currentAccessMode,
-        isSyncing: model.isSyncing,
-        selectMode: setAccessMode,
         browserProfiles: browserProfiles,
         setFeature: setTuningFeature,
         setFeatures: setTuningFeatures,
         setYoutubeProtection: setYoutubeProtection,
         setDailyLimit: setDailyLimit
+      )
+    case .blocking:
+      MobileBlockingScreen(
+        model: model,
+        screenTime: screenTime,
+        accessMode: currentAccessMode,
+        isSyncing: model.isSyncing,
+        selectMode: setAccessMode
       )
     case .devices:
       MobileDevicesScreen(accountLabel: accountLabel, model: model, screenTime: screenTime)
@@ -320,7 +326,7 @@ private struct TortoiseMobileShell: View {
   private func setAccessMode(_ mode: MobileAccessMode) {
     guard !screenTime.sessionLockedActive else { return }
     if mode != .open && !screenTime.canTurnOn {
-      section = .tuning
+      section = .blocking
       screenTime.refreshSetupStatus()
       return
     }
@@ -423,6 +429,7 @@ private struct MobileUsageScreen: View {
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   let setDailyLimit: (Int) -> Void
+  let refreshUsage: () async -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -439,6 +446,12 @@ private struct MobileUsageScreen: View {
       }
 
       accountsCard
+    }
+    .task {
+      while !Task.isCancelled {
+        await refreshUsage()
+        try? await Task.sleep(nanoseconds: 60_000_000_000)
+      }
     }
   }
 
@@ -536,7 +549,8 @@ private struct MobileUsageScreen: View {
   }
 
   private var display: MobileUsageDisplay {
-    if let summary = model.snapshot.siteUsageSummary {
+    if let summary = model.snapshot.siteUsageSummary,
+       summary.date == SiteUsageDates.localDateKey() {
       return MobileUsageDisplay(summary: summary, tab: selectedTab)
     }
     return .empty(tab: selectedTab)
@@ -549,41 +563,21 @@ private struct MobileUsageScreen: View {
   }
 }
 
-private struct MobileTuningScreen: View {
-  @Binding var selectedSite: String
+private struct MobileBlockingScreen: View {
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   let accessMode: MobileAccessMode
   let isSyncing: Bool
   let selectMode: (MobileAccessMode) -> Void
-  let browserProfiles: [MobileBrowserProfile]
-  let setFeature: (String, Bool) -> Void
-  let setFeatures: ([String], Bool) -> Void
-  let setYoutubeProtection: (Bool) -> Void
-  let setDailyLimit: (Int) -> Void
 
   @State private var appsPickerPresented = false
-
-  private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
-
-  private var tuneSites: [TuneSite] {
-    TuneScreen.sites(policy: tunePolicy, surface: .iosSafari)
-  }
-
-  private var selectedTuneSite: TuneSite? {
-    tuneSites.first { $0.id == selectedSite }
-  }
-
-  private var selectedSiteFeatures: [TuneFeature] {
-    TuneScreen.features(forSiteID: selectedSite, policy: tunePolicy, surface: .iosSafari)
-  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       MobileHeader(
         kicker: nil,
-        title: "Tune",
-        subtitle: "Set your mode, commit a session, and strip the noisy parts of each site."
+        title: "Block",
+        subtitle: "Set your mode and choose what's blocked on this iPhone."
       )
 
       VStack(spacing: 10) {
@@ -740,6 +734,58 @@ private struct MobileTuningScreen: View {
         }
       }
       .familyActivityPicker(isPresented: $appsPickerPresented, selection: managedAppsBinding)
+    }
+  }
+
+  /// Routes every picker write through the controller's guard so the locked
+  /// session freeze holds even while the picker is open. The getter reflects the
+  /// controller's (possibly refused) authoritative selection back into the picker.
+  private var managedAppsBinding: Binding<FamilyActivitySelection> {
+    Binding(
+      get: { screenTime.managedAppsSelection },
+      set: { screenTime.setManagedAppsSelection($0) }
+    )
+  }
+
+  private func presentAppsPicker() {
+    guard !screenTime.sessionLockedActive else { return }
+    appsPickerPresented = true
+  }
+}
+
+private struct MobileTuningScreen: View {
+  @Binding var selectedSite: String
+  @ObservedObject var model: AccountHubModel
+  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  let browserProfiles: [MobileBrowserProfile]
+  let setFeature: (String, Bool) -> Void
+  let setFeatures: ([String], Bool) -> Void
+  let setYoutubeProtection: (Bool) -> Void
+  let setDailyLimit: (Int) -> Void
+
+  private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
+
+  private var tuneSites: [TuneSite] {
+    TuneScreen.sites(policy: tunePolicy, surface: .iosSafari)
+  }
+
+  private var selectedTuneSite: TuneSite? {
+    tuneSites.first { $0.id == selectedSite }
+  }
+
+  private var selectedSiteFeatures: [TuneFeature] {
+    TuneScreen.features(forSiteID: selectedSite, policy: tunePolicy, surface: .iosSafari)
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      MobileHeader(
+        kicker: nil,
+        title: "Tune",
+        subtitle: "Strip the noisy parts of each site. Enforced wherever you're connected."
+      )
+
+      MobileSectionLabel("Sites")
 
       LazyVGrid(
         columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
@@ -755,8 +801,6 @@ private struct MobileTuningScreen: View {
         }
 
         MobileTikTokComingSoonTile()
-
-        MobileAddSiteTile()
       }
 
       if let selectedTuneSite {
@@ -903,20 +947,6 @@ private struct MobileTuningScreen: View {
     setFeatures(enforceableSiteFeatures.map(\.id), next)
   }
 
-  /// Routes every picker write through the controller's guard so the locked
-  /// session freeze holds even while the picker is open. The getter reflects the
-  /// controller's (possibly refused) authoritative selection back into the picker.
-  private var managedAppsBinding: Binding<FamilyActivitySelection> {
-    Binding(
-      get: { screenTime.managedAppsSelection },
-      set: { screenTime.setManagedAppsSelection($0) }
-    )
-  }
-
-  private func presentAppsPicker() {
-    guard !screenTime.sessionLockedActive else { return }
-    appsPickerPresented = true
-  }
 }
 
 private struct MobileDevicesScreen: View {
@@ -2145,26 +2175,6 @@ private struct MobileTikTokComingSoonTile: View {
   }
 }
 
-private struct MobileAddSiteTile: View {
-  var body: some View {
-    HStack(spacing: 10) {
-      Image(systemName: "plus")
-        .font(.system(size: 18, weight: .bold))
-        .foregroundStyle(TortoiseDesign.accent)
-      Text("Add app")
-        .font(.system(size: 14, weight: .bold))
-      Spacer()
-    }
-    .padding(12)
-    .frame(maxWidth: .infinity, minHeight: 66)
-    .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-    .overlay {
-      RoundedRectangle(cornerRadius: 14, style: .continuous)
-        .strokeBorder(TortoiseDesign.hairline)
-    }
-    .opacity(0.62)
-  }
-}
 
 private struct MobileScopeChip: View {
   let avatar: String
@@ -2275,6 +2285,7 @@ private enum MobileHubStatusStyle {
 private enum MobileSection: String, CaseIterable, Identifiable {
   case usage
   case tuning
+  case blocking
   case devices
 
   var id: String { rawValue }
@@ -2283,6 +2294,7 @@ private enum MobileSection: String, CaseIterable, Identifiable {
     switch self {
     case .usage: return "Usage"
     case .tuning: return "Tune"
+    case .blocking: return "Block"
     case .devices: return "Devices"
     }
   }
@@ -2291,6 +2303,7 @@ private enum MobileSection: String, CaseIterable, Identifiable {
     switch self {
     case .usage: return "chart.bar"
     case .tuning: return "slider.horizontal.3"
+    case .blocking: return "shield"
     case .devices: return "macbook.and.iphone"
     }
   }
@@ -2618,16 +2631,17 @@ private struct MobileUsageDisplay {
   let apps: [MobileUsageApp]
   let accounts: [MobileUsageAccount]
 
-  init(summary: SiteUsageSummarySnapshot, tab: MobileUsageTab) {
+  init(summary: SiteUsageSummarySnapshot, tab: MobileUsageTab, now: Date = Date()) {
     let site = tab == .all ? nil : summary.sites.first { $0.siteID == tab.rawValue }
     let entries = tab == .all ? summary.entries ?? summary.sites.flatMap(\.entries) : site?.entries ?? []
     let totalSeconds = tab == .all ? summary.totalSeconds : site?.totalSeconds ?? 0
     let webSeconds = entries.filter { !Self.isIOSEntry($0) }.reduce(0) { $0 + ($1.totalSeconds ?? 0) }
     let iosSeconds = entries.filter(Self.isIOSEntry).reduce(0) { $0 + ($1.totalSeconds ?? 0) }
+    let updatedAt = site?.lastUpdatedAt ?? summary.lastUpdatedAt
 
     hero = tab == .all ? "Today" : "\(tab.title) today"
     total = Self.duration(totalSeconds)
-    subtitle = tab == .all ? "Across connected apps and accounts" : "Today"
+    subtitle = Self.freshness(updatedAt, now: now).map { "Updated \($0)" } ?? "Today"
     activity = tab == .youtube ? "\(site?.activityCount ?? site?.videoCount ?? 0) videos" : "\(Set(entries.map(Self.accountKey)).count) accounts"
     web = webSeconds > 0 ? Self.duration(webSeconds) : "No data"
     ios = iosSeconds > 0 ? Self.duration(iosSeconds) : "No data"
@@ -2707,6 +2721,28 @@ private struct MobileUsageDisplay {
       .compactMap { $0 }
       .joined(separator: " ")
       .range(of: #"ios|iphone|ipad"#, options: [.regularExpression, .caseInsensitive]) != nil
+  }
+
+  private static func freshness(_ iso: String?, now: Date) -> String? {
+    guard let iso else {
+      return nil
+    }
+    let fractional = ISO8601DateFormatter()
+    fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let plain = ISO8601DateFormatter()
+    plain.formatOptions = [.withInternetDateTime]
+    guard let updatedAt = fractional.date(from: iso) ?? plain.date(from: iso) else {
+      return nil
+    }
+    let seconds = Int(now.timeIntervalSince(updatedAt))
+    if seconds < 90 {
+      return "just now"
+    }
+    let minutes = seconds / 60
+    if minutes < 60 {
+      return "\(minutes)m ago"
+    }
+    return "\(minutes / 60)h ago"
   }
 
   private static func duration(_ seconds: Int) -> String {

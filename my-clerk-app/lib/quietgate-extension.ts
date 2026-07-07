@@ -378,11 +378,14 @@ export async function recordExtensionSiteUsage(
     input,
   );
 
+  // Summarize for the reporting device's local day, not the server's.
+  const reportDate = input.sites.find((site) => site.date)?.date;
   return {
     device: context.device,
     siteUsageSummary: await getQuietGateSiteUsageSummaryForUser(
       context.supabase,
       context.token.user_id,
+      reportDate,
     ),
   };
 }
