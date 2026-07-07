@@ -142,6 +142,17 @@ final class ManagedAppsShieldTests: XCTestCase {
     XCTAssertEqual(decoded.managedAppsLimitMinutes, 45)
   }
 
+  func testSelectionNeedsRepickOnlyForCategoryOnlySelections() {
+    // Category-only selections stopped enforcing when raw category shields were
+    // removed (a category can contain Tortoise itself); the UI must ask for a
+    // re-pick so the expanded app tokens get captured.
+    XCTAssertTrue(ManagedAppsShield.selectionNeedsRepick(categoryCount: 2, applicationCount: 0, webDomainCount: 0))
+    XCTAssertFalse(ManagedAppsShield.selectionNeedsRepick(categoryCount: 2, applicationCount: 5, webDomainCount: 0))
+    XCTAssertFalse(ManagedAppsShield.selectionNeedsRepick(categoryCount: 2, applicationCount: 0, webDomainCount: 1))
+    XCTAssertFalse(ManagedAppsShield.selectionNeedsRepick(categoryCount: 0, applicationCount: 0, webDomainCount: 0))
+    XCTAssertFalse(ManagedAppsShield.selectionNeedsRepick(categoryCount: 0, applicationCount: 3, webDomainCount: 0))
+  }
+
   func testLegacySnapshotJSONWithoutLimitDecodesToNil() throws {
     // A snapshot persisted before Stage 2 has no managedAppsLimitMinutes key; the
     // JSON below carries exactly the non-defaulted required keys.

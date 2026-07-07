@@ -228,6 +228,20 @@ enum IOSEnforcementSharedStore {
   private static let thresholdEventsKey = "TortoiseIOSThresholdEvents"
   static let safariHeartbeatFreshInterval: TimeInterval = 15 * 60
 
+  /// Written by the ShieldConfiguration extension when iOS asks it to shield
+  /// Tortoise itself ("Tortoise can't block Tortoise"). The key string is
+  /// duplicated there — that target does not compile this file.
+  private static let selfShieldKey = "TortoiseSelfShieldDetectedAt"
+
+  /// Returns true exactly once per detected self-shield, clearing the flag.
+  static func consumeSelfShieldFlag() -> Bool {
+    guard defaults.object(forKey: selfShieldKey) != nil else {
+      return false
+    }
+    defaults.removeObject(forKey: selfShieldKey)
+    return true
+  }
+
   #if os(iOS)
   static func loadSelection() -> FamilyActivitySelection {
     guard let data = defaults.data(forKey: selectionKey),
@@ -354,12 +368,12 @@ enum IOSEnforcementShieldApplier {
   ) {
     store.shield.applications = selection.applicationTokens.nilIfEmpty
     store.shield.webDomains = selection.webDomainTokens.nilIfEmpty
-    store.shield.applicationCategories = selection.categoryTokens.isEmpty
-      ? nil
-      : .specific(selection.categoryTokens)
-    store.shield.webDomainCategories = selection.categoryTokens.isEmpty
-      ? nil
-      : .specific(selection.categoryTokens)
+    // NEVER shield raw category tokens: an opaque category can contain
+    // Tortoise itself, and iOS would silently keep closing Tortoise (no crash
+    // log). Category picks enforce via their member-app tokens, expanded at
+    // pick time with FamilyActivitySelection(includeEntireCategory: true).
+    store.shield.applicationCategories = nil
+    store.shield.webDomainCategories = nil
     store.webContent.blockedByFilter = adultWebFilterEnabled ? .auto() : nil
     store.media.denyExplicitContent = adultWebFilterEnabled ? true : nil
   }
@@ -373,12 +387,9 @@ enum IOSEnforcementShieldApplier {
   ) {
     store.shield.applications = selection.applicationTokens.nilIfEmpty
     store.shield.webDomains = selection.webDomainTokens.nilIfEmpty
-    store.shield.applicationCategories = selection.categoryTokens.isEmpty
-      ? nil
-      : .specific(selection.categoryTokens)
-    store.shield.webDomainCategories = selection.categoryTokens.isEmpty
-      ? nil
-      : .specific(selection.categoryTokens)
+    // See applySelection: raw category shields could catch Tortoise itself.
+    store.shield.applicationCategories = nil
+    store.shield.webDomainCategories = nil
   }
 
   static func clearAllStores() {

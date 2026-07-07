@@ -65,4 +65,15 @@ enum ManagedAppsShield {
   ) -> Bool {
     youtubeSelected || managedAppsSelected || adultFilterOn
   }
+
+  /// Raw category shields were removed (an opaque category can contain Tortoise
+  /// itself, and iOS would then close Tortoise — the "Tortoise can't block
+  /// Tortoise" invariant). Category picks now enforce through their member-app
+  /// tokens expanded at pick time. A selection holding ONLY category tokens
+  /// therefore enforces nothing and needs a re-pick.
+  static func selectionNeedsRepick(
+    categoryCount: Int, applicationCount: Int, webDomainCount: Int
+  ) -> Bool {
+    categoryCount > 0 && applicationCount == 0 && webDomainCount == 0
+  }
 }

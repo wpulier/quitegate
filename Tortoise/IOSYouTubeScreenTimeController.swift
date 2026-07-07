@@ -94,20 +94,48 @@ final class IOSEnforcementController: ObservableObject {
 
   init() {
     let persisted = Self.loadState()
-    selection = IOSEnforcementSharedStore.loadSelection()
-    managedAppsSelection = IOSEnforcementSharedStore.loadManagedAppsSelection()
+    selection = Self.expandedSelection(IOSEnforcementSharedStore.loadSelection())
+    managedAppsSelection = Self.expandedSelection(IOSEnforcementSharedStore.loadManagedAppsSelection())
     shieldingEnabled = persisted.shieldingEnabled
     authorizationMode = persisted.authorizationMode
     enforcementMode = persisted.enforcementMode
     dailyLimitMinutes = persisted.dailyLimitMinutes
     managedAppsLimitMinutes = persisted.managedAppsLimitMinutes
     safariExtensionAcknowledged = persisted.safariExtensionAcknowledged
+    repairSelfShieldIfNeeded()
     loadSafariSetupSnapshot()
     refreshAuthorizationState()
     refreshSetupStatus()
     applyCurrentMode()
     session = IOSEnforcementSharedStore.loadSnapshot().session
     expireSessionIfNeeded()
+  }
+
+  /// Rebuilds `base` with `includeEntireCategory: true` so future picker edits
+  /// expand category picks into their member-app tokens — those concrete tokens
+  /// are what gets shielded now that raw category shields are gone ("Tortoise
+  /// can't block Tortoise").
+  private static func expandedSelection(_ base: FamilyActivitySelection) -> FamilyActivitySelection {
+    var expanded = FamilyActivitySelection(includeEntireCategory: true)
+    expanded.applicationTokens = base.applicationTokens
+    expanded.categoryTokens = base.categoryTokens
+    expanded.webDomainTokens = base.webDomainTokens
+    return expanded
+  }
+
+  /// The ShieldConfiguration extension flags the App Group when iOS asked it to
+  /// shield Tortoise itself. Clear every selection that could have caused it —
+  /// deliberately bypassing the locked-session shrink guard: staying usable
+  /// outranks precommitment when the app is blocking itself.
+  private func repairSelfShieldIfNeeded() {
+    guard IOSEnforcementSharedStore.consumeSelfShieldFlag() else {
+      return
+    }
+    selection = FamilyActivitySelection(includeEntireCategory: true)
+    managedAppsSelection = FamilyActivitySelection(includeEntireCategory: true)
+    IOSEnforcementSharedStore.saveSelection(selection)
+    IOSEnforcementSharedStore.saveManagedAppsSelection(managedAppsSelection)
+    statusMessage = "A selection blocked Tortoise itself, so Tortoise cleared it. Pick your apps again."
   }
 
   var hasSelection: Bool {
@@ -130,6 +158,11 @@ final class IOSEnforcementController: ObservableObject {
     let apps = managedAppsSelection.applicationTokens.count
     let categories = managedAppsSelection.categoryTokens.count
     let domains = managedAppsSelection.webDomainTokens.count
+    if ManagedAppsShield.selectionNeedsRepick(
+      categoryCount: categories, applicationCount: apps, webDomainCount: domains
+    ) {
+      return "Category picks changed - tap Edit and re-select so each app is blocked directly."
+    }
     var parts: [String] = []
     if apps > 0 { parts.append("\(apps) app\(apps == 1 ? "" : "s")") }
     if categories > 0 { parts.append("\(categories) categor\(categories == 1 ? "y" : "ies")") }
@@ -398,6 +431,7 @@ final class IOSEnforcementController: ObservableObject {
   }
 
   func refreshSetupStatus() {
+    repairSelfShieldIfNeeded()
     refreshAuthorizationState()
     loadSafariSetupSnapshot()
     lastSetupCheckAt = Date()
@@ -453,7 +487,7 @@ final class IOSEnforcementController: ObservableObject {
 
   func clearSelection() {
     guard !sessionLockedActive else { return }
-    selection = FamilyActivitySelection()
+    selection = FamilyActivitySelection(includeEntireCategory: true)
     shieldingEnabled = false
   }
 
