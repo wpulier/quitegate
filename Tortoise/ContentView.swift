@@ -17,7 +17,6 @@ struct ContentView: View {
           model: model,
           clerk: clerk,
           initialSection: TortoiseScreenshot.initialSection,
-          showsGuidedSetup: TortoiseScreenshot.initialSection == .tuning,
           refresh: {}
         )
       } else if clerk.session == nil {
@@ -188,7 +187,6 @@ private struct TortoiseMobileShell: View {
   let accountLabel: String
   @ObservedObject var model: AccountHubModel
   let clerk: Clerk
-  let showsGuidedSetup: Bool
   let refresh: () async -> Void
 
   @State private var section: MobileSection
@@ -202,13 +200,11 @@ private struct TortoiseMobileShell: View {
     model: AccountHubModel,
     clerk: Clerk,
     initialSection: MobileSection = .usage,
-    showsGuidedSetup: Bool = true,
     refresh: @escaping () async -> Void
   ) {
     self.accountLabel = accountLabel
     self.model = model
     self.clerk = clerk
-    self.showsGuidedSetup = showsGuidedSetup
     self.refresh = refresh
     _section = State(initialValue: initialSection)
   }
@@ -221,19 +217,13 @@ private struct TortoiseMobileShell: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 18) {
           if section == .devices {
-            MobileIOSConnectionBanner(
-              screenTime: screenTime,
-              syncMessage: model.syncMessage,
-              retrySync: refresh,
-              fixSetup: { section = .devices }
-            )
-            if showsGuidedSetup && screenTime.connectionState != .connected {
-              MobileIOSGuidedSetupCard(screenTime: screenTime)
+            if screenTime.connectionState != .connected {
+              MobileIOSSetupCard(screenTime: screenTime)
             }
           } else if screenTime.connectionState != .connected {
             MobileSetupNudge(
               text: screenTime.connectionTitle,
-              progress: screenTime.setupProgressText
+              progress: screenTime.setupRemainingText
             ) {
               section = .devices
             }
@@ -447,7 +437,7 @@ private struct MobileUsageScreen: View {
       usageHero
 
       if selectedTab == .youtube {
-        MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
+        MobileIOSYouTubeLimitCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
       }
 
       if selectedTab == .all {
@@ -833,55 +823,26 @@ private struct MobileTuningScreen: View {
           }
         }
 
-        if selectedSite == TuningCatalog.youtubeSiteID {
-          MobileIOSYouTubeStatusCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
-
-          MobileCard {
-            VStack(alignment: .leading, spacing: 14) {
-              MobileSectionLabel("iOS enforcement")
-              MobileIOSPolicyRow(
-                systemImage: "play.rectangle.fill",
-                title: "YouTube app",
-                detail: screenTime.selection.applicationTokens.isEmpty ? "Select the native app in Screen Time." : "Selected through Screen Time."
-              )
-              MobileDivider()
-                .padding(.vertical, 2)
-              MobileIOSPolicyRow(
-                systemImage: "safari.fill",
-                title: "YouTube in Safari",
-                detail: screenTime.selection.webDomainTokens.isEmpty ? "Select youtube.com as a web domain." : "Selected through Screen Time."
-              )
-              MobileDivider()
-                .padding(.vertical, 2)
-              MobileIOSPolicyRow(
-                systemImage: "hand.raised.fill",
-                title: "Shielding",
-                detail: screenTime.shieldingEnabled ? "Selected targets are blocked on this iPhone." : "Ready when you turn on iOS blocking."
-              )
+        MobileCard {
+          VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+              Image(systemName: "shield.checkered")
+                .foregroundStyle(TortoiseDesign.green)
+              Text("Active on")
+                .font(.system(size: 13, weight: .bold))
+              Text("· browser profiles")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(TortoiseDesign.secondaryText)
             }
-          }
-        } else {
-          MobileCard {
-            VStack(alignment: .leading, spacing: 14) {
-              HStack(spacing: 8) {
-                Image(systemName: "shield.checkered")
-                  .foregroundStyle(TortoiseDesign.green)
-                Text("Active on")
-                  .font(.system(size: 13, weight: .bold))
-                Text("· browser profiles")
-                  .font(.system(size: 13, weight: .bold))
-                  .foregroundStyle(TortoiseDesign.secondaryText)
-              }
-              LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
-                if browserProfiles.isEmpty {
-                  MobileEmptyState(
-                    title: "No browser profiles yet",
-                    detail: "Install a browser helper, connect it to this Tortoise account, then Safari/browser tuning status will appear here."
-                  )
-                } else {
-                  ForEach(browserProfiles) { profile in
-                    MobileScopeChip(avatar: profile.avatar, title: profile.title)
-                  }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
+              if browserProfiles.isEmpty {
+                MobileEmptyState(
+                  title: "No browser profiles yet",
+                  detail: "Connect one from the Devices tab."
+                )
+              } else {
+                ForEach(browserProfiles) { profile in
+                  MobileScopeChip(avatar: profile.avatar, title: profile.title)
                 }
               }
             }
@@ -966,11 +927,7 @@ private struct MobileDevicesScreen: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
-      MobileHeader(
-        kicker: nil,
-        title: "Devices",
-        subtitle: "One Tortoise profile. This iPhone plus every browser profile, kept in sync."
-      )
+      MobileHeader(kicker: nil, title: "Devices")
 
       MobileCard {
         HStack(spacing: 12) {
@@ -997,13 +954,13 @@ private struct MobileDevicesScreen: View {
       MobileSectionLabel("Devices")
       MobileCard {
         VStack(spacing: 0) {
-          MobileIOSDeviceStatusRow(screenTime: screenTime, syncMessage: model.syncMessage)
+          MobileIOSDeviceStatusRow(screenTime: screenTime)
           if deviceRows.isEmpty {
             MobileDivider()
               .padding(.vertical, 13)
             MobileEmptyState(
               title: "No other devices yet",
-              detail: "Install Tortoise on the Mac or connect a browser helper with this account."
+              detail: "Install Tortoise on your Mac to link it."
             )
           } else {
             ForEach(deviceRows) { row in
@@ -1021,7 +978,7 @@ private struct MobileDevicesScreen: View {
           if browserHubRows.isEmpty {
             MobileEmptyState(
               title: "No browser profiles yet",
-              detail: "Connect the browser helper from the web setup page to sync usage and tuning status."
+              detail: "Add one with the button below."
             )
           } else {
             ForEach(Array(browserHubRows.enumerated()), id: \.element.id) { index, row in
@@ -1213,110 +1170,69 @@ private struct MobileSetupNudge: View {
   }
 }
 
-private struct MobileIOSConnectionBanner: View {
-  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
-  let syncMessage: String
-  let retrySync: () async -> Void
-  let fixSetup: () -> Void
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      HStack(alignment: .top, spacing: 12) {
-        Image(systemName: screenTime.connectionState.systemImage)
-          .font(.system(size: 18, weight: .bold))
-          .foregroundStyle(screenTime.connectionState.tint)
-          .frame(width: 36, height: 36)
-          .background(screenTime.connectionState.tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-        VStack(alignment: .leading, spacing: 4) {
-          HStack(spacing: 8) {
-            Text(screenTime.connectionTitle)
-              .font(.system(size: 15, weight: .bold))
-              .foregroundStyle(TortoiseDesign.primaryText)
-            MobileIOSStatusBadge(text: screenTime.setupProgressText, tint: screenTime.connectionState.tint)
-          }
-          Text(screenTime.connectionDetail)
-            .font(.system(size: 12.5))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-            .fixedSize(horizontal: false, vertical: true)
-          Text(syncMessage)
-            .font(.system(size: 11.5))
-            .foregroundStyle(TortoiseDesign.tertiaryText)
-            .lineLimit(2)
-        }
-
-        Spacer(minLength: 0)
-      }
-
-      HStack(spacing: 8) {
-        Button {
-          fixSetup()
-        } label: {
-          Label(screenTime.connectionState == .connected ? "View setup" : "Fix setup", systemImage: "list.bullet.clipboard")
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
-
-        Button {
-          Task {
-            await retrySync()
-            screenTime.refreshSetupStatus()
-          }
-        } label: {
-          Label("Recheck", systemImage: "arrow.triangle.2.circlepath")
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-      }
-    }
-    .padding(14)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(screenTime.connectionState.tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    .overlay {
-      RoundedRectangle(cornerRadius: 16, style: .continuous)
-        .strokeBorder(screenTime.connectionState.tint.opacity(0.35))
-    }
-  }
-}
-
-private struct MobileIOSGuidedSetupCard: View {
+/// The single "get connected" card: four rows, one action each, no prose.
+/// Replaces the old banner + seven-step checklist pair — once connected the
+/// device row carries the status and this card disappears entirely.
+private struct MobileIOSSetupCard: View {
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   @State private var pickerPresented = false
 
+  private static let steps = IOSEnforcementController.userSetupSteps
+
   var body: some View {
     MobileCard {
-      VStack(alignment: .leading, spacing: 16) {
-        HStack(alignment: .top, spacing: 12) {
-          MobileAvatar(text: "ON", size: 42, background: TortoiseDesign.green, foreground: .white, cornerRadius: 10)
-          VStack(alignment: .leading, spacing: 4) {
-            Text("Turn on iOS")
-              .font(.system(size: 18, weight: .bold))
-              .foregroundStyle(TortoiseDesign.primaryText)
-            Text("Finish each setup item once. Tortoise will keep showing exactly what is connected and what still needs attention.")
-              .font(.system(size: 13))
-              .foregroundStyle(TortoiseDesign.secondaryText)
+      VStack(alignment: .leading, spacing: 14) {
+        HStack(spacing: 8) {
+          Text("Set up this iPhone")
+            .font(.system(size: 17, weight: .bold))
+            .foregroundStyle(TortoiseDesign.primaryText)
+          Spacer()
+          Text(screenTime.setupProgressText)
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+          Button {
+            screenTime.refreshSetupStatus()
+          } label: {
+            Image(systemName: "arrow.triangle.2.circlepath")
+              .font(.system(size: 12, weight: .bold))
+          }
+          .buttonStyle(.bordered)
+          .controlSize(.small)
+        }
+
+        if screenTime.connectionState == .repairRequired {
+          Text(screenTime.repairDetail)
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.red)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+
+        if screenTime.authorizationState != .approved {
+          HStack(spacing: 8) {
+            ForEach(IOSEnforcementAuthorizationMode.allCases) { mode in
+              Button {
+                screenTime.authorizationMode = mode
+              } label: {
+                Label(mode.title, systemImage: mode.systemImage)
+                  .font(.system(size: 12, weight: .bold))
+                  .lineLimit(1)
+                  .minimumScaleFactor(0.75)
+                  .frame(maxWidth: .infinity)
+              }
+              .buttonStyle(.bordered)
+              .tint(screenTime.authorizationMode == mode ? TortoiseDesign.accent : TortoiseDesign.secondaryText)
+            }
+          }
+          if screenTime.authorizationMode == .child {
+            Text("Needs Family Sharing and a child Apple Account.")
+              .font(.system(size: 12))
+              .foregroundStyle(TortoiseDesign.orange)
               .fixedSize(horizontal: false, vertical: true)
           }
         }
 
-        HStack(spacing: 8) {
-          ForEach(IOSEnforcementAuthorizationMode.allCases) { mode in
-            Button {
-              screenTime.authorizationMode = mode
-            } label: {
-              Label(mode.title, systemImage: mode.systemImage)
-                .font(.system(size: 12, weight: .bold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .tint(screenTime.authorizationMode == mode ? TortoiseDesign.accent : TortoiseDesign.secondaryText)
-          }
-        }
-
         VStack(spacing: 0) {
-          ForEach(Array(IOSEnforcementSetupStep.allCases.enumerated()), id: \.element.id) { index, step in
+          ForEach(Array(Self.steps.enumerated()), id: \.element.id) { index, step in
             if index > 0 {
               MobileDivider()
                 .padding(.vertical, 11)
@@ -1324,19 +1240,13 @@ private struct MobileIOSGuidedSetupCard: View {
             MobileIOSSetupStepRow(
               step: step,
               status: screenTime.setupStatus(for: step),
-              detail: detail(for: step),
+              hint: hint(for: step),
               actionTitle: actionTitle(for: step),
-              isDisabled: step == .targets && screenTime.sessionLockedActive,
+              isCurrent: step == currentStep,
+              isDisabled: isDisabled(step),
               action: { perform(step) }
             )
           }
-        }
-
-        if screenTime.authorizationMode == .child && screenTime.authorizationState != .approved {
-          Text("Child device setup requires Family Sharing and a child Apple Account before Screen Time authorization can finish.")
-            .font(.system(size: 12))
-            .foregroundStyle(TortoiseDesign.orange)
-            .fixedSize(horizontal: false, vertical: true)
         }
       }
     }
@@ -1346,33 +1256,37 @@ private struct MobileIOSGuidedSetupCard: View {
     }
   }
 
-  private func detail(for step: IOSEnforcementSetupStep) -> String {
+  /// The first unfinished step gets the prominent button — the eye lands on
+  /// exactly one next action.
+  private var currentStep: IOSEnforcementSetupStep? {
+    Self.steps.first { screenTime.setupStatus(for: $0) != .complete }
+  }
+
+  /// One short line, and only when the next move isn't obvious from the button.
+  private func hint(for step: IOSEnforcementSetupStep) -> String? {
     switch step {
-    case .account:
-      return "Signed in and ready to sync this iPhone."
-    case .authorizationMode:
-      return "Use My iPhone for self-control or Child device for Family Sharing setup."
-    case .screenTimePermission:
-      return screenTime.screenTimeStatusTitle
-    case .targets:
-      return screenTime.targetStatusTitle
     case .safariExtension:
-      return screenTime.safariStatusTitle
-    case .mode:
-      return screenTime.shieldingEnabled ? "\(screenTime.enforcementMode.rawValue.capitalized) is on." : "Turn on Focus or Strict after targets are selected."
-    case .sync:
-      return screenTime.syncHealth
+      switch screenTime.safariExtensionState {
+      case .enabledWaitingForHeartbeat:
+        return "Open Safari once"
+      case .failed:
+        return "Check failed — retry"
+      default:
+        return nil
+      }
+    case .screenTimePermission:
+      return screenTime.authorizationState == .denied ? "Blocked in Settings" : nil
+    default:
+      return nil
     }
   }
 
   private func actionTitle(for step: IOSEnforcementSetupStep) -> String? {
     switch step {
-    case .account, .authorizationMode:
-      return nil
     case .screenTimePermission:
       return screenTime.authorizationState == .approved ? nil : (screenTime.authorizationState == .denied ? "Retry" : "Allow")
     case .targets:
-      return screenTime.authorizationState == .approved ? (screenTime.hasSelection ? "Edit" : "Select") : nil
+      return screenTime.authorizationState == .approved ? (screenTime.hasSelection ? "Edit" : "Choose") : nil
     case .safariExtension:
       switch screenTime.safariExtensionState {
       case .connected:
@@ -1380,12 +1294,23 @@ private struct MobileIOSGuidedSetupCard: View {
       case .enabledWaitingForHeartbeat:
         return "Verify"
       default:
-        return "Open"
+        return "Enable"
       }
     case .mode:
       return screenTime.shieldingEnabled ? nil : "Turn on"
-    case .sync:
-      return "Recheck"
+    case .account, .authorizationMode, .sync:
+      return nil
+    }
+  }
+
+  private func isDisabled(_ step: IOSEnforcementSetupStep) -> Bool {
+    switch step {
+    case .targets:
+      return screenTime.sessionLockedActive
+    case .mode:
+      return !screenTime.canTurnOn && !screenTime.shieldingEnabled
+    default:
+      return false
     }
   }
 
@@ -1415,39 +1340,45 @@ private struct MobileIOSGuidedSetupCard: View {
 private struct MobileIOSSetupStepRow: View {
   let step: IOSEnforcementSetupStep
   let status: IOSEnforcementSetupStatus
-  let detail: String
+  let hint: String?
   let actionTitle: String?
+  var isCurrent: Bool = false
   var isDisabled: Bool = false
   let action: () -> Void
 
   var body: some View {
     HStack(alignment: .center, spacing: 11) {
-      Image(systemName: status.systemImage(default: step.systemImage))
+      Image(systemName: status.systemImage(default: "circle"))
         .font(.system(size: 16, weight: .semibold))
-        .foregroundStyle(status.tint)
+        .foregroundStyle(status == .needsAction ? TortoiseDesign.tertiaryText : status.tint)
         .frame(width: 24)
 
-      VStack(alignment: .leading, spacing: 3) {
-        HStack(spacing: 7) {
-          Text(step.title)
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(TortoiseDesign.primaryText)
-          MobileIOSStatusBadge(text: status.title, tint: status.tint)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(step.title)
+          .font(.system(size: 14, weight: .semibold))
+          .foregroundStyle(status == .complete ? TortoiseDesign.secondaryText : TortoiseDesign.primaryText)
+        if let hint {
+          Text(hint)
+            .font(.system(size: 12))
+            .foregroundStyle(status == .failed ? TortoiseDesign.red : TortoiseDesign.secondaryText)
         }
-        Text(detail)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-          .fixedSize(horizontal: false, vertical: true)
       }
 
       Spacer(minLength: 8)
 
       if let actionTitle {
-        Button(actionTitle, action: action)
-          .font(.system(size: 12, weight: .bold))
-          .buttonStyle(.bordered)
-          .controlSize(.small)
-          .disabled(isDisabled)
+        Group {
+          if isCurrent {
+            Button(actionTitle, action: action)
+              .buttonStyle(.borderedProminent)
+          } else {
+            Button(actionTitle, action: action)
+              .buttonStyle(.bordered)
+          }
+        }
+        .font(.system(size: 12, weight: .bold))
+        .controlSize(.small)
+        .disabled(isDisabled)
       }
     }
   }
@@ -1455,7 +1386,6 @@ private struct MobileIOSSetupStepRow: View {
 
 private struct MobileIOSDeviceStatusRow: View {
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
-  let syncMessage: String
 
   var body: some View {
     HStack(alignment: .top, spacing: 12) {
@@ -1464,27 +1394,16 @@ private struct MobileIOSDeviceStatusRow: View {
         .frame(width: 36, height: 36)
         .background(screenTime.connectionState.tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-      VStack(alignment: .leading, spacing: 8) {
+      VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 6) {
           Text("This iPhone")
             .font(.system(size: 14, weight: .bold))
-          Text("CURRENT")
-            .font(.system(size: 9, weight: .bold))
-            .foregroundStyle(TortoiseDesign.accent)
           MobileIOSStatusBadge(text: screenTime.connectionState.shortTitle, tint: screenTime.connectionState.tint)
         }
         Text(screenTime.deviceStatusSubtitle)
           .font(.system(size: 12))
           .foregroundStyle(TortoiseDesign.secondaryText)
           .fixedSize(horizontal: false, vertical: true)
-        HStack(spacing: 8) {
-          MobileIOSStatusBadge(text: screenTime.screenTimeStatusTitle, tint: screenTime.authorizationState == .approved ? TortoiseDesign.green : TortoiseDesign.orange)
-          MobileIOSStatusBadge(text: screenTime.safariStateTitle, tint: screenTime.safariExtensionConnected ? TortoiseDesign.green : TortoiseDesign.orange)
-        }
-        Text(syncMessage)
-          .font(.system(size: 11.5))
-          .foregroundStyle(TortoiseDesign.tertiaryText)
-          .lineLimit(2)
       }
     }
   }
@@ -1506,245 +1425,38 @@ private struct MobileIOSStatusBadge: View {
   }
 }
 
-private struct MobileIOSYouTubeStatusCard: View {
+/// Compact YouTube daily-limit control for the Usage tab. Setup lives on the
+/// Devices card and blocking on the Block tab — this card is just the number.
+private struct MobileIOSYouTubeLimitCard: View {
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   var setDailyLimit: ((Int) -> Void)? = nil
-  @State private var pickerPresented = false
 
   var body: some View {
     MobileCard {
-      VStack(alignment: .leading, spacing: 16) {
-        HStack(alignment: .top, spacing: 12) {
-          MobileAvatar(text: "iOS", size: 42, background: TortoiseDesign.accent, foreground: .white, cornerRadius: 10)
-          VStack(alignment: .leading, spacing: 4) {
-            Text("Turn on iOS protection")
-              .font(.system(size: 17, weight: .bold))
-              .foregroundStyle(TortoiseDesign.primaryText)
-            Text("Screen Time blocks selected apps/sites. Safari handles page tuners and web usage.")
-              .font(.system(size: 13))
-              .foregroundStyle(TortoiseDesign.secondaryText)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-          Spacer(minLength: 8)
-          IOSScreenTimeBadge(state: screenTime.authorizationState)
+      HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 3) {
+          Text("Daily limit")
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(TortoiseDesign.primaryText)
+          Text(screenTime.shieldingEnabled ? "\(screenTime.enforcementMode.rawValue.capitalized) is on" : "For your chosen apps")
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.secondaryText)
         }
-
+        Spacer()
         HStack(spacing: 8) {
-          ForEach(IOSEnforcementAuthorizationMode.allCases) { mode in
-            Button {
-              screenTime.authorizationMode = mode
-            } label: {
-              Label(mode.title, systemImage: mode.systemImage)
-                .font(.system(size: 12, weight: .bold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .tint(screenTime.authorizationMode == mode ? TortoiseDesign.accent : TortoiseDesign.secondaryText)
+          MobileStepperButton(systemImage: "minus") {
+            adjustDailyLimit(by: -5)
           }
-        }
-
-        HStack(spacing: 9) {
-          MobileIOSCoverageMetric(title: "Selected", value: screenTime.coverageSummary)
-          MobileIOSCoverageMetric(title: "Mode", value: screenTime.enforcementMode.rawValue.capitalized)
-          MobileIOSCoverageMetric(title: "Safari", value: screenTime.safariStateTitle)
-        }
-
-        Text(screenTime.statusMessage)
-          .font(.system(size: 12.5))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-          .fixedSize(horizontal: false, vertical: true)
-
-        HStack(spacing: 9) {
-          if screenTime.authorizationState != .approved {
-            Button {
-              Task {
-                await screenTime.requestAuthorization()
-              }
-            } label: {
-              Label("Allow Screen Time", systemImage: "checkmark.shield")
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
+          .disabled(screenTime.sessionLockedActive)
+          Text("\(screenTime.dailyLimitMinutes)m")
+            .font(.system(size: 14, weight: .bold))
+            .frame(width: 48)
+          MobileStepperButton(systemImage: "plus") {
+            adjustDailyLimit(by: 5)
           }
-
-          Button {
-            guard !screenTime.sessionLockedActive else { return }
-            pickerPresented = true
-          } label: {
-            Label(screenTime.hasSelection ? "Edit targets" : "Select targets", systemImage: "plus")
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.borderedProminent)
-          .disabled(screenTime.authorizationState != .approved || screenTime.sessionLockedActive)
-        }
-
-        HStack(spacing: 9) {
-          Button {
-            if screenTime.shieldingEnabled {
-              screenTime.turnOff()
-            } else {
-              screenTime.turnOn()
-            }
-          } label: {
-            Label(screenTime.shieldingEnabled ? "Turn off" : "Turn on", systemImage: screenTime.shieldingEnabled ? "power" : "shield.checkered")
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.borderedProminent)
-          .disabled((!screenTime.canTurnOn && !screenTime.shieldingEnabled) || screenTime.sessionLockedActive)
-
-          Button {
-            screenTime.refreshSetupStatus()
-          } label: {
-            Label("Recheck", systemImage: "arrow.triangle.2.circlepath")
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.bordered)
-        }
-
-        MobileDivider()
-
-        VStack(alignment: .leading, spacing: 10) {
-          MobileIOSPolicyRow(
-            systemImage: "safari",
-            title: screenTime.safariStateTitle,
-            detail: safariExtensionDetail
-          )
-          HStack(spacing: 8) {
-            Button {
-              screenTime.openSafariExtensionSettings()
-            } label: {
-              Label("Safari settings", systemImage: "gearshape")
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-
-            Button {
-              screenTime.openSafariVerificationPage()
-            } label: {
-              Label("Verify", systemImage: "safari")
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-          }
-
-          if screenTime.safariExtensionState == .unavailable || screenTime.safariExtensionState == .failed {
-            HStack(spacing: 12) {
-              Text("Manual fallback")
-                .font(.system(size: 12.5, weight: .bold))
-              Spacer()
-              MobileSwitch(
-                isOn: Binding(
-                  get: { screenTime.safariExtensionAcknowledged },
-                  set: { screenTime.safariExtensionAcknowledged = $0 }
-                )
-              )
-            }
-            Text(screenTime.safariManualSetupText)
-              .font(.system(size: 11.5))
-              .foregroundStyle(TortoiseDesign.secondaryText)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-        }
-
-        HStack(spacing: 10) {
-          VStack(alignment: .leading, spacing: 3) {
-            Text("Daily selected-target limit")
-              .font(.system(size: 13, weight: .bold))
-            Text(screenTime.limitStatusTitle)
-              .font(.system(size: 12))
-              .foregroundStyle(TortoiseDesign.secondaryText)
-          }
-          Spacer()
-          HStack(spacing: 8) {
-            MobileStepperButton(systemImage: "minus") {
-              adjustDailyLimit(by: -5)
-            }
-            .disabled(screenTime.sessionLockedActive)
-            Text("\(screenTime.dailyLimitMinutes)m")
-              .font(.system(size: 13, weight: .bold))
-              .frame(width: 48)
-            MobileStepperButton(systemImage: "plus") {
-              adjustDailyLimit(by: 5)
-            }
-            .disabled(screenTime.sessionLockedActive)
-          }
-        }
-
-        VStack(spacing: 0) {
-          MobileIOSEnforcementChecklistRow(
-            systemImage: "checkmark.shield",
-            title: "Screen Time",
-            detail: screenTime.screenTimeStatusTitle,
-            isComplete: screenTime.authorizationState == .approved
-          )
-          MobileDivider()
-            .padding(.vertical, 11)
-          MobileIOSEnforcementChecklistRow(
-            systemImage: "square.grid.2x2",
-            title: "Targets",
-            detail: screenTime.targetStatusTitle,
-            isComplete: screenTime.hasSelection
-          )
-          MobileDivider()
-            .padding(.vertical, 11)
-          MobileIOSEnforcementChecklistRow(
-            systemImage: "safari",
-            title: "Safari extension",
-            detail: screenTime.safariStatusTitle,
-            isComplete: screenTime.safariExtensionConnected
-          )
-          MobileDivider()
-            .padding(.vertical, 11)
-          MobileIOSEnforcementChecklistRow(
-            systemImage: "calendar.badge.clock",
-            title: "Schedules",
-            detail: screenTime.schedulesStatusTitle,
-            isComplete: screenTime.scheduleActive
-          )
-          MobileDivider()
-            .padding(.vertical, 11)
-          MobileIOSEnforcementChecklistRow(
-            systemImage: "arrow.triangle.2.circlepath",
-            title: "Sync",
-            detail: screenTime.syncHealth,
-            isComplete: screenTime.syncHealth.contains("current")
-          )
-        }
-
-        if screenTime.hasSelection {
-          Button(role: .destructive) {
-            screenTime.clearSelection()
-          } label: {
-            Label("Clear iOS targets", systemImage: "trash")
-              .font(.system(size: 12.5, weight: .bold))
-          }
-          .buttonStyle(.bordered)
           .disabled(screenTime.sessionLockedActive)
         }
       }
-    }
-    .familyActivityPicker(isPresented: $pickerPresented, selection: $screenTime.selection)
-    .onAppear {
-      screenTime.refreshSetupStatus()
-    }
-  }
-
-  private var safariExtensionDetail: String {
-    switch screenTime.safariExtensionState {
-    case .connected:
-      return "Tortoise has seen the Safari extension recently."
-    case .enabledWaitingForHeartbeat:
-      return "Open YouTube in Safari once so Tortoise can verify the extension heartbeat."
-    case .disabled:
-      return "Turn on Tortoise Safari in Settings, then return and recheck."
-    case .unavailable:
-      return "Use the manual path below on this iOS version, then open YouTube in Safari."
-    case .failed:
-      return screenTime.safariExtensionStatusError ?? "Tortoise could not read Safari extension status."
-    case .unknown:
-      return "Tortoise is checking Safari extension status."
     }
   }
 
@@ -1753,33 +1465,6 @@ private struct MobileIOSYouTubeStatusCard: View {
     let nextMinutes = min(max(screenTime.dailyLimitMinutes + delta, 5), 480)
     screenTime.dailyLimitMinutes = nextMinutes
     setDailyLimit?(nextMinutes)
-  }
-}
-
-private struct MobileIOSEnforcementChecklistRow: View {
-  let systemImage: String
-  let title: String
-  let detail: String
-  let isComplete: Bool
-
-  var body: some View {
-    HStack(spacing: 11) {
-      Image(systemName: isComplete ? "checkmark.circle.fill" : systemImage)
-        .font(.system(size: 16, weight: .semibold))
-        .foregroundStyle(isComplete ? TortoiseDesign.green : TortoiseDesign.secondaryText)
-        .frame(width: 24)
-      VStack(alignment: .leading, spacing: 2) {
-        Text(title)
-          .font(.system(size: 13, weight: .bold))
-          .foregroundStyle(TortoiseDesign.primaryText)
-        Text(detail)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-          .lineLimit(2)
-          .minimumScaleFactor(0.82)
-      }
-      Spacer()
-    }
   }
 }
 
@@ -1794,66 +1479,6 @@ private struct MobileStepperButton: View {
         .frame(width: 28, height: 28)
     }
     .buttonStyle(.bordered)
-  }
-}
-
-private struct IOSScreenTimeBadge: View {
-  let state: IOSScreenTimeAuthorizationState
-
-  var body: some View {
-    Text(state.title.uppercased())
-      .font(.system(size: 9, weight: .bold))
-      .foregroundStyle(state == .approved ? TortoiseDesign.green : TortoiseDesign.orange)
-      .lineLimit(1)
-      .minimumScaleFactor(0.7)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 5)
-      .background(Color.white.opacity(0.08), in: Capsule())
-  }
-}
-
-private struct MobileIOSCoverageMetric: View {
-  let title: String
-  let value: String
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 3) {
-      Text(title.uppercased())
-        .font(.system(size: 10, weight: .bold))
-        .foregroundStyle(TortoiseDesign.tertiaryText)
-      Text(value)
-        .font(.system(size: 13, weight: .bold))
-        .foregroundStyle(TortoiseDesign.primaryText)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(12)
-    .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-  }
-}
-
-private struct MobileIOSPolicyRow: View {
-  let systemImage: String
-  let title: String
-  let detail: String
-
-  var body: some View {
-    HStack(spacing: 12) {
-      Image(systemName: systemImage)
-        .font(.system(size: 16, weight: .semibold))
-        .foregroundStyle(TortoiseDesign.accent)
-        .frame(width: 36, height: 36)
-        .background(TortoiseDesign.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-      VStack(alignment: .leading, spacing: 3) {
-        Text(title)
-          .font(.system(size: 14, weight: .bold))
-          .foregroundStyle(TortoiseDesign.primaryText)
-        Text(detail)
-          .font(.system(size: 12.5))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-          .fixedSize(horizontal: false, vertical: true)
-      }
-    }
   }
 }
 
@@ -2452,13 +2077,13 @@ private extension IOSEnforcementSetupStep {
     case .authorizationMode:
       return "Setup type"
     case .screenTimePermission:
-      return "Screen Time"
+      return "Allow Screen Time"
     case .targets:
-      return "Targets"
+      return "Choose apps"
     case .safariExtension:
       return "Safari extension"
     case .mode:
-      return "Turn on"
+      return "Turn on protection"
     case .sync:
       return "Verify"
     }

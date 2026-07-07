@@ -204,13 +204,18 @@ final class IOSEnforcementController: ObservableObject {
 
   var coverageSummary: String {
     if !hasSelection {
-      return "No iOS targets selected"
+      return "Nothing chosen yet"
     }
 
-    let appText = "\(selection.applicationTokens.count) app\(selection.applicationTokens.count == 1 ? "" : "s")"
-    let categoryText = "\(selection.categoryTokens.count) categor\(selection.categoryTokens.count == 1 ? "y" : "ies")"
-    let domainText = "\(selection.webDomainTokens.count) Safari domain\(selection.webDomainTokens.count == 1 ? "" : "s")"
-    return "\(appText) · \(categoryText) · \(domainText)"
+    // Only the non-zero pieces — "2 apps · 1 site", never "0 categories".
+    var parts: [String] = []
+    let apps = selection.applicationTokens.count
+    let categories = selection.categoryTokens.count
+    let domains = selection.webDomainTokens.count
+    if apps > 0 { parts.append("\(apps) app\(apps == 1 ? "" : "s")") }
+    if categories > 0 { parts.append("\(categories) categor\(categories == 1 ? "y" : "ies")") }
+    if domains > 0 { parts.append("\(domains) site\(domains == 1 ? "" : "s")") }
+    return parts.joined(separator: " · ")
   }
 
   var canApplyShielding: Bool {
@@ -265,45 +270,44 @@ final class IOSEnforcementController: ObservableObject {
     return .setupRequired
   }
 
+  /// The steps a person actually performs; account/mode/sync resolve on their
+  /// own and would only pad the checklist.
+  static let userSetupSteps: [IOSEnforcementSetupStep] = [
+    .screenTimePermission, .targets, .safariExtension, .mode,
+  ]
+
   var setupProgressText: String {
-    let completeCount = IOSEnforcementSetupStep.allCases.filter { setupStatus(for: $0) == .complete }.count
-    return "\(completeCount)/\(IOSEnforcementSetupStep.allCases.count) ready"
+    let completeCount = Self.userSetupSteps.filter { setupStatus(for: $0) == .complete }.count
+    return "\(completeCount) of \(Self.userSetupSteps.count)"
+  }
+
+  var setupRemainingText: String {
+    let remaining = Self.userSetupSteps.filter { setupStatus(for: $0) != .complete }.count
+    if remaining == 0 {
+      return "Almost done"
+    }
+    return remaining == 1 ? "1 step left" : "\(remaining) steps left"
   }
 
   var connectionTitle: String {
     switch connectionState {
     case .connected:
-      return "iOS connected"
-    case .partial:
-      return "iOS partially connected"
-    case .setupRequired:
-      return "iOS setup needed"
+      return "iPhone connected"
+    case .partial, .setupRequired:
+      return "Finish setup"
     case .repairRequired:
-      return "iOS needs repair"
-    }
-  }
-
-  var connectionDetail: String {
-    switch connectionState {
-    case .connected:
-      return "Screen Time, selected targets, Safari tuners, monitoring, and local policy are active."
-    case .partial:
-      return "Some pieces are ready. Finish the checklist so app blocking and Safari tuning both work."
-    case .setupRequired:
-      return "Finish Screen Time permission, target selection, Safari extension, and Turn On."
-    case .repairRequired:
-      return repairDetail
+      return "Needs attention"
     }
   }
 
   var deviceStatusSubtitle: String {
     switch connectionState {
     case .connected:
-      return "\(enforcementMode.rawValue.capitalized) active · \(coverageSummary) · \(safariStateTitle)"
+      return "\(enforcementMode.rawValue.capitalized) active · \(coverageSummary)"
     case .partial:
-      return "\(enforcementMode.rawValue.capitalized) partially active · \(coverageSummary) · \(safariStateTitle)"
+      return "\(enforcementMode.rawValue.capitalized) partly active · \(coverageSummary)"
     case .setupRequired:
-      return "Finish iOS setup · \(coverageSummary) · \(safariStateTitle)"
+      return "Not protecting yet"
     case .repairRequired:
       return repairDetail
     }
