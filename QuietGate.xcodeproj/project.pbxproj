@@ -72,6 +72,7 @@
 		657F2FFA32B7C076D8B89CEA /* ReadinessCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */; };
 		67A953314D5B55EA2D0ACED0 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */; };
 		6AED7A3DAC4ACF70624A1396 /* ConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A8461B44A79C10190F70D06 /* ConnectionStatus.swift */; };
+		709C86648FA63A6B4CD54B57 /* BlockingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59EFB3CA4C513BC24BDF171 /* BlockingView.swift */; };
 		7204B51798C454A01FCB3FD5 /* blocked.js in Resources */ = {isa = PBXBuildFile; fileRef = 5B954448C3C9FEF37E3D0652 /* blocked.js */; };
 		7409F88899BD8DDEE7E5A15E /* BrowserTuningSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE2CBCB3FB5414A38AC61AF /* BrowserTuningSettings.swift */; };
 		787C9B97CFD44F022DB47709 /* MacAccountStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99F4300F673A12FBD2C06C0 /* MacAccountStore.swift */; };
@@ -322,6 +323,7 @@
 		B1C9E1289903D976640AFF9D /* AccessModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessModeTests.swift; sourceTree = "<group>"; };
 		B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionMode.swift; sourceTree = "<group>"; };
 		B4D20478914A15F7CBF7D743 /* LegacyProviderContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyProviderContracts.swift; sourceTree = "<group>"; };
+		B59EFB3CA4C513BC24BDF171 /* BlockingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockingView.swift; sourceTree = "<group>"; };
 		B99F4300F673A12FBD2C06C0 /* MacAccountStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAccountStore.swift; sourceTree = "<group>"; };
 		BB64C9620DA049F321B8E848 /* PresetUnificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetUnificationTests.swift; sourceTree = "<group>"; };
 		BC969185D064186ACC51A71B /* icon-128.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-128.png"; sourceTree = "<group>"; };
@@ -531,6 +533,7 @@
 			children = (
 				912A7297B8C50F7E12F7199D /* AddSheetView.swift */,
 				48D70E7CB61ED25567925555 /* AppsView.swift */,
+				B59EFB3CA4C513BC24BDF171 /* BlockingView.swift */,
 				CB264978DFD0DC526DD449C0 /* BlockRulesSection.swift */,
 				6B4022A534497D10734ECFB8 /* ContentView.swift */,
 				04DD9329A65855473A7041DE /* MenuBarContentView.swift */,
@@ -1145,6 +1148,7 @@
 				799B3C5F36B10074888C281D /* BlockRules.swift in Sources */,
 				34A519910B35F34F15DB12D4 /* BlockRulesSection.swift in Sources */,
 				E9BF6A2093772B01DBE19349 /* BlockingProvider.swift in Sources */,
+				709C86648FA63A6B4CD54B57 /* BlockingView.swift in Sources */,
 				EEA63F96F74571180223BDC4 /* BrowserBlockingProvider.swift in Sources */,
 				83E70B835C2060EE16A968CD /* BrowserExtensionBridge.swift in Sources */,
 				92C3376EF7E3986A71EC3341 /* BrowserTuningFeature.swift in Sources */,

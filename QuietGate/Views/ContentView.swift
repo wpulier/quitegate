@@ -5,6 +5,7 @@ import SwiftUI
 enum AppSection: String, CaseIterable, Identifiable {
   case devices
   case tuning
+  case blocking
   case usage
 
   var id: String { rawValue }
@@ -13,6 +14,7 @@ enum AppSection: String, CaseIterable, Identifiable {
     switch self {
     case .devices: return "Devices"
     case .tuning: return "Tune"
+    case .blocking: return "Block"
     case .usage: return "Usage"
     }
   }
@@ -21,6 +23,7 @@ enum AppSection: String, CaseIterable, Identifiable {
     switch self {
     case .devices: return "macbook.and.iphone"
     case .tuning: return "slider.horizontal.3"
+    case .blocking: return "shield"
     case .usage: return "chart.bar"
     }
   }
@@ -126,6 +129,8 @@ struct ContentView: View {
       ProtectionView()
     case .tuning:
       TuningView()
+    case .blocking:
+      BlockingView()
     case .usage:
       QuietGateUsageView()
     }
