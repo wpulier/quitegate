@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
-APP_NAME="QuietGate"
+APP_NAME="Tortoise"
 PUBLIC_DMG_NAME="Tortoise"
 RUN_TESTS=1
 NOTARY_PROFILE="${QUIETGATE_NOTARY_PROFILE:-quietgate-notary}"

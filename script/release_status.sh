@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_NAME="QuietGate"
+APP_NAME="Tortoise"
 PUBLIC_DMG_NAME="Tortoise"
 DIST_DIR="$ROOT_DIR/dist"
 RELEASE_APP="$ROOT_DIR/build/PublicRelease/DerivedData/Build/Products/Release/$APP_NAME.app"

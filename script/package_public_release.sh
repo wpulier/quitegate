@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="QuietGate"
+APP_NAME="Tortoise"
 PUBLIC_APP_NAME="${QUIETGATE_PUBLIC_APP_NAME:-Tortoise}"
 SCHEME="QuietGate"
 BUNDLE_ID="com.willpulier.QuietGate"
