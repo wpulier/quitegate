@@ -16,6 +16,16 @@ mkdir -p "$DIST_DIR"
 cp -R "$SOURCE_DIR"/. "$DIST_DIR"/
 
 node "$ROOT_DIR/script/generate_chrome_store_assets.mjs" "$ROOT_DIR"
+
+# Use the real Tortoise app icon for the extension icons instead of the
+# generator's placeholder shapes.
+APP_ICON="$ROOT_DIR/Tortoise/Resources/Assets.xcassets/AppIcon.appiconset/ios_marketing_1024.png"
+if [[ -f "$APP_ICON" ]]; then
+  for s in 16 32 48 128; do
+    sips -Z "$s" "$APP_ICON" --out "$DIST_DIR/assets/icon$s.png" >/dev/null
+  done
+fi
+
 node "$ROOT_DIR/script/rewrite_chrome_store_manifest.mjs" "$DIST_DIR/manifest.json"
 
 node --check "$DIST_DIR/background.js"
