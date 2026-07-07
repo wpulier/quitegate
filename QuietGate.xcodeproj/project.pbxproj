@@ -38,6 +38,7 @@
 		2DBB456D7C021E5BB9E1D784 /* TuneScreenModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C54A2A544D0DFDD5A4BD2B45 /* TuneScreenModel.swift */; };
 		2DF28E4F91C032B668D05F49 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = D076F3CC634E2EBCEB0FA5C8 /* manifest.json */; };
 		2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */; };
+		2F6D781D709AE0CD6FE3ADBF /* TabFlipUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0136209C5C64C3A5369DC776 /* TabFlipUITests.swift */; };
 		302291A5F526955CE5285A4E /* instagram.css in Resources */ = {isa = PBXBuildFile; fileRef = A43E5CC9212988EAF189423B /* instagram.css */; };
 		32372EB3B2FE64B8AF0A91B5 /* quietgate-native-host in Resources */ = {isa = PBXBuildFile; fileRef = F110EF06D260E09967CD6F85 /* quietgate-native-host */; };
 		32AEA6C71C4467C6940FA138 /* ProtectionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2CF18FDCD9A40304D483B0E /* ProtectionMode.swift */; };
@@ -165,6 +166,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		24455EC651CB4C317A4044D2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B556D480FA402030EE600C06;
+			remoteInfo = Tortoise;
+		};
 		6B00E06E1B481406C512094D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F6CA6BD8CD26CEC23DEB2389 /* Project object */;
@@ -220,6 +228,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0136209C5C64C3A5369DC776 /* TabFlipUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabFlipUITests.swift; sourceTree = "<group>"; };
 		023A0447C00AFA30E6D7EA30 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		03346809F4EA38D985C2D3F5 /* DevicesHubModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicesHubModelTests.swift; sourceTree = "<group>"; };
 		0334F1007E06A8523AC503FE /* reddit.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = reddit.js; sourceTree = "<group>"; };
@@ -270,6 +279,7 @@
 		59E8EE1477CF0D161AB5FD5C /* ProtectionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTests.swift; sourceTree = "<group>"; };
 		5B954448C3C9FEF37E3D0652 /* blocked.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = blocked.js; sourceTree = "<group>"; };
 		5BC8F0F5B084CC91BB0A512B /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+		5C2B3EEC29BB4D72228BA607 /* TortoiseUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TortoiseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F6581F448432CC167402E64 /* AdultContentPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdultContentPreset.swift; sourceTree = "<group>"; };
 		60AE1C57CC050901354EC9E0 /* PlatformControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControls.swift; sourceTree = "<group>"; };
 		658E7943694A952A7343ECDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -574,6 +584,7 @@
 				650C9055349E3987F8EBF490 /* TortoiseSafariExtension */,
 				065B7E5D0D89AC1077696E59 /* TortoiseShieldAction */,
 				31EC16AFC35D9714AF3FBD88 /* TortoiseShieldConfiguration */,
+				7A826D1AF90E112020710CF3 /* TortoiseUITests */,
 				1920BC17A12A463C24897D5C /* Frameworks */,
 				AE6AE2ACAE9921CD861AEBD2 /* Products */,
 			);
@@ -621,6 +632,14 @@
 				97E83559A72E96D37ED558E9 /* ProtectionStore.swift */,
 			);
 			path = Stores;
+			sourceTree = "<group>";
+		};
+		7A826D1AF90E112020710CF3 /* TortoiseUITests */ = {
+			isa = PBXGroup;
+			children = (
+				0136209C5C64C3A5369DC776 /* TabFlipUITests.swift */,
+			);
+			path = TortoiseUITests;
 			sourceTree = "<group>";
 		};
 		92ECC167FD1E509FB37188ED /* blocked */ = {
@@ -707,6 +726,7 @@
 				7DDB3D0AA0D5EE6D889967A5 /* TortoiseSafariExtension.appex */,
 				E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */,
 				D05F096844E04708BBBCAE46 /* TortoiseShieldConfiguration.appex */,
+				5C2B3EEC29BB4D72228BA607 /* TortoiseUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -843,6 +863,24 @@
 			productReference = E8AA9032FF5E77FA1B3D892F /* TortoiseShieldAction.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		A71D8C2553D11CC8C08E6E2A /* TortoiseUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 21F2F9737AC036FB6D07B250 /* Build configuration list for PBXNativeTarget "TortoiseUITests" */;
+			buildPhases = (
+				FE9C3B62AE1FEA0135EA3566 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8A12BE398470C63379A454C6 /* PBXTargetDependency */,
+			);
+			name = TortoiseUITests;
+			packageProductDependencies = (
+			);
+			productName = TortoiseUITests;
+			productReference = 5C2B3EEC29BB4D72228BA607 /* TortoiseUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		B556D480FA402030EE600C06 /* Tortoise */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3A059D8887B3E20C557875CA /* Build configuration list for PBXNativeTarget "Tortoise" */;
@@ -916,6 +954,11 @@
 						DevelopmentTeam = SY7TABCD5M;
 						ProvisioningStyle = Automatic;
 					};
+					A71D8C2553D11CC8C08E6E2A = {
+						DevelopmentTeam = SY7TABCD5M;
+						ProvisioningStyle = Automatic;
+						TestTargetID = B556D480FA402030EE600C06;
+					};
 					B556D480FA402030EE600C06 = {
 						DevelopmentTeam = SY7TABCD5M;
 						ProvisioningStyle = Automatic;
@@ -949,6 +992,7 @@
 				144C9CCF6FF43EB7ED07F3BB /* TortoiseSafariExtension */,
 				8E32F36205EA5885F39332C6 /* TortoiseShieldAction */,
 				05FC9E638E861C3107672055 /* TortoiseShieldConfiguration */,
+				A71D8C2553D11CC8C08E6E2A /* TortoiseUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -1197,6 +1241,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FE9C3B62AE1FEA0135EA3566 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F6D781D709AE0CD6FE3ADBF /* TabFlipUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1214,6 +1266,11 @@
 			isa = PBXTargetDependency;
 			target = 017E4BD045B6A71A7806E69D /* QuietGate */;
 			targetProxy = D7329381712620908D66A209 /* PBXContainerItemProxy */;
+		};
+		8A12BE398470C63379A454C6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B556D480FA402030EE600C06 /* Tortoise */;
+			targetProxy = 24455EC651CB4C317A4044D2 /* PBXContainerItemProxy */;
 		};
 		BFA83976E5152CEFB945F318 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1485,6 +1542,44 @@
 			};
 			name = Debug;
 		};
+		448DD8FE09E82FCE2A838073 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.willpulier.TortoiseUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Tortoise;
+			};
+			name = Release;
+		};
+		44FFA423D2A525BA66C820D9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = SY7TABCD5M;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.willpulier.TortoiseUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Tortoise;
+			};
+			name = Debug;
+		};
 		567886ACC9900D72D73AAB58 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1673,6 +1768,15 @@
 			buildConfigurations = (
 				11BEF2DBA0EA1BDC2402B5D9 /* Debug */,
 				B336307B0E3EAA39BDE901B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		21F2F9737AC036FB6D07B250 /* Build configuration list for PBXNativeTarget "TortoiseUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44FFA423D2A525BA66C820D9 /* Debug */,
+				448DD8FE09E82FCE2A838073 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

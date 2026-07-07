@@ -220,14 +220,23 @@ private struct TortoiseMobileShell: View {
 
       ScrollView {
         VStack(alignment: .leading, spacing: 18) {
-          MobileIOSConnectionBanner(
-            screenTime: screenTime,
-            syncMessage: model.syncMessage,
-            retrySync: refresh,
-            fixSetup: { section = .tuning }
-          )
-          if showsGuidedSetup && screenTime.connectionState != .connected {
-            MobileIOSGuidedSetupCard(screenTime: screenTime)
+          if section == .devices {
+            MobileIOSConnectionBanner(
+              screenTime: screenTime,
+              syncMessage: model.syncMessage,
+              retrySync: refresh,
+              fixSetup: { section = .devices }
+            )
+            if showsGuidedSetup && screenTime.connectionState != .connected {
+              MobileIOSGuidedSetupCard(screenTime: screenTime)
+            }
+          } else if screenTime.connectionState != .connected {
+            MobileSetupNudge(
+              text: screenTime.connectionTitle,
+              progress: screenTime.setupProgressText
+            ) {
+              section = .devices
+            }
           }
           screenContent
         }
@@ -1164,6 +1173,43 @@ private struct MobileAddSheet: View {
         .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
     }
     .padding(.top, 12)
+  }
+}
+
+/// One-line pointer to the Devices tab while setup is incomplete. Keeps
+/// Usage/Tune/Block free of the full setup checklist.
+private struct MobileSetupNudge: View {
+  let text: String
+  let progress: String
+  let action: () -> Void
+
+  var body: some View {
+    Button(action: action) {
+      HStack(spacing: 10) {
+        Image(systemName: "exclamationmark.circle.fill")
+          .font(.system(size: 15, weight: .bold))
+          .foregroundStyle(TortoiseDesign.orange)
+        Text(text)
+          .font(.system(size: 13, weight: .bold))
+          .foregroundStyle(TortoiseDesign.primaryText)
+          .lineLimit(1)
+        Spacer(minLength: 8)
+        Text(progress)
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+        Image(systemName: "chevron.right")
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(TortoiseDesign.tertiaryText)
+      }
+      .padding(.horizontal, 14)
+      .padding(.vertical, 12)
+      .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+      .overlay {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+          .strokeBorder(TortoiseDesign.hairline)
+      }
+    }
+    .buttonStyle(.plain)
   }
 }
 

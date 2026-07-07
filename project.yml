@@ -222,6 +222,20 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Tortoise.app/Contents/MacOS/Tortoise"
         BUNDLE_LOADER: "$(TEST_HOST)"
+  TortoiseUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - TortoiseUITests
+    dependencies:
+      - target: Tortoise
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.willpulier.TortoiseUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Tortoise
+        DEVELOPMENT_TEAM: SY7TABCD5M
+        CODE_SIGN_STYLE: Automatic
 schemes:
   QuietGate:
     build:
@@ -236,3 +250,8 @@ schemes:
     build:
       targets:
         Tortoise: all
+        TortoiseUITests: [test]
+    test:
+      gatherCoverageData: false
+      targets:
+        - TortoiseUITests
