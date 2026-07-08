@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body { margin: 0; background: #08080a; }
+  .tg { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity .12s ease, background .18s ease; }
+  .tap:active { opacity: .72; }
+  .exp { overflow: hidden; transition: max-height .36s cubic-bezier(.4,0,.2,1), opacity .24s ease; }
+  .chev { transition: transform .3s cubic-bezier(.4,0,.2,1); }
+  .knob { transition: transform .22s cubic-bezier(.4,0,.2,1); }
+  .trk { transition: background .22s ease; }
+</style>
+</helmet>
+<div class="tg" style="min-height:100vh; background:radial-gradient(120% 90% at 50% 0%, #16161c 0%, #08080a 60%); display:flex; flex-direction:column; align-items:center; padding:52px 24px 80px;">
+
+  <div style="text-align:center; margin-bottom:34px; max-width:460px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1.6px; color:#787885; text-transform:uppercase; margin-bottom:10px;">Tune · redesign</div>
+    <div style="font-size:26px; font-weight:700; letter-spacing:-0.4px; color:#f6f6fa;">Augment apps, don't block them</div>
+    <div style="font-size:14px; line-height:1.5; color:#9e9eaa; margin-top:10px;">Two surfaces, clearly split: reshape sites <em>in your browser</em>, or cap the <em>apps installed on the phone</em>. Toggle between them up top; controls stay folded until you open one.</div>
+  </div>
+
+  <!-- ===== PHONE ===== -->
+  <div style="width:414px; background:#000; border-radius:56px; padding:13px; box-shadow:0 50px 110px -34px rgba(0,0,0,0.95);">
+    <div style="border-radius:44px; overflow:hidden; background:#0e0e11;">
+
+      <!-- status bar -->
+      <div style="position:relative; height:54px; display:flex; align-items:flex-end; justify-content:space-between; padding:0 30px 8px;">
+        <div style="font-size:16px; font-weight:600; color:#f6f6fa;">9:41</div>
+        <div style="position:absolute; left:50%; top:11px; transform:translateX(-50%); width:126px; height:36px; background:#000; border-radius:20px;"></div>
+        <div style="display:flex; gap:7px; align-items:center; color:#f6f6fa;">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2.3c2.2 0 4.3.85 5.9 2.4l1.2-1.2C13.7 1.6 11.2.6 8.5.6S3.3 1.6 1.4 3.5l1.2 1.2C4.2 3.15 6.3 2.3 8.5 2.3Zm0 3.4c1.3 0 2.5.5 3.4 1.4l1.2-1.2C11.9 4.7 10.3 4 8.5 4S5.1 4.7 3.9 5.9l1.2 1.2C6 6.2 7.2 5.7 8.5 5.7Zm0 3.4c.7 0 1.3.3 1.8.8l-1.8 1.8-1.8-1.8c.5-.5 1.1-.8 1.8-.8Z"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="1" width="21" height="11" rx="3" stroke="currentColor" stroke-opacity="0.4"/><rect x="2" y="2.5" width="18" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="5" rx="1" fill="currentColor" fill-opacity="0.5"/></svg>
+        </div>
+      </div>
+
+      <!-- content -->
+      <div class="tg-scroll" style="padding:18px 20px 40px; display:flex; flex-direction:column; gap:14px; min-height:744px;">
+
+        <div>
+          <div style="font-size:32px; font-weight:700; letter-spacing:-0.4px; color:#f6f6fa;">Tune</div>
+          <div style="font-size:14px; line-height:1.45; color:#9e9eaa; margin-top:6px;">Two ways to calm things down. Reshape sites in your browser, or set limits on the apps installed here. Neither one fully blocks — that's the Block tab.</div>
+        </div>
+
+        <!-- surface segmented -->
+        <div style="display:flex; gap:6px; background:#16161a; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:5px;">
+          <div class="tap" onClick="{{ showBrowser }}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; font-size:13px; font-weight:700; color:{{ browserFg }}; background:{{ browserBg }}; border-radius:10px; padding:10px 6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><polygon points="16.5 7.5 10.5 10.5 7.5 16.5 13.5 13.5"/></svg>In the browser</div>
+          <div class="tap" onClick="{{ showDevice }}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; font-size:13px; font-weight:700; color:{{ deviceFg }}; background:{{ deviceBg }}; border-radius:10px; padding:10px 6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18.5" x2="13" y2="18.5"/></svg>Apps on iPhone</div>
+        </div>
+
+        <sc-if value="{{ browserView }}" hint-placeholder-val="{{ true }}">
+
+        <!-- sync line -->
+        <div style="display:flex; align-items:center; gap:8px; padding:2px 2px 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#30cc5c" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg>
+          <span style="font-size:12px; color:#9e9eaa;">Active in <span style="color:#c9c9d4; font-weight:600;">Safari</span> here &amp; <span style="color:#c9c9d4; font-weight:600;">Chrome</span> on your Mac</span>
+        </div>
+
+        <!-- ===== YOUTUBE ===== -->
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:18px; overflow:hidden;">
+          <div class="tap" onClick="{{ openYt }}" style="display:flex; align-items:center; gap:13px; padding:16px 18px;">
+            <div style="width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,0.10); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;"><img src="assets/youtube.svg" style="width:26px; height:26px;"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:16px; font-weight:700; color:#f6f6fa;">YouTube</div>
+              <div style="font-size:13px; color:#9e9eaa; margin-top:2px;">{{ ytCount }} of 4 quieted</div>
+            </div>
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ ytDeg }}deg);"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="exp" style="max-height:{{ ytMaxH }}; opacity:{{ ytOp }};">
+            <div style="padding:0 18px 8px;">
+              <div class="tap" onClick="{{ t_yHome }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><line x1="3" y1="21" x2="21" y2="21"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Home feed</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Opens on search, not a wall of recommendations</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ yHomeBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ yHomeX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_yShorts }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 9.5v5l4-2.5z" fill="currentColor" stroke="none"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Shorts</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Removes the endless vertical feed</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ yShortsBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ yShortsX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_yComments }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8 8 0 0 1-8 8H7l-4 3V11.5a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Comments</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Hides comment threads under videos</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ yCommentsBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ yCommentsX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_yLimit }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Daily time limit</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Locks YouTube after 30m a day</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ yLimitBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ yLimitX }});"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== X ===== -->
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:18px; overflow:hidden;">
+          <div class="tap" onClick="{{ openX }}" style="display:flex; align-items:center; gap:13px; padding:16px 18px;">
+            <div style="width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,0.90); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;"><img src="assets/x.svg" style="width:22px; height:22px;"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:16px; font-weight:700; color:#f6f6fa;">X</div>
+              <div style="font-size:13px; color:#9e9eaa; margin-top:2px;">{{ xCount }} of 3 quieted</div>
+            </div>
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ xDeg }}deg);"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="exp" style="max-height:{{ xMaxH }}; opacity:{{ xOp }};">
+            <div style="padding:0 18px 8px;">
+              <div class="tap" onClick="{{ t_xMedia }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7c2 0 3.7.6 5.2 1.5"/><path d="M22 12s-3.5 7-10 7c-2 0-3.7-.6-5.2-1.5"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Sensitive media</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Hides adult &amp; flagged images and video</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ xMediaBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ xMediaX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_xVideos }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Videos &amp; GIFs</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Keeps text, drops autoplaying clips</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ xVideosBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ xVideosX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_xTrends }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-8"/><path d="M21 7v5h-5"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Explore &amp; Trends</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Removes trending &amp; discovery rabbit holes</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ xTrendsBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ xTrendsX }});"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== INSTAGRAM ===== -->
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:18px; overflow:hidden;">
+          <div class="tap" onClick="{{ openIg }}" style="display:flex; align-items:center; gap:13px; padding:16px 18px;">
+            <div style="width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,0.10); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;"><img src="assets/instagram.svg" style="width:24px; height:24px;"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:16px; font-weight:700; color:#f6f6fa;">Instagram</div>
+              <div style="font-size:13px; color:#9e9eaa; margin-top:2px;">{{ igCount }} of 3 quieted</div>
+            </div>
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ igDeg }}deg);"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="exp" style="max-height:{{ igMaxH }}; opacity:{{ igOp }};">
+            <div style="padding:0 18px 8px;">
+              <div class="tap" onClick="{{ t_igReels }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 9.5v5l4-2.5z" fill="currentColor" stroke="none"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Reels</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Removes the Reels tab and tray</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ igReelsBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ igReelsX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_igExplore }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Explore</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Hides the algorithmic discovery grid</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ igExploreBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ igExploreX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_igStories }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 3"><circle cx="12" cy="12" r="9"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Stories</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Removes the stories tray up top</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ igStoriesBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ igStoriesX }});"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== REDDIT ===== -->
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:18px; overflow:hidden;">
+          <div class="tap" onClick="{{ openRd }}" style="display:flex; align-items:center; gap:13px; padding:16px 18px;">
+            <div style="width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,0.10); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;"><img src="assets/reddit.svg" style="width:26px; height:26px;"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:16px; font-weight:700; color:#f6f6fa;">Reddit</div>
+              <div style="font-size:13px; color:#9e9eaa; margin-top:2px;">{{ rdCount }} of 2 quieted</div>
+            </div>
+            <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ rdDeg }}deg);"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="exp" style="max-height:{{ rdMaxH }}; opacity:{{ rdOp }};">
+            <div style="padding:0 18px 8px;">
+              <div class="tap" onClick="{{ t_rdPopular }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-1.5.5-2.8 1.2-3.8C9 10.5 12 10 12 7c0 0 1 1 2 2"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Popular &amp; All</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Redirects r/popular and r/all back home</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ rdPopularBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ rdPopularX }});"></div></div>
+              </div>
+              <div class="tap" onClick="{{ t_rdMedia }}" style="display:flex; align-items:center; gap:13px; padding:12px 0; border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="width:34px; height:34px; border-radius:9px; background:#28282d; display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></div>
+                <div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#f6f6fa;">Media posts</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Keeps text posts, drops image &amp; video</div></div>
+                <div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ rdMediaBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ rdMediaX }});"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TikTok coming soon -->
+        <div style="display:flex; align-items:center; gap:13px; padding:16px 18px; background:#1e1e22; border:1px solid rgba(255,255,255,0.08); border-radius:18px; opacity:0.5;">
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; color:#787885; flex:0 0 auto;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12M6 22h12M8 2c0 4 8 5 8 10s-8 6-8 10M16 2c0 4-8 5-8 10s8 6 8 10"/></svg></div>
+          <div style="flex:1;"><div style="font-size:16px; font-weight:700; color:#9e9eaa;">TikTok</div><div style="font-size:13px; color:#787885; margin-top:2px;">Coming soon</div></div>
+        </div>
+        </sc-if>
+
+        <!-- ===== DEVICE APPS SURFACE ===== -->
+        <sc-if value="{{ deviceView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:flex-start; gap:9px; padding:2px 2px 4px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto; margin-top:1px;"><circle cx="12" cy="12" r="9.5"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="#787885"/></svg>
+          <span style="font-size:12px; line-height:1.4; color:#9e9eaa;">Apple won't let anything reshape what's <span style="color:#c9c9d4; font-weight:600;">inside</span> an installed app. What you can do here: cap how long and set a nightly downtime.</span>
+        </div>
+
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:15px 16px; display:flex; align-items:center; gap:13px;">
+          <span style="width:40px; height:40px; border-radius:11px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;"><img src="assets/instagram.svg" style="width:22px; height:22px;"></span>
+          <div style="flex:1;"><div style="font-size:15px; font-weight:700; color:#f6f6fa;">Instagram</div><div style="font-size:12px; color:#9e9eaa; margin-top:2px;">Daily limit</div></div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="tap" onClick="{{ igMinus }}" style="width:28px; height:28px; border:1px solid rgba(255,255,255,0.22); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#f6f6fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <span style="font-size:13px; font-weight:700; color:#f6f6fa; min-width:48px; text-align:center;">{{ limIg }}</span>
+            <div class="tap" onClick="{{ igPlus }}" style="width:28px; height:28px; border:1px solid rgba(255,255,255,0.22); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#f6f6fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+        </div>
+
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:15px 16px; display:flex; align-items:center; gap:13px;">
+          <span style="width:40px; height:40px; border-radius:11px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#c9c9d4; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M8 2h8M8 22h8M9 2c0 3 6 4 6 8s-6 5-6 8M15 2c0 3-6 4-6 8s6 5 6 8"/></svg></span>
+          <div style="flex:1;"><div style="font-size:15px; font-weight:700; color:#f6f6fa;">TikTok</div><div style="font-size:12px; color:#9e9eaa; margin-top:2px;">Daily limit</div></div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="tap" onClick="{{ ttMinus }}" style="width:28px; height:28px; border:1px solid rgba(255,255,255,0.22); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#f6f6fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <span style="font-size:13px; font-weight:700; color:#f6f6fa; min-width:48px; text-align:center;">{{ limTt }}</span>
+            <div class="tap" onClick="{{ ttPlus }}" style="width:28px; height:28px; border:1px solid rgba(255,255,255,0.22); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#f6f6fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+        </div>
+
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:15px 16px; display:flex; align-items:center; gap:13px;">
+          <span style="width:40px; height:40px; border-radius:11px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;"><img src="assets/youtube.svg" style="width:23px; height:23px;"></span>
+          <div style="flex:1;"><div style="font-size:15px; font-weight:700; color:#f6f6fa;">YouTube</div><div style="font-size:12px; color:#9e9eaa; margin-top:2px;">Daily limit</div></div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="tap" onClick="{{ ytMinus }}" style="width:28px; height:28px; border:1px solid rgba(255,255,255,0.22); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#f6f6fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <span style="font-size:13px; font-weight:700; color:#f6f6fa; min-width:48px; text-align:center;">{{ limYt }}</span>
+            <div class="tap" onClick="{{ ytPlus }}" style="width:28px; height:28px; border:1px solid rgba(255,255,255,0.22); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#f6f6fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+        </div>
+
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:15px 16px; display:flex; align-items:center; gap:13px;">
+          <span style="width:40px; height:40px; border-radius:11px; background:rgba(122,140,255,0.16); display:flex; align-items:center; justify-content:center; color:#7a8cff; flex:0 0 auto;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5Z"/></svg></span>
+          <div style="flex:1;"><div style="font-size:15px; font-weight:700; color:#f6f6fa;">Downtime</div><div style="font-size:12px; color:#9e9eaa; margin-top:2px;">These apps pause 10:00 PM – 7:00 AM</div></div>
+          <div class="tap trk" onClick="{{ toggleDt }}" style="width:44px; height:26px; border-radius:13px; background:{{ dtBg }}; position:relative; flex:0 0 auto;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ dtX }});"></div></div>
+        </div>
+        </sc-if>
+
+      </div>
+
+      <!-- tab bar (Tune active) -->
+      <div style="display:flex; background:rgba(18,18,22,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.10); padding:12px 0 22px;">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="4" y1="21" x2="4" y2="11"/><line x1="12" y1="21" x2="12" y2="5"/><line x1="20" y1="21" x2="20" y2="14"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Usage</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#3e63dd;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/><circle cx="8" cy="7" r="2.3" fill="currentColor" stroke="#0e0e11" stroke-width="1.2"/><circle cx="16" cy="12" r="2.3" fill="currentColor" stroke="#0e0e11" stroke-width="1.2"/><circle cx="10" cy="17" r="2.3" fill="currentColor" stroke="#0e0e11" stroke-width="1.2"/></svg>
+          <span style="font-size:10.5px; font-weight:700;">Tune</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Block</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M2 17h14"/><rect x="17" y="8" width="5" height="11" rx="1.3"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Devices</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="tap" onClick="{{ reset }}" style="margin-top:24px; font-size:13px; font-weight:600; color:#787885; padding:8px 16px; border:1px solid rgba(255,255,255,0.12); border-radius:20px;">↺ Reset demo</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  defaults() {
+    return {
+      yHome: true, yShorts: true, yComments: false, yLimit: false,
+      xMedia: true, xVideos: false, xTrends: false,
+      igReels: true, igExplore: false, igStories: false,
+      rdPopular: false, rdMedia: false,
+    };
+  }
+  state = { open: "youtube", f: this.defaults(), surface: "browser", lim: { ig: 45, tt: 20, yt: 60 }, downtime: true };
+
+  renderVals() {
+    const f = this.state.f;
+    const open = this.state.open;
+    const v = {};
+
+    // per-app expansion
+    const apps = { yt: "youtube", x: "x", ig: "instagram", rd: "reddit" };
+    for (const [k, id] of Object.entries(apps)) {
+      const isOpen = open === id;
+      v[k + "Deg"] = isOpen ? 180 : 0;
+      v[k + "MaxH"] = isOpen ? "520px" : "0px";
+      v[k + "Op"] = isOpen ? 1 : 0;
+    }
+    v.openYt = () => this.toggleOpen("youtube");
+    v.openX = () => this.toggleOpen("x");
+    v.openIg = () => this.toggleOpen("instagram");
+    v.openRd = () => this.toggleOpen("reddit");
+
+    // counts
+    v.ytCount = ["yHome", "yShorts", "yComments", "yLimit"].filter(k => f[k]).length;
+    v.xCount = ["xMedia", "xVideos", "xTrends"].filter(k => f[k]).length;
+    v.igCount = ["igReels", "igExplore", "igStories"].filter(k => f[k]).length;
+    v.rdCount = ["rdPopular", "rdMedia"].filter(k => f[k]).length;
+
+    // per-feature switch visuals + handlers
+    for (const key of Object.keys(this.defaults())) {
+      v[key + "Bg"] = f[key] ? "#30cc5c" : "rgba(255,255,255,0.20)";
+      v[key + "X"] = f[key] ? "16px" : "0px";
+      v["t_" + key] = () => this.setState(s => ({ f: { ...s.f, [key]: !s.f[key] } }));
+    }
+
+    // surface switch
+    const b = this.state.surface === "browser";
+    v.browserView = b;
+    v.deviceView = !b;
+    v.browserBg = b ? "#3e63dd" : "transparent";
+    v.browserFg = b ? "#fff" : "#9e9eaa";
+    v.deviceBg = !b ? "#3e63dd" : "transparent";
+    v.deviceFg = !b ? "#fff" : "#9e9eaa";
+    v.showBrowser = () => this.setState({ surface: "browser" });
+    v.showDevice = () => this.setState({ surface: "device" });
+
+    // device app limits
+    const fmt = (m) => { const h = Math.floor(m / 60), mm = m % 60; return h ? (mm ? `${h}h ${mm}m` : `${h}h`) : `${m}m`; };
+    const L = this.state.lim;
+    v.limIg = fmt(L.ig);
+    v.limTt = fmt(L.tt);
+    v.limYt = fmt(L.yt);
+    const adj = (k, d) => () => this.setState(s => ({ lim: { ...s.lim, [k]: Math.max(5, Math.min(480, s.lim[k] + d)) } }));
+    v.igMinus = adj("ig", -5); v.igPlus = adj("ig", 5);
+    v.ttMinus = adj("tt", -5); v.ttPlus = adj("tt", 5);
+    v.ytMinus = adj("yt", -5); v.ytPlus = adj("yt", 5);
+    v.dtBg = this.state.downtime ? "#30cc5c" : "rgba(255,255,255,0.20)";
+    v.dtX = this.state.downtime ? "16px" : "0px";
+    v.toggleDt = () => this.setState(s => ({ downtime: !s.downtime }));
+
+    v.reset = () => this.setState({ open: "youtube", f: this.defaults(), surface: "browser", lim: { ig: 45, tt: 20, yt: 60 }, downtime: true });
+    return v;
+  }
+
+  toggleOpen(id) {
+    this.setState(s => ({ open: s.open === id ? null : id }));
+  }
+}
+</script>
+</body>
+</html>

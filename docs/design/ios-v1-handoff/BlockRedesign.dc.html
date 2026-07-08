@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body { margin: 0; background: #08080a; }
+  .tg { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity .12s ease, background .18s ease, border-color .2s ease; }
+  .tap:active { opacity: .78; }
+  .exp { overflow: hidden; transition: max-height .36s cubic-bezier(.4,0,.2,1), opacity .24s ease; }
+  .chev { transition: transform .3s cubic-bezier(.4,0,.2,1); }
+  .knob { transition: transform .22s cubic-bezier(.4,0,.2,1); }
+  .trk { transition: background .22s ease; }
+</style>
+</helmet>
+<div class="tg" style="min-height:100vh; background:radial-gradient(120% 90% at 50% 0%, #16161c 0%, #08080a 60%); display:flex; flex-direction:column; align-items:center; padding:52px 24px 80px;">
+
+  <div style="text-align:center; margin-bottom:34px; max-width:460px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1.6px; color:#787885; text-transform:uppercase; margin-bottom:10px;">Block · redesign</div>
+    <div style="font-size:26px; font-weight:700; letter-spacing:-0.4px; color:#f6f6fa;">One question: what's off-limits?</div>
+    <div style="font-size:14px; line-height:1.5; color:#9e9eaa; margin-top:10px;">Pick a group. Open, Focus and Strict are just preset groups of what's blocked — or build your own. Tap a mode to see exactly what it covers.</div>
+  </div>
+
+  <!-- ===== PHONE ===== -->
+  <div style="width:414px; background:#000; border-radius:56px; padding:13px; box-shadow:0 50px 110px -34px rgba(0,0,0,0.95);">
+    <div style="border-radius:44px; overflow:hidden; background:#0e0e11;">
+
+      <!-- status bar -->
+      <div style="position:relative; height:54px; display:flex; align-items:flex-end; justify-content:space-between; padding:0 30px 8px;">
+        <div style="font-size:16px; font-weight:600; color:#f6f6fa;">9:41</div>
+        <div style="position:absolute; left:50%; top:11px; transform:translateX(-50%); width:126px; height:36px; background:#000; border-radius:20px;"></div>
+        <div style="display:flex; gap:7px; align-items:center; color:#f6f6fa;">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2.3c2.2 0 4.3.85 5.9 2.4l1.2-1.2C13.7 1.6 11.2.6 8.5.6S3.3 1.6 1.4 3.5l1.2 1.2C4.2 3.15 6.3 2.3 8.5 2.3Zm0 3.4c1.3 0 2.5.5 3.4 1.4l1.2-1.2C11.9 4.7 10.3 4 8.5 4S5.1 4.7 3.9 5.9l1.2 1.2C6 6.2 7.2 5.7 8.5 5.7Zm0 3.4c.7 0 1.3.3 1.8.8l-1.8 1.8-1.8-1.8c.5-.5 1.1-.8 1.8-.8Z"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="1" width="21" height="11" rx="3" stroke="currentColor" stroke-opacity="0.4"/><rect x="2" y="2.5" width="18" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="5" rx="1" fill="currentColor" fill-opacity="0.5"/></svg>
+        </div>
+      </div>
+
+      <!-- content -->
+      <div style="padding:18px 20px 40px; display:flex; flex-direction:column; gap:12px; min-height:744px;">
+
+        <div>
+          <div style="font-size:32px; font-weight:700; letter-spacing:-0.4px; color:#f6f6fa;">Block</div>
+          <div style="font-size:14px; line-height:1.45; color:#9e9eaa; margin-top:6px;">Choose what's off-limits on this iPhone right now.</div>
+        </div>
+
+        <!-- ===== OPEN ===== -->
+        <div style="background:#1e1e22; border:1.5px solid {{ openBorder }}; border-radius:16px; overflow:hidden;">
+          <div class="tap" onClick="{{ selOpen }}" style="display:flex; align-items:center; gap:13px; padding:15px 16px;">
+            <div style="width:38px; height:38px; border-radius:11px; background:{{ openIconBg }}; display:flex; align-items:center; justify-content:center; color:{{ openIconColor }}; flex:0 0 auto;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="8.5"/></svg></div>
+            <div style="flex:1;"><div style="font-size:16px; font-weight:700; color:#f6f6fa;">Open</div><div style="font-size:12.5px; color:#9e9eaa; margin-top:2px;">Nothing blocked. Everything's on.</div></div>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#30cc5c" style="opacity:{{ openCheck }};"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <!-- ===== FOCUS ===== -->
+        <div style="background:#1e1e22; border:1.5px solid {{ focusBorder }}; border-radius:16px; overflow:hidden;">
+          <div class="tap" onClick="{{ selFocus }}" style="display:flex; align-items:center; gap:13px; padding:15px 16px;">
+            <div style="width:38px; height:38px; border-radius:11px; background:{{ focusIconBg }}; display:flex; align-items:center; justify-content:center; color:{{ focusIconColor }}; flex:0 0 auto;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="1.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22.5" y2="12"/></svg></div>
+            <div style="flex:1;"><div style="font-size:16px; font-weight:700; color:#f6f6fa;">Focus</div><div style="font-size:12.5px; color:#9e9eaa; margin-top:2px;">The usual time-sinks + adult sites.</div></div>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#3e63dd" style="opacity:{{ focusCheck }};"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="padding:0 16px 15px;">
+            <div style="display:flex; align-items:center; gap:9px;">
+              <div style="display:flex; gap:6px;">
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/instagram.svg" style="width:15px; height:15px;"></span>
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#c9c9d4;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 2h8M8 22h8M9 2c0 3 6 4 6 8s-6 5-6 8M15 2c0 3-6 4-6 8s6 5 6 8"/></svg></span>
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,149,0,0.16); display:flex; align-items:center; justify-content:center; color:#ff9500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg></span>
+              </div>
+              <span style="font-size:12px; color:#787885;">Instagram, TikTok &amp; adult sites</span>
+              <div style="flex:1;"></div>
+              <div class="tap" style="font-size:13px; font-weight:600; color:#409cff; opacity:{{ focusCheck }};">Edit</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== STRICT ===== -->
+        <div style="background:#1e1e22; border:1.5px solid {{ strictBorder }}; border-radius:16px; overflow:hidden;">
+          <div class="tap" onClick="{{ selStrict }}" style="display:flex; align-items:center; gap:13px; padding:15px 16px;">
+            <div style="width:38px; height:38px; border-radius:11px; background:{{ strictIconBg }}; display:flex; align-items:center; justify-content:center; color:{{ strictIconColor }}; flex:0 0 auto;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/><rect x="9" y="10.5" width="6" height="5" rx="1"/><path d="M10 10.5V9a2 2 0 0 1 4 0v1.5"/></svg></div>
+            <div style="flex:1;"><div style="font-size:16px; font-weight:700; color:#f6f6fa;">Strict</div><div style="font-size:12.5px; color:#9e9eaa; margin-top:2px;">Everything, and no early exit.</div></div>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#a855f7" style="opacity:{{ strictCheck }};"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="padding:0 16px 15px;">
+            <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+              <div style="display:flex; gap:6px;">
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/instagram.svg" style="width:15px; height:15px;"></span>
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#c9c9d4;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 2h8M8 22h8M9 2c0 3 6 4 6 8s-6 5-6 8M15 2c0 3-6 4-6 8s6 5 6 8"/></svg></span>
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/x.svg" style="width:13px; height:13px;"></span>
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/reddit.svg" style="width:15px; height:15px;"></span>
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/youtube.svg" style="width:15px; height:15px;"></span>
+                <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,149,0,0.16); display:flex; align-items:center; justify-content:center; color:#ff9500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg></span>
+              </div>
+              <span style="display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:600; color:#a855f7;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>All apps + sites · lockable</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== CUSTOM ===== -->
+        <div style="background:#1e1e22; border:1.5px solid {{ customBorder }}; border-radius:16px; overflow:hidden;">
+          <div class="tap" onClick="{{ selCustom }}" style="display:flex; align-items:center; gap:13px; padding:15px 16px;">
+            <div style="width:38px; height:38px; border-radius:11px; background:{{ customIconBg }}; display:flex; align-items:center; justify-content:center; color:{{ customIconColor }}; flex:0 0 auto;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.4" fill="#1e1e22"/><circle cx="15" cy="16" r="2.4" fill="#1e1e22"/></svg></div>
+            <div style="flex:1;"><div style="font-size:16px; font-weight:700; color:#f6f6fa;">Custom group</div><div style="font-size:12.5px; color:#9e9eaa; margin-top:2px;">Pick exactly what to block, app by app.</div></div>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#3e63dd" style="opacity:{{ customCheck }};"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="padding:0 16px 14px; display:flex; align-items:center; gap:9px;">
+            <div style="display:flex; gap:6px;">
+              <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/instagram.svg" style="width:15px; height:15px;"></span>
+              <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#c9c9d4;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 2h8M8 22h8M9 2c0 3 6 4 6 8s-6 5-6 8M15 2c0 3-6 4-6 8s6 5 6 8"/></svg></span>
+              <span style="width:26px; height:26px; border-radius:7px; background:rgba(255,149,0,0.16); display:flex; align-items:center; justify-content:center; color:#ff9500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg></span>
+            </div>
+            <span style="font-size:12px; color:#787885;">{{ customSummary }}</span>
+          </div>
+          <div class="exp" style="max-height:{{ customMaxH }}; opacity:{{ customOp }};">
+            <div style="padding:2px 16px 14px;">
+              <div style="height:1px; background:rgba(255,255,255,0.08); margin-bottom:6px;"></div>
+              <div class="tap" onClick="{{ tc_ig }}" style="display:flex; align-items:center; gap:12px; padding:11px 0;"><span style="width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/instagram.svg" style="width:17px; height:17px;"></span><span style="flex:1; font-size:14.5px; font-weight:600; color:#f6f6fa;">Instagram</span><div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ igBg }}; position:relative;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ igX }});"></div></div></div>
+              <div class="tap" onClick="{{ tc_tt }}" style="display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid rgba(255,255,255,0.06);"><span style="width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#c9c9d4;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 2h8M8 22h8M9 2c0 3 6 4 6 8s-6 5-6 8M15 2c0 3-6 4-6 8s6 5 6 8"/></svg></span><span style="flex:1; font-size:14.5px; font-weight:600; color:#f6f6fa;">TikTok</span><div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ ttBg }}; position:relative;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ ttX }});"></div></div></div>
+              <div class="tap" onClick="{{ tc_x }}" style="display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid rgba(255,255,255,0.06);"><span style="width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center; overflow:hidden;"><img src="assets/x.svg" style="width:15px; height:15px;"></span><span style="flex:1; font-size:14.5px; font-weight:600; color:#f6f6fa;">X</span><div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ xBg }}; position:relative;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ xX }});"></div></div></div>
+              <div class="tap" onClick="{{ tc_gm }}" style="display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid rgba(255,255,255,0.06);"><span style="width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#c9c9d4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="4"/><line x1="7" y1="11" x2="7" y2="14"/><line x1="5.5" y1="12.5" x2="8.5" y2="12.5"/><circle cx="16" cy="11.5" r="1"/><circle cx="18.5" cy="13.5" r="1"/></svg></span><span style="flex:1; font-size:14.5px; font-weight:600; color:#f6f6fa;">Games</span><div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ gmBg }}; position:relative;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ gmX }});"></div></div></div>
+              <div class="tap" onClick="{{ tc_adult }}" style="display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid rgba(255,255,255,0.06);"><span style="width:30px; height:30px; border-radius:8px; background:rgba(255,149,0,0.16); display:flex; align-items:center; justify-content:center; color:#ff9500;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg></span><span style="flex:1; font-size:14.5px; font-weight:600; color:#f6f6fa;">Adult websites</span><div class="trk" style="width:44px; height:26px; border-radius:13px; background:{{ adultBg }}; position:relative;"><div class="knob" style="position:absolute; top:2.5px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transform:translateX({{ adultX }});"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TIMED SESSION (folded) ===== -->
+        <div style="background:#16161a; border:1px solid rgba(255,255,255,0.08); border-radius:16px; overflow:hidden; margin-top:4px;">
+          <div class="tap" onClick="{{ toggleSess }}" style="display:flex; align-items:center; gap:11px; padding:15px 16px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9e9eaa" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg>
+            <div style="flex:1;"><div style="font-size:14.5px; font-weight:700; color:#f6f6fa;">Lock in for a set time</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Optional — commit and it won't turn off early</div></div>
+            <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ sessDeg }}deg);"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="exp" style="max-height:{{ sessMaxH }}; opacity:{{ sessOp }};">
+            <div style="padding:0 16px 16px; display:flex; gap:8px;">
+              <div class="tap" style="flex:1; text-align:center; font-size:12.5px; font-weight:700; color:#f6f6fa; padding:11px 4px; background:#28282d; border-radius:11px;">Focus<br>25m</div>
+              <div class="tap" style="flex:1; text-align:center; font-size:12.5px; font-weight:700; color:#f6f6fa; padding:11px 4px; background:#28282d; border-radius:11px;">Focus<br>1h</div>
+              <div class="tap" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:12.5px; font-weight:700; color:#fff; padding:11px 4px; background:rgba(168,85,247,0.22); border:1px solid rgba(168,85,247,0.5); border-radius:11px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9b3e8" stroke-width="2.2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Lock 2h</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- tab bar (Block active) -->
+      <div style="display:flex; background:rgba(18,18,22,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.10); padding:12px 0 22px;">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="4" y1="21" x2="4" y2="11"/><line x1="12" y1="21" x2="12" y2="5"/><line x1="20" y1="21" x2="20" y2="14"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Usage</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/><circle cx="8" cy="7" r="2" fill="#0e0e11"/><circle cx="16" cy="12" r="2" fill="#0e0e11"/><circle cx="10" cy="17" r="2" fill="#0e0e11"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Tune</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#3e63dd;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg>
+          <span style="font-size:10.5px; font-weight:700;">Block</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M2 17h14"/><rect x="17" y="8" width="5" height="11" rx="1.3"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Devices</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="tap" onClick="{{ reset }}" style="margin-top:24px; font-size:13px; font-weight:600; color:#787885; padding:8px 16px; border:1px solid rgba(255,255,255,0.12); border-radius:20px;">↺ Reset demo</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  customDefaults() {
+    return { ig: true, tt: true, x: false, gm: false, adult: true };
+  }
+  state = { mode: "focus", sessOpen: false, c: this.customDefaults() };
+
+  renderVals() {
+    const { mode, sessOpen, c } = this.state;
+    const v = {};
+
+    const accent = { open: "#30cc5c", focus: "#3e63dd", strict: "#a855f7", custom: "#3e63dd" };
+    const heights = { open: "0px", focus: "180px", strict: "220px", custom: "360px" };
+
+    for (const id of ["open", "focus", "strict", "custom"]) {
+      const sel = mode === id;
+      v[id + "Border"] = sel ? accent[id] : "rgba(255,255,255,0.10)";
+      v[id + "IconBg"] = sel ? this.tint(accent[id]) : "#28282d";
+      v[id + "IconColor"] = sel ? accent[id] : "#9e9eaa";
+      v[id + "Check"] = sel ? 1 : 0;
+      v[id + "MaxH"] = sel ? heights[id] : "0px";
+      v[id + "Op"] = sel ? 1 : 0;
+    }
+
+    v.selOpen = () => this.setState({ mode: "open" });
+    v.selFocus = () => this.setState({ mode: "focus" });
+    v.selStrict = () => this.setState({ mode: "strict" });
+    v.selCustom = () => this.setState({ mode: "custom" });
+
+    for (const key of Object.keys(this.customDefaults())) {
+      v[key + "Bg"] = c[key] ? "#30cc5c" : "rgba(255,255,255,0.20)";
+      v[key + "X"] = c[key] ? "16px" : "0px";
+      v["tc_" + key] = () => this.setState(s => ({ c: { ...s.c, [key]: !s.c[key] } }));
+    }
+
+    v.sessDeg = sessOpen ? 180 : 0;
+    v.sessMaxH = sessOpen ? "120px" : "0px";
+    v.sessOp = sessOpen ? 1 : 0;
+    v.toggleSess = () => this.setState(s => ({ sessOpen: !s.sessOpen }));
+
+    const labels = [["ig","Instagram"],["tt","TikTok"],["x","X"],["gm","Games"],["adult","Adult sites"]];
+    const onCount = labels.filter(([k]) => c[k]).length;
+    v.customSummary = onCount ? `${onCount} of 5 blocked` : "Nothing selected yet";
+
+    v.reset = () => this.setState({ mode: "focus", sessOpen: false, c: this.customDefaults() });
+    return v;
+  }
+
+  tint(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    return `rgba(${r},${g},${b},0.16)`;
+  }
+}
+</script>
+</body>
+</html>

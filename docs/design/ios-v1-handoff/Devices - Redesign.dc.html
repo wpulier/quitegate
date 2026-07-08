@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body { margin: 0; background: #08080a; }
+  .tg { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity .12s ease, background .18s ease; }
+  .tap:active { opacity: .72; }
+  .exp { overflow: hidden; transition: max-height .34s cubic-bezier(.4,0,.2,1), opacity .24s ease; }
+  .chev { transition: transform .3s cubic-bezier(.4,0,.2,1); }
+</style>
+</helmet>
+<div class="tg" style="min-height:100vh; background:radial-gradient(120% 90% at 50% 0%, #16161c 0%, #08080a 60%); display:flex; flex-direction:column; align-items:center; padding:52px 24px 80px;">
+
+  <div style="text-align:center; margin-bottom:34px; max-width:440px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:1.6px; color:#787885; text-transform:uppercase; margin-bottom:10px;">Devices · redesign</div>
+    <div style="font-size:26px; font-weight:700; letter-spacing:-0.4px; color:#f6f6fa;">Just access &amp; setup</div>
+    <div style="font-size:14px; line-height:1.5; color:#9e9eaa; margin-top:10px;">Tap the <span style="color:#c9c9d4;">connections</span> row to see everything on your account. Tap <span style="color:#409cff;">Verify</span> to finish setup — the card folds into one line.</div>
+  </div>
+
+  <!-- ===== PHONE ===== -->
+  <div style="width:414px; background:#000; border-radius:56px; padding:13px; box-shadow:0 50px 110px -34px rgba(0,0,0,0.95);">
+    <div style="border-radius:44px; overflow:hidden; background:#0e0e11;">
+
+      <!-- status bar -->
+      <div style="position:relative; height:54px; display:flex; align-items:flex-end; justify-content:space-between; padding:0 30px 8px;">
+        <div style="font-size:16px; font-weight:600; color:#f6f6fa;">9:41</div>
+        <div style="position:absolute; left:50%; top:11px; transform:translateX(-50%); width:126px; height:36px; background:#000; border-radius:20px;"></div>
+        <div style="display:flex; gap:7px; align-items:center; color:#f6f6fa;">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2.3c2.2 0 4.3.85 5.9 2.4l1.2-1.2C13.7 1.6 11.2.6 8.5.6S3.3 1.6 1.4 3.5l1.2 1.2C4.2 3.15 6.3 2.3 8.5 2.3Zm0 3.4c1.3 0 2.5.5 3.4 1.4l1.2-1.2C11.9 4.7 10.3 4 8.5 4S5.1 4.7 3.9 5.9l1.2 1.2C6 6.2 7.2 5.7 8.5 5.7Zm0 3.4c.7 0 1.3.3 1.8.8l-1.8 1.8-1.8-1.8c.5-.5 1.1-.8 1.8-.8Z"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="1" width="21" height="11" rx="3" stroke="currentColor" stroke-opacity="0.4"/><rect x="2" y="2.5" width="18" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="5" rx="1" fill="currentColor" fill-opacity="0.5"/></svg>
+        </div>
+      </div>
+
+      <!-- content -->
+      <div style="padding:18px 20px 40px; display:flex; flex-direction:column; gap:18px; min-height:744px;">
+
+        <div style="font-size:32px; font-weight:700; letter-spacing:-0.4px; color:#f6f6fa;">Devices</div>
+
+        <!-- ===== ACCOUNT CARD ===== -->
+        <div style="background:#1e1e22; border:1px solid rgba(255,255,255,0.13); border-radius:18px; overflow:hidden;">
+          <!-- identity -->
+          <div style="display:flex; align-items:center; gap:13px; padding:18px 20px;">
+            <div style="width:46px; height:46px; border-radius:15px; background:rgba(62,99,221,0.28); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#f6f6fa; flex:0 0 auto;">AR</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:17px; font-weight:700; color:#f6f6fa;">Alex Rivera</div>
+              <div style="font-size:13px; color:#9e9eaa; margin-top:2px;">alex.rivera@gmail.com</div>
+            </div>
+          </div>
+          <!-- connections toggle row -->
+          <div class="tap" onClick="{{ toggleConnections }}" style="display:flex; align-items:center; gap:12px; padding:15px 20px; border-top:1px solid rgba(255,255,255,0.08); background:{{ connRowBg }};">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9e9eaa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M2 17h14"/><rect x="17" y="8" width="5" height="11" rx="1.3"/></svg>
+            <div style="flex:1; font-size:15px; font-weight:600; color:#f6f6fa;">Connections</div>
+            <div style="display:flex; align-items:center; gap:9px;">
+              <span style="font-size:14px; font-weight:700; color:#f6f6fa; background:rgba(255,255,255,0.09); min-width:26px; height:26px; padding:0 9px; border-radius:13px; display:inline-flex; align-items:center; justify-content:center;">3</span>
+              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ connChevDeg }}deg);"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <!-- expandable list -->
+          <div class="exp" style="max-height:{{ connMaxH }}; opacity:{{ connOpacity }};">
+            <div style="padding:4px 20px 18px; display:flex; flex-direction:column;">
+              <div style="height:1px; background:rgba(255,255,255,0.08); margin-bottom:14px;"></div>
+              <!-- this iphone -->
+              <div style="display:flex; align-items:center; gap:12px; padding:8px 0;">
+                <div style="width:34px; height:34px; border-radius:10px; background:rgba(48,204,92,0.16); display:flex; align-items:center; justify-content:center; color:#30cc5c; flex:0 0 auto;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="11" y1="18.5" x2="13" y2="18.5"/></svg></div>
+                <div style="flex:1; min-width:0;"><div style="display:flex; align-items:center; gap:6px;"><span style="font-size:14px; font-weight:700; color:#f6f6fa;">This iPhone</span><span style="font-size:8.5px; font-weight:700; letter-spacing:0.4px; color:#3e63dd; background:rgba(62,99,221,0.16); padding:2px 6px; border-radius:5px;">CURRENT</span></div></div>
+                <span style="width:8px; height:8px; border-radius:50%; background:#30cc5c;"></span>
+              </div>
+              <!-- macbook -->
+              <div style="display:flex; align-items:center; gap:12px; padding:8px 0;">
+                <div style="width:34px; height:34px; border-radius:10px; background:rgba(62,99,221,0.14); display:flex; align-items:center; justify-content:center; color:#3e63dd; flex:0 0 auto;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20l-1.5-2.5H3.5L2 20Z"/></svg></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:700; color:#f6f6fa;">Alex's MacBook Pro</div><div style="font-size:12px; color:#9e9eaa; margin-top:1px;">Chrome · 2 profiles</div></div>
+                <span style="width:8px; height:8px; border-radius:50%; background:#30cc5c;"></span>
+              </div>
+              <!-- chrome personal -->
+              <div style="display:flex; align-items:center; gap:12px; padding:8px 0 8px 22px;">
+                <div style="width:30px; height:30px; border-radius:9px; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; color:#9e9eaa; flex:0 0 auto;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9.5"/><ellipse cx="12" cy="12" rx="4" ry="9.5"/><line x1="2.5" y1="12" x2="21.5" y2="12"/></svg></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:13.5px; font-weight:600; color:#f6f6fa;">Chrome · Personal</div></div>
+                <span style="width:8px; height:8px; border-radius:50%; background:#30cc5c;"></span>
+              </div>
+              <!-- chrome work -->
+              <div style="display:flex; align-items:center; gap:12px; padding:8px 0 8px 22px;">
+                <div style="width:30px; height:30px; border-radius:9px; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; color:#9e9eaa; flex:0 0 auto;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9.5"/><ellipse cx="12" cy="12" rx="4" ry="9.5"/><line x1="2.5" y1="12" x2="21.5" y2="12"/></svg></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:13.5px; font-weight:600; color:#f6f6fa;">Chrome · Work</div><div style="font-size:12px; color:#ff9500; margin-top:1px;">Reconnect to sync</div></div>
+                <span style="width:8px; height:8px; border-radius:50%; background:#ff9500;"></span>
+              </div>
+              <!-- connect another -->
+              <div class="tap" style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:11px; background:rgba(62,99,221,0.14);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#409cff" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span style="font-size:13.5px; font-weight:700; color:#409cff;">Connect another device</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== SETUP: IN PROGRESS ===== -->
+        <sc-if value="{{ setupInProgress }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#1c1c20; border:1px solid rgba(255,255,255,0.10); border-radius:18px; padding:20px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="flex:1; font-size:18px; font-weight:700; color:#f6f6fa;">Set up this iPhone</div>
+              <div style="font-size:13px; font-weight:600; color:#9e9eaa;">{{ progressText }}</div>
+              <div class="tap" style="width:34px; height:34px; border-radius:10px; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#409cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8a8 8 0 1 0 .5 4"/><polyline points="20 3 20 8 15 8"/></svg>
+              </div>
+            </div>
+
+            <!-- step: allow screen time (done) -->
+            <div style="display:flex; align-items:center; gap:12px; padding:16px 0 0;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div style="flex:1; font-size:16px; font-weight:600; color:#9e9eaa;">Allow Screen Time</div>
+            </div>
+            <div style="height:1px; background:rgba(255,255,255,0.09); margin:14px 0;"></div>
+            <!-- step: choose apps (done + edit) -->
+            <div style="display:flex; align-items:center; gap:12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div style="flex:1; font-size:16px; font-weight:600; color:#9e9eaa;">Choose apps</div>
+              <div class="tap" style="font-size:14px; font-weight:600; color:#409cff; background:rgba(255,255,255,0.08); padding:7px 15px; border-radius:9px;">Edit</div>
+            </div>
+            <div style="height:1px; background:rgba(255,255,255,0.09); margin:14px 0;"></div>
+            <!-- step: safari extension (pending) -->
+            <div style="display:flex; align-items:center; gap:12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff9500" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.5"/><path d="M12 7v5.2l3.4 2"/></svg>
+              <div style="flex:1;">
+                <div style="font-size:16px; font-weight:700; color:#f6f6fa;">Safari extension</div>
+                <div style="font-size:13px; color:#9e9eaa; margin-top:2px;">Open Safari once</div>
+              </div>
+              <div class="tap" onClick="{{ verifySafari }}" style="font-size:14px; font-weight:700; color:#fff; background:#0a84ff; padding:8px 18px; border-radius:9px;">Verify</div>
+            </div>
+            <div style="height:1px; background:rgba(255,255,255,0.09); margin:14px 0;"></div>
+            <!-- step: turn on protection (done) -->
+            <div style="display:flex; align-items:center; gap:12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div style="flex:1; font-size:16px; font-weight:600; color:#9e9eaa;">Turn on protection</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== SETUP: ALL SET (collapsible) ===== -->
+        <sc-if value="{{ setupDone }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#1c1c20; border:1px solid rgba(48,204,92,0.28); border-radius:18px; overflow:hidden;">
+            <div class="tap" onClick="{{ toggleSetup }}" style="display:flex; align-items:center; gap:12px; padding:18px 20px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div style="flex:1;">
+                <div style="font-size:16px; font-weight:700; color:#f6f6fa;">This iPhone is all set</div>
+                <div style="font-size:13px; color:#9e9eaa; margin-top:2px;">Protection on · all 4 steps done</div>
+              </div>
+              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#787885" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{ setupChevDeg }}deg);"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="exp" style="max-height:{{ setupMaxH }}; opacity:{{ setupOpacity }};">
+              <div style="padding:0 20px 18px;">
+                <div style="height:1px; background:rgba(255,255,255,0.08); margin-bottom:6px;"></div>
+                <div style="display:flex; align-items:center; gap:11px; padding:11px 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:14px; color:#9e9eaa;">Allow Screen Time</span></div>
+                <div style="display:flex; align-items:center; gap:11px; padding:11px 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:14px; color:#9e9eaa; flex:1;">Choose apps</span><span class="tap" style="font-size:13px; font-weight:600; color:#409cff;">Edit</span></div>
+                <div style="display:flex; align-items:center; gap:11px; padding:11px 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:14px; color:#9e9eaa;">Safari extension</span></div>
+                <div style="display:flex; align-items:center; gap:11px; padding:11px 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="#30cc5c"><circle cx="12" cy="12" r="11"/><path d="M17 8.5l-6.2 6.2-3-3" fill="none" stroke="#0e0e11" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:14px; color:#9e9eaa;">Turn on protection</span></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <!-- tab bar -->
+      <div style="display:flex; background:rgba(18,18,22,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.10); padding:12px 0 22px;">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="4" y1="21" x2="4" y2="11"/><line x1="12" y1="21" x2="12" y2="5"/><line x1="20" y1="21" x2="20" y2="14"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Usage</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/><circle cx="8" cy="7" r="2" fill="#0e0e11"/><circle cx="16" cy="12" r="2" fill="#0e0e11"/><circle cx="10" cy="17" r="2" fill="#0e0e11"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Tune</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#787885;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3Z"/></svg>
+          <span style="font-size:10.5px; font-weight:600;">Block</span>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#3e63dd;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M2 17h14"/><rect x="17" y="8" width="5" height="11" rx="1.3"/></svg>
+          <span style="font-size:10.5px; font-weight:700;">Devices</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- reset -->
+  <div class="tap" onClick="{{ reset }}" style="margin-top:24px; font-size:13px; font-weight:600; color:#787885; padding:8px 16px; border:1px solid rgba(255,255,255,0.12); border-radius:20px;">↺ Reset demo</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { connectionsOpen: false, safariVerified: false, setupExpanded: false };
+
+  renderVals() {
+    const { connectionsOpen, safariVerified, setupExpanded } = this.state;
+    return {
+      connectionsOpen,
+      connMaxH: connectionsOpen ? "460px" : "0px",
+      connOpacity: connectionsOpen ? 1 : 0,
+      connChevDeg: connectionsOpen ? 180 : 0,
+      connRowBg: connectionsOpen ? "rgba(255,255,255,0.03)" : "transparent",
+
+      setupInProgress: !safariVerified,
+      setupDone: safariVerified,
+      progressText: "3 of 4",
+      setupChevDeg: setupExpanded ? 180 : 0,
+      setupMaxH: setupExpanded ? "280px" : "0px",
+      setupOpacity: setupExpanded ? 1 : 0,
+
+      toggleConnections: () => this.setState(s => ({ connectionsOpen: !s.connectionsOpen })),
+      verifySafari: () => this.setState({ safariVerified: true, setupExpanded: false }),
+      toggleSetup: () => this.setState(s => ({ setupExpanded: !s.setupExpanded })),
+      reset: () => this.setState({ connectionsOpen: false, safariVerified: false, setupExpanded: false }),
+    };
+  }
+}
+</script>
+</body>
+</html>
