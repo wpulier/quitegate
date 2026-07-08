@@ -109,6 +109,7 @@ final class AccountHubModel: ObservableObject {
         siteUsageSummary: siteUsageSummary,
         lastSyncedAt: Date()
       )
+      Self.recordUsageHistory(siteUsageSummary)
       syncMessage = "This iPhone is registered. Policy and usage summaries are current."
     } catch {
       syncMessage = "Policy sync unavailable. Try again after account services are reachable."
@@ -125,7 +126,33 @@ final class AccountHubModel: ObservableObject {
 
     if let summary = try? await apiClient.fetchSiteUsage(token: token).siteUsageSummary {
       snapshot.siteUsageSummary = summary
+      Self.recordUsageHistory(summary)
     }
+  }
+
+  /// The single choke point folding every fresh summary into the on-device
+  /// usage ledger (the backend only ever serves one day; history lives here).
+  /// Records under the summary's own date key so a timezone-straddling
+  /// response lands on the day it actually describes.
+  static func recordUsageHistory(_ summary: SiteUsageSummarySnapshot?) {
+    guard let summary else {
+      return
+    }
+    let entries = summary.entries ?? summary.sites.flatMap(\.entries)
+    let split = UsageHistory.webIOSSplit(entries: entries.map { entry in
+      (
+        descriptor: [entry.sourceType, entry.browserName, entry.deviceName, entry.profileName, entry.label]
+          .compactMap { $0 }
+          .joined(separator: " "),
+        totalSeconds: entry.totalSeconds ?? 0
+      )
+    })
+    UsageHistoryStore.recordSummary(
+      date: summary.date,
+      totalSeconds: summary.totalSeconds,
+      webSeconds: split.web,
+      iosSeconds: split.ios
+    )
   }
 
   @discardableResult
