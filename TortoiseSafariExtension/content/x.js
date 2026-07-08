@@ -181,6 +181,10 @@ function recordSensitiveAuthorPair(rawHandle, rawTweetID) {
   if (!tweetIDsForHandle) {
     tweetIDsForHandle = new Set();
     pendingAuthorTweetIDs.set(handle, tweetIDsForHandle);
+    // Same bounding philosophy as the sensitive-metadata sets: oldest out.
+    while (pendingAuthorTweetIDs.size > MAX_EXPLICIT_AUTHORS) {
+      pendingAuthorTweetIDs.delete(pendingAuthorTweetIDs.keys().next().value);
+    }
   }
   tweetIDsForHandle.add(tweetID);
   if (tweetIDsForHandle.size < AUTHOR_FLAG_THRESHOLD) {
