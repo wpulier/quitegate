@@ -51,6 +51,17 @@ quietGateBrowser.runtime.onMessage.addListener((message, _sender, sendResponse) 
     return true;
   }
 
+  if (type === "quietgate.platformControls") {
+    // A site's own safety settings observed by platform-controls.js — persist
+    // them in the App Group so the Tortoise app can tell the user honestly
+    // whether the platform's built-in filter is protecting them.
+    sendNativeMessage({
+      type: "quietgate.platformControls",
+      payload: message.payload || null
+    }).then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
   return false;
 });
 

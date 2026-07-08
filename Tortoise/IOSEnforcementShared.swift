@@ -205,6 +205,15 @@ struct SafariExtensionPolicy: Codable, Equatable {
   ]
 }
 
+/// What the Safari extension observed on a platform's own settings page —
+/// e.g. X's "Display media that may contain sensitive content". A control is
+/// present only when the observer could actually read it.
+struct PlatformControlsSnapshot: Codable, Equatable {
+  let site: String
+  let observedAt: Date
+  let controls: [String: Bool]
+}
+
 struct SafariBrowserProfile: Codable, Equatable {
   let id: String
   let name: String
@@ -334,6 +343,46 @@ enum IOSEnforcementSharedStore {
 
   static func loadSiteUsageBySite() -> [String: [String: Any]]? {
     defaults.dictionary(forKey: siteUsageKey) as? [String: [String: Any]]
+  }
+
+  // MARK: platform controls (a site's OWN safety settings, observed in Safari)
+
+  private static let platformControlsKey = "TortoisePlatformControls"
+
+  /// Records what the Safari extension observed on a platform's settings page
+  /// (e.g. X's "Display media that may contain sensitive content"). Boolean
+  /// entries in the payload become the snapshot's controls; everything else in
+  /// the payload (url, checkedAt strings) is presentation-side noise.
+  static func recordPlatformControls(payload: [String: Any], now: Date = Date()) {
+    guard let site = payload["site"] as? String, !site.isEmpty else {
+      return
+    }
+    var controls: [String: Bool] = [:]
+    for (key, value) in payload where key != "site" {
+      // Only true JS booleans: bridged numbers (counts, timestamps) must not
+      // masquerade as safety-control states.
+      if let number = value as? NSNumber, CFGetTypeID(number) == CFBooleanGetTypeID() {
+        controls[key] = number.boolValue
+      }
+    }
+    var snapshots = loadAllPlatformControls()
+    snapshots[site] = PlatformControlsSnapshot(site: site, observedAt: now, controls: controls)
+    guard let data = try? JSONEncoder().encode(snapshots) else {
+      return
+    }
+    defaults.set(data, forKey: platformControlsKey)
+  }
+
+  static func loadPlatformControls(site: String) -> PlatformControlsSnapshot? {
+    loadAllPlatformControls()[site]
+  }
+
+  private static func loadAllPlatformControls() -> [String: PlatformControlsSnapshot] {
+    guard let data = defaults.data(forKey: platformControlsKey),
+          let snapshots = try? JSONDecoder().decode([String: PlatformControlsSnapshot].self, from: data) else {
+      return [:]
+    }
+    return snapshots
   }
 
   // MARK: launch-loop watch (see LaunchRecovery)

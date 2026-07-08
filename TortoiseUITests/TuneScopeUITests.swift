@@ -39,6 +39,23 @@ final class TuneScopeUITests: XCTestCase {
     XCTAssertEqual(app.state, .runningForeground)
   }
 
+  func testXSiteShowsPlatformSafetyRow() {
+    let app = launchTuning()
+
+    let xTile = app.staticTexts["X"].firstMatch
+    XCTAssertTrue(xTile.waitForExistence(timeout: 8), "X site tile never appeared")
+    if !xTile.isHittable {
+      app.swipeUp()
+    }
+    xTile.tap()
+
+    XCTAssertTrue(
+      element(app, "tune-x-platform-safety").waitForExistence(timeout: 6),
+      "the X account-setting honesty row must lead the X tuning card"
+    )
+    XCTAssertEqual(app.state, .runningForeground)
+  }
+
   func testAddComputerNavigatesToDevices() {
     // Fixture mode has no cloud devices, so the add-computer affordance is deterministic.
     let app = launchTuning()

@@ -38,6 +38,14 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         "ok": true,
         "storedAt": ISO8601DateFormatter().string(from: Date())
       ]
+    case "quietgate.platformControls":
+      if let payload = message["payload"] as? [String: Any] {
+        IOSEnforcementSharedStore.recordPlatformControls(payload: payload)
+      }
+      IOSEnforcementSharedStore.recordSafariExtensionHeartbeat(
+        policyMode: IOSEnforcementSharedStore.loadSafariPolicy().mode
+      )
+      return ["ok": true]
     default:
       os_log(.debug, "Unhandled Tortoise Safari message: %@", type)
       return policyResponse()

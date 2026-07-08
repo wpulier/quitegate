@@ -239,6 +239,12 @@ private struct TortoiseMobileShell: View {
         screenTime.refreshSetupStatus()
       }
       .task {
+        // Optimistic Safari hand-off: stage policy flips into the App Group the
+        // moment the user acts, so switching straight to Safari enforces them.
+        model.onPolicyStaged = { [weak screenTime] policy in
+          guard let screenTime, !screenTime.sessionLockedActive else { return }
+          screenTime.applyPolicyFeatures(TuneScreen.iosSafariEnforcedFeatures(policy: policy))
+        }
         screenTime.refreshSetupStatus()
       }
       .onChange(of: model.snapshot.policy?.policy.browser?.options?.youtubeDailyLimitMinutes, initial: true) { _, minutes in
@@ -832,6 +838,10 @@ private struct MobileTuningScreen: View {
           }
         }
 
+        if selectedTuneSite.id == "x" {
+          MobileXPlatformSafetyRow()
+        }
+
         MobileCard {
           VStack(spacing: 0) {
             ForEach(Array(selectedSiteFeatures.enumerated()), id: \.element.id) { index, feature in
@@ -901,6 +911,10 @@ private struct MobileTuningScreen: View {
         }
       }
     }
+    // .contain makes the card its own accessibility container: without it the
+    // card identifier propagates onto the chips and CLOBBERS their identifiers
+    // whenever a chip renders as a Button (any attention state).
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("tune-scope-card")
   }
 
@@ -1950,6 +1964,79 @@ private struct MobileTuneSetupFirstBanner: View {
       }
     }
     .accessibilityIdentifier("tune-setup-first-banner")
+  }
+}
+
+/// The X account-setting honesty row: X's own "display sensitive media"
+/// setting decides whether X serves adult media raw (server-side, everywhere,
+/// including the X app), so its state leads the X tuning card. Reloaded on
+/// appear and on app-return, because the Safari extension records it while
+/// the user is on X's settings page.
+private struct MobileXPlatformSafetyRow: View {
+  @Environment(\.openURL) private var openURL
+  @Environment(\.scenePhase) private var scenePhase
+  @State private var snapshot: PlatformControlsSnapshot?
+
+  private var status: XPlatformSafety.Status {
+    XPlatformSafety.status(snapshot: snapshot)
+  }
+
+  var body: some View {
+    MobileCard {
+      HStack(alignment: .top, spacing: 10) {
+        Image(systemName: icon)
+          .font(.system(size: 15, weight: .semibold))
+          .foregroundStyle(iconColor)
+          .padding(.top, 1)
+        VStack(alignment: .leading, spacing: 3) {
+          Text(XPlatformSafetyCopy.title)
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(TortoiseDesign.primaryText)
+          Text(XPlatformSafety.detail(for: status))
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+            .fixedSize(horizontal: false, vertical: true)
+          if let actionTitle = XPlatformSafety.actionTitle(for: status) {
+            Button(actionTitle) {
+              openURL(XPlatformSafety.settingsURL)
+            }
+            .buttonStyle(.bordered)
+            .padding(.top, 4)
+          }
+        }
+        Spacer(minLength: 0)
+      }
+    }
+    // Same identifier scoping as the scope card: keep the row id off the
+    // inner CTA Button.
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("tune-x-platform-safety")
+    .onAppear(perform: reload)
+    .onChange(of: scenePhase) { _, phase in
+      if phase == .active {
+        reload()
+      }
+    }
+  }
+
+  private var icon: String {
+    switch status {
+    case .unknown: return "questionmark.circle"
+    case .exposed: return "exclamationmark.triangle.fill"
+    case .protected: return "checkmark.shield.fill"
+    }
+  }
+
+  private var iconColor: Color {
+    switch status {
+    case .unknown: return TortoiseDesign.secondaryText
+    case .exposed: return TortoiseDesign.orange
+    case .protected: return TortoiseDesign.green
+    }
+  }
+
+  private func reload() {
+    snapshot = IOSEnforcementSharedStore.loadPlatformControls(site: "x")
   }
 }
 

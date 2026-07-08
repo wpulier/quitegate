@@ -12,6 +12,13 @@ final class AccountHubModel: ObservableObject {
   /// snapshot). Cleared by the next successful write.
   @Published var writeErrorMessage: String?
 
+  /// Fired with the freshest known policy at each updatePolicy transition: the
+  /// optimistic next policy right before the PUT, and the confirmed (or
+  /// conflict-refreshed) policy after a failure. Lets local enforcement — the
+  /// iOS Safari App Group policy — apply a flip immediately instead of after
+  /// the network round-trip, and visibly revert when the write fails.
+  var onPolicyStaged: ((TortoisePolicy) -> Void)?
+
   private let apiClient = TortoiseAPIClient()
 
   func refresh(using clerk: Clerk) async {
@@ -143,12 +150,18 @@ final class AccountHubModel: ObservableObject {
     isSyncing = true
     defer { isSyncing = false }
 
+    // Optimistic hand-off: local enforcement (the iOS Safari App Group policy)
+    // applies the flip NOW, so hopping straight from the toggle into Safari
+    // enforces it without waiting on the network write. Every failure path
+    // below re-stages the confirmed policy, so a failed write reverts locally.
+    let nextPolicy = transform(currentEnvelope.policy)
+    onPolicyStaged?(nextPolicy)
+
     do {
       guard let token = try await session.getToken() else {
         throw TortoiseAPIError.missingSessionToken
       }
 
-      let nextPolicy = transform(currentEnvelope.policy)
       let updatedEnvelope = try await apiClient.updatePolicy(
         token: token,
         policy: nextPolicy,
@@ -170,6 +183,7 @@ final class AccountHubModel: ObservableObject {
         syncMessage = error.localizedDescription
         writeErrorMessage = "Couldn't save — check your connection."
       }
+      onPolicyStaged?(snapshot.policy?.policy ?? currentEnvelope.policy)
       return nil
     }
   }

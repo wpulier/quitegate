@@ -43,6 +43,8 @@ targets:
         type: file
       - path: Tortoise/TuneScopeModel.swift
         type: file
+      - path: Tortoise/PlatformSafetyModel.swift
+        type: file
       - path: Tortoise/DevicePresentation.swift
         type: file
       - path: Tortoise/DevicesHubModel.swift

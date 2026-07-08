@@ -1,5 +1,5 @@
 (() => {
-const TUNER_VERSION = "2026.06.29.1200";
+const TUNER_VERSION = "2026.07.08.1500";
 const existingController = window.__quietgateXTunerController;
 if (existingController?.version === TUNER_VERSION) {
   existingController.refresh?.();
@@ -42,6 +42,7 @@ const MANAGED_MEDIA_CLASSES = [
   HIDDEN_CLASS,
   "qg-x-sensitive-media-surface",
   "qg-x-explicit-post",
+  "qg-x-explicit-author",
   "qg-x-explicit-profile",
   "qg-x-explicit-profile-shell",
   "qg-x-explicit-profile-header",
@@ -120,6 +121,114 @@ const sensitivePostIDs = new Set();
 const sensitiveMediaURLHints = new Set();
 const sensitiveMediaIDs = new Set();
 const explicitProfileHandles = new Set();
+
+// Author-level blocking: an account confirmed explicit gets ALL its posts
+// hidden in every view (feed included), catching the unlabeled posts that
+// per-post cues miss. Confirmation needs AUTHOR_FLAG_THRESHOLD distinct
+// flagged tweets so one sensitive retweet doesn't blocklist a normal account.
+const EXPLICIT_AUTHOR_STORAGE_KEY = "xExplicitAuthors";
+const AUTHOR_FLAG_THRESHOLD = 2;
+const MAX_EXPLICIT_AUTHORS = 500;
+const MAX_AUTHOR_PAIRS_PER_MESSAGE = 200;
+const AUTHOR_HANDLE_PATTERN = /^[a-z0-9_]{1,15}$/;
+const flaggedExplicitAuthors = new Set();
+const pendingAuthorTweetIDs = new Map();
+
+function normalizedAuthorHandle(value) {
+  const handle = String(value || "").trim().replace(/^@/, "").toLowerCase();
+  return AUTHOR_HANDLE_PATTERN.test(handle) ? handle : null;
+}
+
+function persistFlaggedAuthors() {
+  const trimmed = [...flaggedExplicitAuthors].slice(-MAX_EXPLICIT_AUTHORS);
+  quietGateBrowser.storage.local
+    .set({ [EXPLICIT_AUTHOR_STORAGE_KEY]: trimmed })
+    ?.catch?.(() => {});
+}
+
+function mergeFlaggedAuthors(values, { persist }) {
+  if (!Array.isArray(values)) {
+    return false;
+  }
+  let changed = false;
+  for (const rawValue of values) {
+    const handle = normalizedAuthorHandle(rawValue);
+    if (handle && !flaggedExplicitAuthors.has(handle)) {
+      flaggedExplicitAuthors.add(handle);
+      pendingAuthorTweetIDs.delete(handle);
+      changed = true;
+    }
+  }
+  if (changed) {
+    document.documentElement.dataset.quietgateXFlaggedAuthorCount = String(flaggedExplicitAuthors.size);
+    if (persist) {
+      persistFlaggedAuthors();
+    }
+  }
+  return changed;
+}
+
+/// One (author, flagged tweet) observation. Returns true when it pushed the
+/// author over the threshold into the persistent blocklist.
+function recordSensitiveAuthorPair(rawHandle, rawTweetID) {
+  const handle = normalizedAuthorHandle(rawHandle);
+  const tweetID = String(rawTweetID || "").trim();
+  if (!handle || !NUMERIC_ID_PATTERN.test(tweetID) || flaggedExplicitAuthors.has(handle)) {
+    return false;
+  }
+
+  let tweetIDsForHandle = pendingAuthorTweetIDs.get(handle);
+  if (!tweetIDsForHandle) {
+    tweetIDsForHandle = new Set();
+    pendingAuthorTweetIDs.set(handle, tweetIDsForHandle);
+  }
+  tweetIDsForHandle.add(tweetID);
+  if (tweetIDsForHandle.size < AUTHOR_FLAG_THRESHOLD) {
+    return false;
+  }
+  return mergeFlaggedAuthors([handle], { persist: true });
+}
+
+async function loadFlaggedAuthors() {
+  try {
+    const stored = await quietGateBrowser.storage.local.get({ [EXPLICIT_AUTHOR_STORAGE_KEY]: [] });
+    if (mergeFlaggedAuthors(stored[EXPLICIT_AUTHOR_STORAGE_KEY], { persist: false })) {
+      scheduleApplySettings();
+    }
+  } catch (_error) {
+    // Author blocking degrades to per-post cues when storage is unavailable.
+  }
+}
+
+/// The post's author handle(s) from the DOM: avatar container test-ids and
+/// User-Name links only — never body links, so @mentions are not treated as
+/// authors. A quoted porn author inside the post counts; hiding the wrapping
+/// post is the protective outcome.
+function postAuthorHandles(post) {
+  const handles = new Set();
+  for (const node of post.querySelectorAll?.('[data-testid^="UserAvatar-Container-"]') || []) {
+    const testid = node.getAttribute("data-testid") || "";
+    const handle = normalizedAuthorHandle(testid.slice("UserAvatar-Container-".length));
+    if (handle) {
+      handles.add(handle);
+    }
+  }
+  for (const link of post.querySelectorAll?.('[data-testid="User-Name"] a[href], [data-testid="UserName"] a[href]') || []) {
+    const href = (link.getAttribute("href") || "").split(/[?#]/)[0];
+    const parts = href.split("/").filter(Boolean);
+    if (parts.length === 1) {
+      const handle = normalizedAuthorHandle(parts[0]);
+      if (handle) {
+        handles.add(handle);
+      }
+    }
+  }
+  return [...handles];
+}
+
+function hasFlaggedAuthor(post) {
+  return postAuthorHandles(post).some((handle) => flaggedExplicitAuthors.has(handle));
+}
 const PROFILE_ROUTE_PATHS = new Set([
   "with_replies",
   "media",
@@ -154,6 +263,7 @@ document.documentElement.dataset.quietgateXExplicitPostCount = "0";
 document.documentElement.dataset.quietgateXProfileFallbackPostCount = "0";
 document.documentElement.dataset.quietgateXSearchMediaCount = "0";
 document.documentElement.dataset.quietgateXSearchResultCount = "0";
+document.documentElement.dataset.quietgateXFlaggedAuthorCount = "0";
 document.documentElement.dataset.quietgateXLastDecision = "";
 
 function normalizedMediaURLHint(value) {
@@ -254,7 +364,16 @@ function handlePageDetectorMessage(event) {
   document.documentElement.dataset.quietgateXSensitivePostCount = String(sensitivePostIDs.size);
   document.documentElement.dataset.quietgateXSensitiveMediaCount = String(sensitiveMediaIDs.size);
 
-  if (postIDsChanged || mediaURLsChanged || mediaIDsChanged) {
+  let authorsChanged = false;
+  if (Array.isArray(event.data.sensitiveAuthors)) {
+    for (const pair of event.data.sensitiveAuthors.slice(0, MAX_AUTHOR_PAIRS_PER_MESSAGE)) {
+      if (recordSensitiveAuthorPair(pair?.handle, pair?.tweetID)) {
+        authorsChanged = true;
+      }
+    }
+  }
+
+  if (postIDsChanged || mediaURLsChanged || mediaIDsChanged || authorsChanged) {
     scheduleApplySettings();
   }
 }
@@ -629,7 +748,7 @@ function explicitProfileFlagKey(handle) {
 }
 
 function profilePreviouslyFlagged(handle) {
-  if (explicitProfileHandles.has(handle)) {
+  if (explicitProfileHandles.has(handle) || flaggedExplicitAuthors.has(handle)) {
     return true;
   }
   try {
@@ -645,6 +764,9 @@ function profilePreviouslyFlagged(handle) {
 
 function flagExplicitProfile(handle) {
   explicitProfileHandles.add(handle);
+  // A profile confirmed explicit is an explicit AUTHOR: feed posts everywhere
+  // inherit the block, not just this profile page.
+  mergeFlaggedAuthors([handle], { persist: true });
   try {
     sessionStorage.setItem(explicitProfileFlagKey(handle), "1");
   } catch (_error) {
@@ -910,7 +1032,7 @@ function createExplicitPlaceholder(title, detail, extraClass = "") {
 
 function ensureExplicitPlaceholder(
   post,
-  title = "QuietGate blocked explicit content",
+  title = "Tortoise blocked explicit content",
   detail = "Hidden by X explicit-content tuning."
 ) {
   const previous = post.previousElementSibling;
@@ -925,7 +1047,7 @@ function ensureExplicitPlaceholder(
 }
 
 function ensureSearchPlaceholder(
-  title = "QuietGate blocked explicit search results",
+  title = "Tortoise blocked explicit search results",
   detail = "This X search matched your explicit-search tuning."
 ) {
   const main = document.querySelector("main") || document.body;
@@ -975,7 +1097,7 @@ function markExplicitSearchMedia(hiddenSurfaces, placeholders) {
   }
 
   placeholders.add(ensureSearchPlaceholder(
-    "QuietGate blocked explicit media results",
+    "Tortoise blocked explicit media results",
     "This X media search matched your explicit-content tuning."
   ));
   recordAdultDecision(adultDecision("x-search-media", "hide", "explicit-search-query", 95, searchQueryText()));
@@ -1130,11 +1252,36 @@ function markMediaSurfaces(features) {
     const groups = [];
     const allMediaSurfaces = collectAllMediaSurfaces(post);
 
-    if (!profileFallbackPosts.has(post) && explicitCueEnabled && hasExplicitContentCue(post, allMediaSurfaces)) {
+    // Confirmed explicit adult-domain posts convict their author: two distinct
+    // convictions blocklist the account, catching its unlabeled posts too.
+    if (explicitCueEnabled && hasAdultDomainCue(post)) {
+      const statusIDs = statusIDsForPost(post);
+      if (statusIDs.length > 0) {
+        for (const handle of postAuthorHandles(post)) {
+          recordSensitiveAuthorPair(handle, statusIDs[0]);
+        }
+      }
+    }
+
+    const authorFlagged = explicitCueEnabled && hasFlaggedAuthor(post);
+    if (
+      !profileFallbackPosts.has(post) &&
+      explicitCueEnabled &&
+      (authorFlagged || hasExplicitContentCue(post, allMediaSurfaces))
+    ) {
       markExplicitContent(post, allMediaSurfaces, hiddenSurfaces, hiddenPosts, placeholders);
+      if (authorFlagged) {
+        post.classList.add("qg-x-explicit-author");
+      }
     }
 
     if (features.xSensitiveMedia && (hasSensitiveWarning(post) || hasSensitiveMetadataSignal(post))) {
+      const statusIDs = statusIDsForPost(post);
+      if (statusIDs.length > 0) {
+        for (const handle of postAuthorHandles(post)) {
+          recordSensitiveAuthorPair(handle, statusIDs[0]);
+        }
+      }
       groups.push({
         reasonClass: "qg-x-sensitive-media-surface",
         surfaces: allMediaSurfaces.length > 0 ? allMediaSurfaces : collectSensitiveFallbackSurfaces(post)
@@ -1227,6 +1374,11 @@ function handleStorageChange(changes, areaName) {
     return;
   }
 
+  if (changes[EXPLICIT_AUTHOR_STORAGE_KEY] &&
+      mergeFlaggedAuthors(changes[EXPLICIT_AUTHOR_STORAGE_KEY].newValue, { persist: false })) {
+    scheduleApplySettings();
+  }
+
   if (changes.mode || changes.features || changes.options || changes.blockedDomains) {
     loadSettings();
   }
@@ -1257,6 +1409,7 @@ window.addEventListener("message", handlePageDetectorMessage);
 
 function refreshController() {
   injectPageDetectorScript();
+  loadFlaggedAuthors();
   loadSettings();
   usageController?.refresh?.();
   syncNativeSettings();

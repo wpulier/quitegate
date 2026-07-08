@@ -242,10 +242,56 @@
       hasTruthySensitiveField(value?.mediaVisibilityResults);
   }
 
+  const AUTHOR_HANDLE_PATTERN = /^[a-z0-9_]{1,15}$/;
+
+  function normalizedAuthorHandle(value) {
+    const handle = String(value || "").trim().replace(/^@/, "").toLowerCase();
+    return AUTHOR_HANDLE_PATTERN.test(handle) ? handle : null;
+  }
+
+  // The tweet's canonical author slot only — never entities.user_mentions or
+  // quoted/retweeted subtrees, so mentioned and quoted users are not blamed
+  // for someone else's sensitive post.
+  function authorHandleForTweet(root) {
+    const userResult =
+      root?.core?.user_results?.result ||
+      root?.user_results?.result ||
+      root?.user ||
+      root?.author;
+    if (!isObject(userResult)) {
+      return null;
+    }
+    return normalizedAuthorHandle(
+      userResult.legacy?.screen_name ||
+      userResult.core?.screen_name ||
+      userResult.screen_name
+    );
+  }
+
+  function rootTweetID(root) {
+    for (const candidate of [root?.rest_id, root?.legacy?.id_str, root?.id_str, root?.id]) {
+      const normalized = String(candidate || "").trim();
+      if (NUMERIC_ID_PATTERN.test(normalized)) {
+        return normalized;
+      }
+    }
+    return null;
+  }
+
+  function contextTweetRoot(value, ancestors) {
+    for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+      if (looksLikeTweet(ancestors[index])) {
+        return ancestors[index];
+      }
+    }
+    return looksLikeTweet(value) ? value : null;
+  }
+
   function collectSensitiveMetadata(payload) {
     const tweetIDs = new Set();
     const mediaURLs = new Set();
     const mediaIDs = new Set();
+    const sensitiveAuthorPairs = new Map();
     const seen = new WeakSet();
     let visited = 0;
 
@@ -262,6 +308,13 @@
         }
         collectMediaURLHints(value, mediaURLs);
         collectMediaIDs(value, mediaIDs);
+
+        const root = contextTweetRoot(value, ancestors);
+        const handle = authorHandleForTweet(root);
+        const tweetID = rootTweetID(root);
+        if (handle && tweetID) {
+          sensitiveAuthorPairs.set(`${handle}:${tweetID}`, { handle, tweetID });
+        }
       }
 
       const nextAncestors = ancestors.length >= 10
@@ -276,14 +329,20 @@
     return {
       tweetIDs: [...tweetIDs],
       mediaURLs: [...mediaURLs],
-      mediaIDs: [...mediaIDs]
+      mediaIDs: [...mediaIDs],
+      sensitiveAuthors: [...sensitiveAuthorPairs.values()]
     };
   }
 
   function emitSensitiveMetadata(payload) {
     try {
       const metadata = collectSensitiveMetadata(payload);
-      if (metadata.tweetIDs.length === 0 && metadata.mediaURLs.length === 0 && metadata.mediaIDs.length === 0) {
+      if (
+        metadata.tweetIDs.length === 0 &&
+        metadata.mediaURLs.length === 0 &&
+        metadata.mediaIDs.length === 0 &&
+        metadata.sensitiveAuthors.length === 0
+      ) {
         return;
       }
       window.postMessage({
