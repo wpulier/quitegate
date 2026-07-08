@@ -8,7 +8,7 @@ settings:
   base:
     DEVELOPMENT_TEAM: SY7TABCD5M
     MARKETING_VERSION: "1.1"
-    CURRENT_PROJECT_VERSION: "6"
+    CURRENT_PROJECT_VERSION: "7"
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
 packages:
@@ -50,6 +50,8 @@ targets:
       - path: Tortoise/QRCode.swift
         type: file
       - path: Tortoise/IOSEnforcementShared.swift
+        type: file
+      - path: Tortoise/LaunchRecovery.swift
         type: file
       - path: Tortoise/IOSSession.swift
         type: file
@@ -132,6 +134,8 @@ targets:
       - TortoiseDeviceActivityMonitor
       - path: Tortoise/IOSEnforcementShared.swift
         type: file
+      - path: Tortoise/LaunchRecovery.swift
+        type: file
       - path: Tortoise/IOSSession.swift
         type: file
       - path: Tortoise/ConnectionStatus.swift
@@ -190,6 +194,8 @@ targets:
     sources:
       - TortoiseSafariExtension
       - path: Tortoise/IOSEnforcementShared.swift
+        type: file
+      - path: Tortoise/LaunchRecovery.swift
         type: file
       - path: Tortoise/IOSSession.swift
         type: file

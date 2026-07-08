@@ -336,6 +336,37 @@ enum IOSEnforcementSharedStore {
     defaults.dictionary(forKey: siteUsageKey) as? [String: [String: Any]]
   }
 
+  // MARK: launch-loop watch (see LaunchRecovery)
+
+  private static let launchPendingKey = "TortoiseLaunchPendingSurvival"
+  private static let earlyDeathCountKey = "TortoiseEarlyDeathCount"
+
+  /// Called once at controller init. Records this launch as pending survival
+  /// and returns whether the streak of early deaths means this launch must
+  /// wipe all enforcement state (safe mode). Entering safe mode resets the
+  /// streak so the wipe happens once, not on every subsequent launch.
+  static func beginLaunchWatch(wasEnforcing: Bool) -> Bool {
+    let assessment = LaunchRecovery.assess(
+      previousLaunchDiedEarly: defaults.bool(forKey: launchPendingKey),
+      wasEnforcing: wasEnforcing,
+      priorEarlyDeathCount: defaults.integer(forKey: earlyDeathCountKey)
+    )
+    defaults.set(
+      assessment.shouldEnterSafeMode ? 0 : assessment.earlyDeathCount,
+      forKey: earlyDeathCountKey
+    )
+    defaults.set(true, forKey: launchPendingKey)
+    return assessment.shouldEnterSafeMode
+  }
+
+  /// A launch counts as survived once the app reaches background (a normal
+  /// exit) or stays alive past the grace period — a Screen Time self-shield
+  /// kill strikes while foregrounded, so it can do neither.
+  static func markLaunchSurvived() {
+    defaults.set(false, forKey: launchPendingKey)
+    defaults.set(0, forKey: earlyDeathCountKey)
+  }
+
   static func recordThresholdEvent(_ event: IOSEnforcementThresholdEvent) {
     var events = loadThresholdEvents()
     events.append(event)
@@ -441,6 +472,11 @@ extension ManagedSettingsStore.Name {
   /// `clearAllStores()` sweep never touches it.
   static let tortoiseManagedAppsLimit = Self("tortoise.managedApps.limit")
 
+  /// Pre-TestFlight store name (replaced before build 1 uploaded, so no
+  /// installed device should hold it) — kept forever because this purge list
+  /// is append-only and clearing an empty store costs nothing.
+  static let tortoiseLegacyYouTube = Self("tortoise.youtube")
+
   static let tortoiseEnforcementStores: [Self] = [
     .tortoiseImmediate,
     .tortoiseSchedule,
@@ -455,7 +491,8 @@ extension ManagedSettingsStore.Name {
     .tortoiseSchedule,
     .tortoiseLimit,
     .tortoiseManagedApps,
-    .tortoiseManagedAppsLimit
+    .tortoiseManagedAppsLimit,
+    .tortoiseLegacyYouTube
   ]
 }
 

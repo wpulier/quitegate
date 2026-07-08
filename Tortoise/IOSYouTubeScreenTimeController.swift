@@ -102,6 +102,7 @@ final class IOSEnforcementController: ObservableObject {
     dailyLimitMinutes = persisted.dailyLimitMinutes
     managedAppsLimitMinutes = persisted.managedAppsLimitMinutes
     safariExtensionAcknowledged = persisted.safariExtensionAcknowledged
+    let recoveredFromLaunchLoop = recoverFromLaunchLoopIfNeeded()
     purgeStaleShieldStoresIfNeeded()
     repairSelfShieldIfNeeded()
     loadSafariSetupSnapshot()
@@ -110,6 +111,51 @@ final class IOSEnforcementController: ObservableObject {
     applyCurrentMode()
     session = IOSEnforcementSharedStore.loadSnapshot().session
     expireSessionIfNeeded()
+    armLaunchSurvivalMarkers()
+    // Last: applyCurrentMode()'s deferred updateStatusMessage() overwrites
+    // anything set earlier in init, and this message must be what greets the
+    // person after a wipe.
+    if recoveredFromLaunchLoop {
+      statusMessage = "Tortoise kept getting closed by its own protection, so protection was reset. Pick your apps again."
+    }
+  }
+
+  /// Crash-loop backstop: a shield that catches Tortoise itself makes iOS
+  /// kill the app moments after every foreground — no crash log, and no
+  /// guarantee any code later in launch runs. So the check is first, the
+  /// trigger is the loop itself (two straight launches that died while
+  /// foregrounded with enforcement active), and the response wipes
+  /// EVERYTHING: every store, every monitor, both selections, and the
+  /// on-switch. init's applyCurrentMode() then re-applies the now-empty state.
+  private func recoverFromLaunchLoopIfNeeded() -> Bool {
+    let wasEnforcing = shieldingEnabled || hasSelection || hasManagedAppsSelection
+    guard IOSEnforcementSharedStore.beginLaunchWatch(wasEnforcing: wasEnforcing) else {
+      return false
+    }
+    IOSEnforcementShieldApplier.purgeAllStoresEverWritten()
+    activityCenter.stopMonitoring()
+    selection = FamilyActivitySelection(includeEntireCategory: true)
+    managedAppsSelection = FamilyActivitySelection(includeEntireCategory: true)
+    IOSEnforcementSharedStore.saveManagedAppsSelection(managedAppsSelection)
+    shieldingEnabled = false
+    return true
+  }
+
+  /// A Screen Time self-shield kill strikes while the app is foregrounded, so
+  /// surviving to background OR outliving the grace period both prove this
+  /// launch was healthy. Quick in-and-out visits background normally and never
+  /// count toward the loop.
+  private func armLaunchSurvivalMarkers() {
+    NotificationCenter.default.addObserver(
+      forName: UIApplication.didEnterBackgroundNotification,
+      object: nil,
+      queue: .main
+    ) { _ in
+      IOSEnforcementSharedStore.markLaunchSurvived()
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+      IOSEnforcementSharedStore.markLaunchSurvived()
+    }
   }
 
   /// Rebuilds `base` with `includeEntireCategory: true` so future picker edits
@@ -130,13 +176,17 @@ final class IOSEnforcementController: ObservableObject {
   /// One-time purge of every store + all monitors; init's applyCurrentMode()
   /// then re-arms everything fresh with category-free shields.
   private func purgeStaleShieldStoresIfNeeded() {
-    let migrationKey = "TortoiseShieldStorePurge.v1"
+    // v2: v1 marked itself done BEFORE purging — on a phone where the app dies
+    // seconds after launch, that one shot may have burned without the clears
+    // landing. Run once more for everyone, and mark done only AFTER the work
+    // so an interrupted purge retries next launch (it's idempotent).
+    let migrationKey = "TortoiseShieldStorePurge.v2"
     guard !TortoiseAppGroup.defaults.bool(forKey: migrationKey) else {
       return
     }
-    TortoiseAppGroup.defaults.set(true, forKey: migrationKey)
     IOSEnforcementShieldApplier.purgeAllStoresEverWritten()
     activityCenter.stopMonitoring()
+    TortoiseAppGroup.defaults.set(true, forKey: migrationKey)
   }
 
   /// The ShieldConfiguration extension flags the App Group when iOS asked it to

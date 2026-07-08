@@ -33,10 +33,39 @@ final class TortoiseShieldConfigurationExtension: ShieldConfigurationDataSource 
     application.bundleIdentifier == Self.tortoiseBundleID
   }
 
+  /// Every Tortoise store name ever shipped, mirrored verbatim from
+  /// ManagedSettingsStore.Name.tortoiseAllStores in IOSEnforcementShared.swift
+  /// (not compiled into this target). Append-only, like the original.
+  private static let allStoreNames = [
+    "tortoise.immediate",
+    "tortoise.schedule",
+    "tortoise.limit",
+    "tortoise.managedApps",
+    "tortoise.managedApps.limit",
+    "tortoise.youtube",
+  ]
+
+  /// Keys mirrored from IOSEnforcementSharedStore's selection storage.
+  private static let selectionKeys = [
+    "TortoiseIOSEnforcementSelection",
+    "TortoiseIOSManagedAppsSelection",
+  ]
+
   private func selfShieldConfiguration() -> ShieldConfiguration {
     Self.appGroupDefaults?.set(Date().timeIntervalSince1970, forKey: Self.selfShieldKey)
+    // Heal in place, not just flag: when Tortoise itself is shielded, iOS
+    // kills the main app on every foreground, so this extension may be the
+    // only Tortoise code that ever runs. Drop every shield and the persisted
+    // selections that caused them; the main app's launch recovery finishes
+    // the cleanup once it can stay alive.
+    for name in Self.allStoreNames {
+      ManagedSettingsStore(named: .init(name)).clearAllSettings()
+    }
+    for key in Self.selectionKeys {
+      Self.appGroupDefaults?.removeObject(forKey: key)
+    }
     return makeConfiguration(
-      subtitle: "A selection accidentally included Tortoise itself. Open Tortoise — it repairs this automatically."
+      subtitle: "A selection accidentally included Tortoise itself. Tortoise cleared it — reopen the app and pick your apps again."
     )
   }
 
