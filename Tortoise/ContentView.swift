@@ -106,9 +106,9 @@ private enum TortoiseScreenshot {
     let environmentSection = ProcessInfo.processInfo.environment["TORTOISE_SCREENSHOT_SECTION"]
     let argumentSection = value(after: "--tortoise-screenshot-section")
     guard let section = environmentSection ?? argumentSection else {
-      return .devices
+      return .usage
     }
-    return MobileSection(rawValue: section) ?? .devices
+    return MobileSection(rawValue: section) ?? .usage
   }
 
   private static func value(after flag: String) -> String? {
@@ -190,7 +190,6 @@ private struct TortoiseMobileShell: View {
   let refresh: () async -> Void
 
   @State private var section: MobileSection
-  @State private var usageTab = MobileUsageTab.all
   @State private var selectedSite = TuningCatalog.youtubeSiteID
   @StateObject private var screenTime = IOSYouTubeScreenTimeController()
   @Environment(\.scenePhase) private var scenePhase
@@ -199,7 +198,7 @@ private struct TortoiseMobileShell: View {
     accountLabel: String,
     model: AccountHubModel,
     clerk: Clerk,
-    initialSection: MobileSection = .devices,
+    initialSection: MobileSection = .usage,
     refresh: @escaping () async -> Void
   ) {
     self.accountLabel = accountLabel
@@ -221,11 +220,17 @@ private struct TortoiseMobileShell: View {
               MobileIOSSetupCard(screenTime: screenTime)
             }
           } else if screenTime.connectionState != .connected {
-            MobileSetupNudge(
-              text: screenTime.connectionTitle,
-              progress: screenTime.setupRemainingText
-            ) {
-              section = .devices
+            if section == .usage {
+              MobileFinishSetupBanner(progress: screenTime.setupProgressText) {
+                section = .devices
+              }
+            } else {
+              MobileSetupNudge(
+                text: screenTime.connectionTitle,
+                progress: screenTime.setupRemainingText
+              ) {
+                section = .devices
+              }
             }
           }
           screenContent
@@ -284,10 +289,7 @@ private struct TortoiseMobileShell: View {
     switch section {
     case .usage:
       MobileUsageScreen(
-        selectedTab: $usageTab,
         model: model,
-        screenTime: screenTime,
-        setDailyLimit: setDailyLimit,
         refreshUsage: { await model.refreshUsage(using: clerk) }
       )
     case .tuning:
@@ -308,7 +310,8 @@ private struct TortoiseMobileShell: View {
         screenTime: screenTime,
         accessMode: currentAccessMode,
         isSyncing: model.isSyncing,
-        selectMode: setAccessMode
+        selectMode: setAccessMode,
+        setDailyLimit: setDailyLimit
       )
     case .devices:
       MobileDevicesScreen(accountLabel: accountLabel, model: model, screenTime: screenTime)
@@ -419,28 +422,22 @@ private struct TortoiseMobileShell: View {
   }
 }
 
+/// Usage per the iOS v1 redesign: one dominant number, an honest trend (only
+/// once history exists), a 7-bar week, the web/iPhone split, and the app and
+/// account detail folded away until asked for.
 private struct MobileUsageScreen: View {
-  @Binding var selectedTab: MobileUsageTab
   @ObservedObject var model: AccountHubModel
-  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
-  let setDailyLimit: (Int) -> Void
   let refreshUsage: () async -> Void
 
+  @State private var byAppOpen = true
+  @State private var byAccountOpen = false
+
   var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
+    VStack(alignment: .leading, spacing: 16) {
       MobileHeader(kicker: todayLabel, title: "Usage")
-      usageTabs
       usageHero
-
-      if selectedTab == .youtube {
-        MobileIOSYouTubeLimitCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
-      }
-
-      if selectedTab == .all {
-        byAppCard
-      }
-
-      accountsCard
+      byAppCard
+      byAccountCard
     }
     .task {
       while !Task.isCancelled {
@@ -450,105 +447,225 @@ private struct MobileUsageScreen: View {
     }
   }
 
-  private var usageTabs: some View {
-    ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: 8) {
-        ForEach(MobileUsageTab.allCases) { tab in
-          Button {
-            selectedTab = tab
-          } label: {
-            Text(tab.title)
-              .font(.system(size: 13, weight: .bold))
-              .foregroundStyle(selectedTab == tab ? TortoiseDesign.primaryText : TortoiseDesign.secondaryText)
-              .padding(.horizontal, 16)
-              .padding(.vertical, 9)
-              .background(
-                selectedTab == tab ? TortoiseDesign.accent.opacity(0.24) : TortoiseDesign.elevatedPanel,
-                in: Capsule()
-              )
-              .overlay {
-                Capsule()
-                  .strokeBorder(selectedTab == tab ? TortoiseDesign.accent : TortoiseDesign.hairline)
-              }
-          }
-          .buttonStyle(.plain)
-        }
-      }
-    }
-  }
+  // MARK: hero
 
   private var usageHero: some View {
     MobileCard {
-      VStack(alignment: .leading, spacing: 14) {
-        HStack {
-          VStack(alignment: .leading, spacing: 4) {
-            Text(display.hero.uppercased())
-              .font(.system(size: 12, weight: .bold))
-              .foregroundStyle(TortoiseDesign.tertiaryText)
-            Text(display.total)
-              .font(.system(size: 56, weight: .bold))
-              .foregroundStyle(TortoiseDesign.primaryText)
-              .lineLimit(1)
-              .minimumScaleFactor(0.72)
-          }
+      VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .lastTextBaseline) {
+          Text(display.total)
+            .font(.system(size: 44, weight: .bold))
+            .tracking(-1)
+            .foregroundStyle(TortoiseDesign.primaryText)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
           Spacer()
-          MobilePill(text: display.activity)
+          if let delta = yesterdayDelta, delta != 0 {
+            trendChip(delta: delta)
+          }
         }
 
-        Text(display.subtitle)
-          .font(.system(size: 14))
+        Text(UsageHistory.contextLine(yesterdayDelta: yesterdayDelta, averageDelta: averageDelta))
+          .font(.system(size: 13))
           .foregroundStyle(TortoiseDesign.secondaryText)
+          .padding(.top, 6)
+          .fixedSize(horizontal: false, vertical: true)
 
-        HStack(spacing: 10) {
-          MobileMetric(value: display.web, label: "Web browsers")
-          MobileMetric(value: display.ios, label: "This iPhone")
+        weekBars
+          .padding(.top, 14)
+
+        MobileDivider()
+          .padding(.top, 13)
+          .padding(.bottom, 11)
+
+        HStack(spacing: 22) {
+          legendEntry(color: TortoiseDesign.accent, label: "Web", value: display.web)
+          legendEntry(color: TortoiseDesign.accent.opacity(0.55), label: "iPhone Safari", value: display.ios)
         }
       }
     }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("usage-hero")
   }
+
+  private func trendChip(delta: Int) -> some View {
+    let down = delta < 0
+    let tint = down ? TortoiseDesign.green : TortoiseDesign.orange
+    return HStack(spacing: 5) {
+      Image(systemName: down ? "arrow.down" : "arrow.up")
+        .font(.system(size: 11, weight: .heavy))
+      Text(UsageHistory.shortDuration(abs(delta)))
+        .font(.system(size: 12.5, weight: .bold))
+    }
+    .foregroundStyle(tint)
+    .padding(.horizontal, 10)
+    .padding(.vertical, 6)
+    .background(tint.opacity(0.14), in: Capsule())
+  }
+
+  private var weekBars: some View {
+    let bars = UsageHistory.sevenDayBars(history: history, today: today)
+    let maxSeconds = max(bars.map(\.totalSeconds).max() ?? 0, 1)
+    return HStack(alignment: .bottom, spacing: 6) {
+      ForEach(bars) { bar in
+        VStack(spacing: 6) {
+          RoundedRectangle(cornerRadius: 5, style: .continuous)
+            .fill(bar.isToday ? TortoiseDesign.accent : Color.white.opacity(0.12))
+            .frame(height: bar.hasData ? max(CGFloat(bar.totalSeconds) / CGFloat(maxSeconds) * 40, 4) : 4)
+            .frame(maxHeight: 40, alignment: .bottom)
+          Text(bar.weekdayLetter)
+            .font(.system(size: 10, weight: bar.isToday ? .bold : .regular))
+            .foregroundStyle(bar.isToday ? TortoiseDesign.primaryText : TortoiseDesign.tertiaryText)
+        }
+        .frame(maxWidth: .infinity)
+      }
+    }
+  }
+
+  private func legendEntry(color: Color, label: String, value: String) -> some View {
+    HStack(spacing: 8) {
+      RoundedRectangle(cornerRadius: 2, style: .continuous)
+        .fill(color)
+        .frame(width: 9, height: 9)
+      Text(label)
+        .font(.system(size: 13))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+      Text(value)
+        .font(.system(size: 13, weight: .bold))
+        .foregroundStyle(TortoiseDesign.primaryText)
+    }
+  }
+
+  // MARK: folded detail
 
   private var byAppCard: some View {
     MobileCard {
-      VStack(alignment: .leading, spacing: 16) {
-        MobileSectionLabel("By app")
-        if display.apps.isEmpty {
-          MobileEmptyState(
-            title: "No usage reported yet",
-            detail: "Connect browser helpers or set up iOS Screen Time targets for YouTube app and Safari."
-          )
-        } else {
-          ForEach(display.apps) { app in
-            MobileUsageAppRow(app: app)
+      VStack(alignment: .leading, spacing: 0) {
+        Button {
+          withAnimation(.easeInOut(duration: 0.25)) {
+            byAppOpen.toggle()
           }
+        } label: {
+          foldHeader(
+            systemImage: "chart.bar",
+            title: "By app & site",
+            count: "\(display.apps.count) item\(display.apps.count == 1 ? "" : "s")",
+            isOpen: byAppOpen
+          )
+        }
+        .buttonStyle(.plain)
+
+        if byAppOpen {
+          VStack(alignment: .leading, spacing: 15) {
+            if display.apps.isEmpty {
+              MobileEmptyState(
+                title: "No usage reported yet",
+                detail: "Browse in Safari here (or a connected browser) and today's time shows up within a minute."
+              )
+            } else {
+              ForEach(display.apps) { app in
+                MobileUsageAppRow(app: app)
+              }
+            }
+          }
+          .padding(.top, 14)
         }
       }
     }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("usage-by-app")
   }
 
-  private var accountsCard: some View {
+  private var byAccountCard: some View {
     MobileCard {
-      VStack(alignment: .leading, spacing: 15) {
-        MobileSectionLabel("Accounts")
-        if display.accounts.isEmpty {
-          MobileEmptyState(
-            title: "No account activity",
-            detail: "Tortoise will show real synced browser and iOS entries here once they report usage."
-          )
-        } else {
-          ForEach(display.accounts) { account in
-            MobileAccountRow(account: account)
+      VStack(alignment: .leading, spacing: 0) {
+        Button {
+          withAnimation(.easeInOut(duration: 0.25)) {
+            byAccountOpen.toggle()
           }
+        } label: {
+          foldHeader(
+            systemImage: "person",
+            title: "By account",
+            count: "\(display.accounts.count) signed in",
+            isOpen: byAccountOpen
+          )
+        }
+        .buttonStyle(.plain)
+
+        if byAccountOpen {
+          VStack(alignment: .leading, spacing: 16) {
+            if display.accounts.isEmpty {
+              MobileEmptyState(
+                title: "No account activity",
+                detail: "Signed-in browser profiles and this iPhone's Safari appear here once they report usage."
+              )
+            } else {
+              ForEach(display.accounts) { account in
+                MobileAccountRow(account: account)
+              }
+            }
+          }
+          .padding(.top, 14)
         }
       }
     }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("usage-by-account")
   }
+
+  private func foldHeader(systemImage: String, title: String, count: String, isOpen: Bool) -> some View {
+    HStack(spacing: 11) {
+      Image(systemName: systemImage)
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+      Text(title)
+        .font(.system(size: 15, weight: .bold))
+        .foregroundStyle(TortoiseDesign.primaryText)
+      Spacer(minLength: 8)
+      Text(count)
+        .font(.system(size: 13))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+      Image(systemName: "chevron.down")
+        .font(.system(size: 12, weight: .bold))
+        .foregroundStyle(TortoiseDesign.tertiaryText)
+        .rotationEffect(.degrees(isOpen ? 180 : 0))
+    }
+    .contentShape(Rectangle())
+  }
+
+  // MARK: data
 
   private var display: MobileUsageDisplay {
-    if let summary = model.snapshot.siteUsageSummary,
-       summary.date == SiteUsageDates.localDateKey() {
-      return MobileUsageDisplay(summary: summary, tab: selectedTab)
+    if let summary = model.snapshot.siteUsageSummary, summary.date == today {
+      return MobileUsageDisplay(summary: summary)
     }
-    return .empty(tab: selectedTab)
+    return .empty
+  }
+
+  private var today: String {
+    SiteUsageDates.localDateKey()
+  }
+
+  /// Stored ledger merged with the live summary, so the bars and trend agree
+  /// with the hero number even before the next refresh persists it.
+  private var history: [UsageDayRecord] {
+    var stored = UsageHistoryStore.load()
+    if let summary = model.snapshot.siteUsageSummary, summary.date == today {
+      stored = UsageHistory.record(
+        UsageDayRecord(date: summary.date, totalSeconds: summary.totalSeconds, webSeconds: 0, iosSeconds: 0),
+        into: stored
+      )
+    }
+    return stored
+  }
+
+  private var yesterdayDelta: Int? {
+    UsageHistory.yesterdayDelta(history: history, today: today)
+  }
+
+  private var averageDelta: Int? {
+    UsageHistory.averageDelta(history: history, today: today)
   }
 
   private var todayLabel: String {
@@ -564,6 +681,7 @@ private struct MobileBlockingScreen: View {
   let accessMode: MobileAccessMode
   let isSyncing: Bool
   let selectMode: (MobileAccessMode) -> Void
+  let setDailyLimit: (Int) -> Void
 
   @State private var appsPickerPresented = false
 
@@ -729,6 +847,8 @@ private struct MobileBlockingScreen: View {
         }
       }
       .familyActivityPicker(isPresented: $appsPickerPresented, selection: managedAppsBinding)
+
+      MobileIOSYouTubeLimitCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
     }
   }
 
@@ -981,17 +1101,38 @@ private struct MobileTuningScreen: View {
 
 }
 
+/// Devices per the iOS v1 redesign: just access & setup. One account card
+/// whose Connections row expands to everything on the account (this iPhone,
+/// devices, nested browser profiles); the setup block collapses to a single
+/// green "all set" row once the checklist is done.
 private struct MobileDevicesScreen: View {
   let accountLabel: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   @State private var addSheetPresented = false
+  @State private var connectionsOpen = false
+  @State private var allSetExpanded = false
+  @State private var editAppsPresented = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       MobileHeader(kicker: nil, title: "Devices")
 
-      MobileCard {
+      accountCard
+
+      if screenTime.connectionState == .connected {
+        allSetCard
+      }
+    }
+    .sheet(isPresented: $addSheetPresented) { MobileAddSheet() }
+    .familyActivityPicker(isPresented: $editAppsPresented, selection: $screenTime.selection)
+  }
+
+  // MARK: account + connections
+
+  private var accountCard: some View {
+    MobileCard {
+      VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 12) {
           MobileAvatar(text: accountInitials, size: 48, background: TortoiseDesign.accent.opacity(0.28))
           VStack(alignment: .leading, spacing: 3) {
@@ -1003,51 +1144,59 @@ private struct MobileDevicesScreen: View {
               .lineLimit(1)
           }
           Spacer()
-          VStack(alignment: .trailing, spacing: 1) {
-            Text("\(connectionCount)")
-              .font(.system(size: 25, weight: .bold))
-            Text("connections")
-              .font(.system(size: 11, weight: .bold))
-              .foregroundStyle(TortoiseDesign.secondaryText)
-          }
         }
-      }
 
-      MobileSectionLabel("Devices")
-      MobileCard {
-        VStack(spacing: 0) {
-          MobileIOSDeviceStatusRow(screenTime: screenTime)
-          if deviceRows.isEmpty {
+        MobileDivider()
+          .padding(.top, 16)
+          .padding(.bottom, 14)
+
+        Button {
+          withAnimation(.easeInOut(duration: 0.25)) {
+            connectionsOpen.toggle()
+          }
+        } label: {
+          HStack(spacing: 12) {
+            Image(systemName: "macbook.and.iphone")
+              .font(.system(size: 15, weight: .semibold))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+            Text("Connections")
+              .font(.system(size: 15, weight: .semibold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Spacer(minLength: 8)
+            Text("\(connectionCount)")
+              .font(.system(size: 14, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+              .padding(.horizontal, 9)
+              .padding(.vertical, 4)
+              .background(Color.white.opacity(0.09), in: Capsule())
+            Image(systemName: "chevron.down")
+              .font(.system(size: 12, weight: .bold))
+              .foregroundStyle(TortoiseDesign.tertiaryText)
+              .rotationEffect(.degrees(connectionsOpen ? 180 : 0))
+          }
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("devices-connections-row")
+
+        if connectionsOpen {
+          VStack(alignment: .leading, spacing: 0) {
             MobileDivider()
-              .padding(.vertical, 13)
-            MobileEmptyState(
-              title: "No other devices yet",
-              detail: "Install Tortoise on your Mac to link it."
-            )
-          } else {
+              .padding(.top, 14)
+              .padding(.bottom, 13)
+
+            MobileIOSDeviceStatusRow(screenTime: screenTime)
+
             ForEach(deviceRows) { row in
               MobileDivider()
                 .padding(.vertical, 13)
               MobileHubRow(row: row)
             }
-          }
-        }
-      }
 
-      MobileSectionLabel("Browser profiles")
-      MobileCard {
-        VStack(spacing: 0) {
-          if browserHubRows.isEmpty {
-            MobileEmptyState(
-              title: "No browser profiles yet",
-              detail: "Add one with the button below."
-            )
-          } else {
-            ForEach(Array(browserHubRows.enumerated()), id: \.element.id) { index, row in
-              if index > 0 {
-                MobileDivider()
-                  .padding(.vertical, 13)
-              }
+            ForEach(browserHubRows) { row in
+              MobileDivider()
+                .padding(.vertical, 13)
               VStack(alignment: .leading, spacing: 0) {
                 MobileHubRow(row: row)
                 if !row.profiles.isEmpty {
@@ -1065,21 +1214,94 @@ private struct MobileDevicesScreen: View {
                 }
               }
             }
+
+            Button {
+              addSheetPresented = true
+            } label: {
+              Label("Connect another device", systemImage: "plus")
+                .font(.system(size: 13, weight: .bold))
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top, 16)
           }
-          Button {
-            addSheetPresented = true
-          } label: {
-            Label("Connect another device", systemImage: "plus")
-              .font(.system(size: 13, weight: .bold))
-              .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(.borderedProminent)
-          .padding(.top, 16)
         }
       }
     }
-    .sheet(isPresented: $addSheetPresented) { MobileAddSheet() }
   }
+
+  // MARK: setup all-set
+
+  private var allSetCard: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      Button {
+        withAnimation(.easeInOut(duration: 0.25)) {
+          allSetExpanded.toggle()
+        }
+      } label: {
+        HStack(spacing: 12) {
+          Image(systemName: "checkmark.circle.fill")
+            .font(.system(size: 20))
+            .foregroundStyle(TortoiseDesign.green)
+          VStack(alignment: .leading, spacing: 2) {
+            Text("This iPhone is all set")
+              .font(.system(size: 16, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Text("Protection on · all \(Self.steps.count) steps done")
+              .font(.system(size: 13))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+          }
+          Spacer(minLength: 8)
+          Image(systemName: "chevron.down")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(TortoiseDesign.tertiaryText)
+            .rotationEffect(.degrees(allSetExpanded ? 180 : 0))
+        }
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+
+      if allSetExpanded {
+        MobileDivider()
+          .padding(.top, 15)
+          .padding(.bottom, 4)
+        ForEach(Self.steps, id: \.self) { step in
+          HStack(spacing: 11) {
+            Image(systemName: "checkmark.circle.fill")
+              .font(.system(size: 16))
+              .foregroundStyle(TortoiseDesign.green)
+            Text(step.title)
+              .font(.system(size: 14))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+            Spacer(minLength: 8)
+            if step == .targets {
+              Button("Edit") {
+                editAppsPresented = true
+              }
+              .font(.system(size: 13, weight: .semibold))
+              .foregroundStyle(TortoiseDesign.accent)
+              .buttonStyle(.plain)
+              .disabled(screenTime.sessionLockedActive)
+            }
+          }
+          .padding(.vertical, 10)
+        }
+      }
+    }
+    .padding(18)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 18, style: .continuous)
+        .strokeBorder(TortoiseDesign.green.opacity(0.28))
+    }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("devices-setup-allset")
+  }
+
+  private static let steps = IOSEnforcementController.userSetupSteps
+
+  // MARK: data
 
   private var hubRows: [DeviceHubRow] {
     DevicesHub.rows(
@@ -1229,6 +1451,49 @@ private struct MobileSetupNudge: View {
       }
     }
     .buttonStyle(.plain)
+  }
+}
+
+/// The landing-screen setup banner (iOS v1 redesign): setup no longer hijacks
+/// navigation — while the checklist is incomplete, Usage carries this one
+/// orange line stating the consequence and linking to Devices.
+private struct MobileFinishSetupBanner: View {
+  let progress: String
+  let action: () -> Void
+
+  var body: some View {
+    Button(action: action) {
+      HStack(spacing: 11) {
+        Image(systemName: "exclamationmark.triangle")
+          .font(.system(size: 15, weight: .semibold))
+          .foregroundStyle(TortoiseDesign.orange)
+        VStack(alignment: .leading, spacing: 2) {
+          Text("Finish setting up this iPhone")
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(TortoiseDesign.primaryText)
+          Text("Blocking & tuning stay off until setup is done")
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+        }
+        Spacer(minLength: 8)
+        Text(progress)
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(TortoiseDesign.orange)
+        Image(systemName: "chevron.right")
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(TortoiseDesign.orange)
+      }
+      .padding(.horizontal, 16)
+      .padding(.vertical, 14)
+      .background(TortoiseDesign.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+      .overlay {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+          .strokeBorder(TortoiseDesign.orange.opacity(0.28))
+      }
+    }
+    .buttonStyle(.plain)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("usage-finish-setup-banner")
   }
 }
 
@@ -1483,8 +1748,8 @@ private struct MobileIOSStatusBadge: View {
   }
 }
 
-/// Compact YouTube daily-limit control for the Usage tab. Setup lives on the
-/// Devices card and blocking on the Block tab — this card is just the number.
+/// Compact YouTube daily-limit control, parked on the Block tab until the
+/// Tune "Apps on iPhone" surface (build 14) absorbs it as a per-app row.
 private struct MobileIOSYouTubeLimitCard: View {
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   var setDailyLimit: ((Int) -> Void)? = nil
@@ -1493,10 +1758,10 @@ private struct MobileIOSYouTubeLimitCard: View {
     MobileCard {
       HStack(spacing: 10) {
         VStack(alignment: .leading, spacing: 3) {
-          Text("Daily limit")
+          Text("YouTube daily limit")
             .font(.system(size: 14, weight: .bold))
             .foregroundStyle(TortoiseDesign.primaryText)
-          Text(screenTime.shieldingEnabled ? "\(screenTime.enforcementMode.rawValue.capitalized) is on" : "For your chosen apps")
+          Text("YouTube app + Safari on this iPhone")
             .font(.system(size: 12))
             .foregroundStyle(TortoiseDesign.secondaryText)
         }
@@ -1682,8 +1947,8 @@ private struct MobileUsageAppRow: View {
 
   var body: some View {
     HStack(spacing: 12) {
-      MobileAvatar(text: app.letter, size: 30, background: app.color, foreground: app.foreground, cornerRadius: 8)
-      VStack(alignment: .leading, spacing: 7) {
+      MobileAvatar(text: app.letter, size: 32, background: app.color, foreground: app.foreground, cornerRadius: 9)
+      VStack(alignment: .leading, spacing: 5) {
         HStack {
           Text(app.name)
             .font(.system(size: 14, weight: .bold))
@@ -1691,6 +1956,11 @@ private struct MobileUsageAppRow: View {
           Text(app.time)
             .font(.system(size: 13, weight: .bold))
             .foregroundStyle(TortoiseDesign.secondaryText)
+        }
+        if let detail = app.detail {
+          Text(detail)
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.tertiaryText)
         }
         GeometryReader { geometry in
           ZStack(alignment: .leading) {
@@ -2281,13 +2551,15 @@ private enum MobileHubStatusStyle {
   }
 }
 
-/// Case order is the tab order. Devices leads — it's where setup lives, and
-/// it mirrors the Mac app's Devices / Tune / Usage navigation.
+/// Case order is the tab order. Usage leads — it's the daily-use screen;
+/// Devices is "set once," so it's last. While setup is incomplete, Usage
+/// carries a finish-setup banner that links to Devices, so setup never
+/// hijacks navigation. (iOS v1 redesign, docs/design/ios-v1-handoff/.)
 private enum MobileSection: String, CaseIterable, Identifiable {
-  case devices
+  case usage
   case tuning
   case blocking
-  case usage
+  case devices
 
   var id: String { rawValue }
 
@@ -2500,83 +2772,41 @@ private extension IOSEnforcementAuthorizationMode {
   }
 }
 
-private enum MobileUsageTab: String, CaseIterable, Identifiable {
-  case all
-  case youtube
-  case x
-  case instagram
-  case reddit
-  case tiktok
-
-  var id: String { rawValue }
-
-  var title: String {
-    switch self {
-    case .all: return "All"
-    case .youtube: return "YouTube"
-    case .x: return "X"
-    case .instagram: return "Instagram"
-    case .reddit: return "Reddit"
-    case .tiktok: return "TikTok"
-    }
-  }
-}
-
 private struct MobileUsageDisplay {
-  let hero: String
   let total: String
-  let subtitle: String
-  let activity: String
   let web: String
   let ios: String
   let apps: [MobileUsageApp]
   let accounts: [MobileUsageAccount]
 
-  init(summary: SiteUsageSummarySnapshot, tab: MobileUsageTab, now: Date = Date()) {
-    let site = tab == .all ? nil : summary.sites.first { $0.siteID == tab.rawValue }
-    let entries = tab == .all ? summary.entries ?? summary.sites.flatMap(\.entries) : site?.entries ?? []
-    let totalSeconds = tab == .all ? summary.totalSeconds : site?.totalSeconds ?? 0
+  init(summary: SiteUsageSummarySnapshot) {
+    let entries = summary.entries ?? summary.sites.flatMap(\.entries)
     let webSeconds = entries.filter { !Self.isIOSEntry($0) }.reduce(0) { $0 + ($1.totalSeconds ?? 0) }
     let iosSeconds = entries.filter(Self.isIOSEntry).reduce(0) { $0 + ($1.totalSeconds ?? 0) }
-    let updatedAt = site?.lastUpdatedAt ?? summary.lastUpdatedAt
 
-    hero = tab == .all ? "Today" : "\(tab.title) today"
-    total = Self.duration(totalSeconds)
-    subtitle = Self.freshness(updatedAt, now: now).map { "Updated \($0)" } ?? "Today"
-    activity = tab == .youtube ? "\(site?.activityCount ?? site?.videoCount ?? 0) videos" : "\(Set(entries.map(Self.accountKey)).count) accounts"
+    total = Self.duration(summary.totalSeconds)
     web = webSeconds > 0 ? Self.duration(webSeconds) : "No data"
     ios = iosSeconds > 0 ? Self.duration(iosSeconds) : "No data"
-    apps = tab == .all ? Self.apps(from: summary) : []
+    apps = Self.apps(from: summary)
     accounts = entries.map(Self.account(from:))
   }
 
-  static func empty(tab: MobileUsageTab) -> MobileUsageDisplay {
-    MobileUsageDisplay(
-      hero: tab == .all ? "Today" : "\(tab.title) today",
-      total: "0m",
-      subtitle: tab == .all ? "No synced usage yet" : "No synced \(tab.title) usage yet",
-      activity: tab == .youtube ? "0 videos" : "0 accounts",
-      web: "No data",
-      ios: "No data",
-      apps: [],
-      accounts: []
-    )
-  }
+  static let empty = MobileUsageDisplay(
+    total: "0m",
+    web: "No data",
+    ios: "No data",
+    apps: [],
+    accounts: []
+  )
 
   private init(
-    hero: String,
     total: String,
-    subtitle: String,
-    activity: String,
     web: String,
     ios: String,
     apps: [MobileUsageApp],
     accounts: [MobileUsageAccount]
   ) {
-    self.hero = hero
     self.total = total
-    self.subtitle = subtitle
-    self.activity = activity
     self.web = web
     self.ios = ios
     self.apps = apps
@@ -2584,19 +2814,38 @@ private struct MobileUsageDisplay {
   }
 
   private static func apps(from summary: SiteUsageSummarySnapshot) -> [MobileUsageApp] {
-    let total = max(summary.totalSeconds, 1)
-    return summary.sites.prefix(6).map { site in
+    let sorted = summary.sites.sorted { $0.totalSeconds > $1.totalSeconds }
+    // Bars scale to the biggest destination (mockup), not the day total.
+    let maxSeconds = max(sorted.first?.totalSeconds ?? 0, 1)
+    return sorted.prefix(6).map { site in
       let theme = MobileUsageApp.theme(for: site.siteID)
-      let percent = Int((Double(site.totalSeconds) / Double(total) * 100).rounded())
+      let percent = Int((Double(site.totalSeconds) / Double(maxSeconds) * 100).rounded())
       return MobileUsageApp(
         letter: theme.letter,
         name: site.displayTitle,
         time: duration(site.totalSeconds),
+        detail: Self.activityDetail(for: site),
         percent: max(percent, 3),
         color: theme.color,
         foreground: theme.foreground
       )
     }
+  }
+
+  /// "42 videos watched" for YouTube today; lights up for any site the moment
+  /// its extension reports an activity count + label (posts land in build 14).
+  private static func activityDetail(for site: SiteUsageSnapshot) -> String? {
+    let count = site.activityCount ?? site.videoCount ?? 0
+    guard count > 0 else {
+      return nil
+    }
+    if site.activityLabel == "videos" || site.siteID == "youtube" {
+      return "\(count) video\(count == 1 ? "" : "s") watched"
+    }
+    if let label = site.activityLabel, !label.isEmpty {
+      return "~\(count) \(label) seen"
+    }
+    return nil
   }
 
   private static func account(from entry: SiteUsageSourceSnapshot) -> MobileUsageAccount {
@@ -2613,37 +2862,11 @@ private struct MobileUsageDisplay {
     )
   }
 
-  private static func accountKey(_ entry: SiteUsageSourceSnapshot) -> String {
-    email(in: entry.label ?? "") ?? email(in: entry.profileName ?? "") ?? entry.id
-  }
-
   private static func isIOSEntry(_ entry: SiteUsageSourceSnapshot) -> Bool {
     [entry.sourceType, entry.browserName, entry.deviceName, entry.profileName, entry.label]
       .compactMap { $0 }
       .joined(separator: " ")
       .range(of: #"ios|iphone|ipad"#, options: [.regularExpression, .caseInsensitive]) != nil
-  }
-
-  private static func freshness(_ iso: String?, now: Date) -> String? {
-    guard let iso else {
-      return nil
-    }
-    let fractional = ISO8601DateFormatter()
-    fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    let plain = ISO8601DateFormatter()
-    plain.formatOptions = [.withInternetDateTime]
-    guard let updatedAt = fractional.date(from: iso) ?? plain.date(from: iso) else {
-      return nil
-    }
-    let seconds = Int(now.timeIntervalSince(updatedAt))
-    if seconds < 90 {
-      return "just now"
-    }
-    let minutes = seconds / 60
-    if minutes < 60 {
-      return "\(minutes)m ago"
-    }
-    return "\(minutes / 60)h ago"
   }
 
   private static func duration(_ seconds: Int) -> String {
@@ -2669,6 +2892,7 @@ private struct MobileUsageApp: Identifiable {
   let letter: String
   let name: String
   let time: String
+  let detail: String?
   let percent: Int
   let color: Color
   let foreground: Color

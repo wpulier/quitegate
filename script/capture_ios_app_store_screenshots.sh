@@ -91,10 +91,11 @@ capture_device_set() {
   build_for_simulator "$simulator_id"
   prepare_status_bar "$simulator_id"
 
+  # Capture order mirrors the tab order: Usage → Tune → Block → Devices.
   launch_and_capture "$simulator_id" "$output_dir/01-account-hub.png"
-  launch_and_capture "$simulator_id" "$output_dir/02-ios-setup.png" --tortoise-screenshot --tortoise-screenshot-section blocking
+  launch_and_capture "$simulator_id" "$output_dir/02-usage.png" --tortoise-screenshot --tortoise-screenshot-section usage
   launch_and_capture "$simulator_id" "$output_dir/03-tuning.png" --tortoise-screenshot --tortoise-screenshot-section tuning
-  launch_and_capture "$simulator_id" "$output_dir/04-usage.png" --tortoise-screenshot --tortoise-screenshot-section usage
+  launch_and_capture "$simulator_id" "$output_dir/04-blocking.png" --tortoise-screenshot --tortoise-screenshot-section blocking
   launch_and_capture "$simulator_id" "$output_dir/05-devices.png" --tortoise-screenshot --tortoise-screenshot-section devices
 }
 
