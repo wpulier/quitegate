@@ -66,6 +66,7 @@
 		55213734CF36DD46CF774064 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
 		552D0792C7AEE302784FE461 /* LaunchRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 747C618402D998B6530203C0 /* LaunchRecovery.swift */; };
 		5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A31DDDECCBC62D89589294 /* AppBlocking.swift */; };
+		5700674882BF1AA1BE4C7045 /* TuneScopeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A94783FA14B60C37C6F38B1 /* TuneScopeUITests.swift */; };
 		57B98CEC9C97078E68331D76 /* LaunchRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 747C618402D998B6530203C0 /* LaunchRecovery.swift */; };
 		5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899CA3F2232649843D526BBF /* PlatformControlsTests.swift */; };
 		5CB80A03E6C49CEE1DC34656 /* DevicesHubModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54B8050C0212C4236FE20E5C /* DevicesHubModel.swift */; };
@@ -297,6 +298,7 @@
 		67481EEAFE4705285370B181 /* AppUpdateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateServiceTests.swift; sourceTree = "<group>"; };
 		68CA11AB044A28A3D7FAC1D0 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
 		6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainNormalizerTests.swift; sourceTree = "<group>"; };
+		6A94783FA14B60C37C6F38B1 /* TuneScopeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuneScopeUITests.swift; sourceTree = "<group>"; };
 		6B4022A534497D10734ECFB8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		6B9D0D6C462B904E4484093F /* BrowserExtensionBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserExtensionBridgeTests.swift; sourceTree = "<group>"; };
 		6BFA12DDF78911C0F4BAC8B0 /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
@@ -650,6 +652,7 @@
 			isa = PBXGroup;
 			children = (
 				0136209C5C64C3A5369DC776 /* TabFlipUITests.swift */,
+				6A94783FA14B60C37C6F38B1 /* TuneScopeUITests.swift */,
 			);
 			path = TortoiseUITests;
 			sourceTree = "<group>";
@@ -1270,6 +1273,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F6D781D709AE0CD6FE3ADBF /* TabFlipUITests.swift in Sources */,
+				5700674882BF1AA1BE4C7045 /* TuneScopeUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1389,7 +1393,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1472,7 +1476,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_NS_ASSERTIONS = NO;
