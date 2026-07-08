@@ -210,7 +210,7 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
   var detail: String {
     switch self {
     case .youtubeHome:
-      return "Removes the browse feed so YouTube opens without a recommendation wall."
+      return "Opens on search, not a wall of recommendations."
     case .youtubeVideoSidebar:
       return "Removes the watch-page side rail that pulls in videos and modules."
     case .youtubeRecommendations:
@@ -226,9 +226,9 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
     case .youtubeEndScreenCards:
       return "Removes end-screen cards, teasers, and card buttons over the player."
     case .youtubeShorts:
-      return "Removes Shorts links, shelves, and Shorts watch pages."
+      return "Removes the endless vertical feed."
     case .youtubeComments:
-      return "Removes comments from watch pages."
+      return "Hides comment threads under videos."
     case .youtubeMixes:
       return "Removes YouTube Mix and radio-style result modules."
     case .youtubeMerch:
@@ -256,23 +256,23 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
     case .youtubeDailyLimit:
       return "Blocks YouTube after the configured daily time limit is reached."
     case .xSensitiveMedia:
-      return "Hides X-labeled sensitive media and media posts with high-confidence explicit cues."
+      return "Hides adult & flagged images and video."
     case .xExplicitContent:
       return "Hides media posts with adult domains, explicit text cues, or adult account cues."
     case .xExplicitSearch:
       return "Hides X search People, Latest, and Media results when the query or result has high-confidence explicit cues."
     case .xVideos:
-      return "Removes video and GIF players from posts while keeping text available."
+      return "Keeps text, drops autoplaying clips."
     case .xPhotos:
       return "Removes tweet photos without hiding profile avatars."
     case .xMediaCards:
       return "Removes rich link cards with large media previews."
     case .xExploreTrends:
-      return "Removes trend modules and Explore entry points that pull you into browsing."
+      return "Removes trending & discovery rabbit holes."
     case .instagramReels:
-      return "Removes Reels links, trays, and Reels pages."
+      return "Removes the Reels tab and tray."
     case .instagramExplore:
-      return "Removes Explore entry points and redirects direct Explore pages back home."
+      return "Hides the algorithmic discovery grid."
     case .instagramSuggested:
       return "Removes suggested posts, recommendation modules, and clearly labeled promoted posts."
     case .instagramProfileSuggestions:
@@ -282,15 +282,15 @@ enum BrowserTuningFeature: String, CaseIterable, Codable, Identifiable {
     case .instagramNotifications:
       return "Removes notification entry points that pull you back into browsing."
     case .instagramStories:
-      return "Removes the stories tray while keeping the main feed available."
+      return "Removes the stories tray up top."
     case .redditPopularAll:
-      return "Removes r/popular and r/all entry points and redirects those feeds home."
+      return "Redirects r/popular and r/all back home."
     case .redditRecommendations:
       return "Removes recommended, promoted, and suggested community modules."
     case .redditNSFW:
       return "Removes native NSFW posts, mature communities, and adult-domain media posts."
     case .redditMedia:
-      return "Removes image and video media from posts while leaving text posts available."
+      return "Keeps text posts, drops image & video."
     case .redditSidebars:
       return "Removes right-rail sidebars and community panels."
     }

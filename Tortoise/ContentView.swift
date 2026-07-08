@@ -2278,7 +2278,11 @@ private struct MobileUsageAppRow: View {
 
   var body: some View {
     HStack(spacing: 12) {
-      MobileAvatar(text: app.letter, size: 32, background: app.color, foreground: app.foreground, cornerRadius: 9)
+      if let assetName = app.brandAssetName, UIImage(named: assetName) != nil {
+        MobileTuneBrandMark(assetName: assetName, size: 32, cornerRadius: 9)
+      } else {
+        MobileAvatar(text: app.letter, size: 32, background: app.color, foreground: app.foreground, cornerRadius: 9)
+      }
       VStack(alignment: .leading, spacing: 5) {
         HStack {
           Text(app.name)
@@ -3051,6 +3055,7 @@ private struct MobileUsageDisplay {
       let percent = Int((Double(site.totalSeconds) / Double(maxSeconds) * 100).rounded())
       return MobileUsageApp(
         letter: theme.letter,
+        brandAssetName: TuningCatalog.sites.first { $0.id == site.siteID.lowercased() }?.brandAssetName,
         name: site.displayTitle,
         time: duration(site.totalSeconds),
         detail: Self.activityDetail(for: site),
@@ -3119,6 +3124,7 @@ private struct MobileUsageDisplay {
 private struct MobileUsageApp: Identifiable {
   let id = UUID()
   let letter: String
+  var brandAssetName: String?
   let name: String
   let time: String
   let detail: String?
