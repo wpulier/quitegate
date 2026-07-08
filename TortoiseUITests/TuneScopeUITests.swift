@@ -39,6 +39,22 @@ final class TuneScopeUITests: XCTestCase {
     XCTAssertEqual(app.state, .runningForeground)
   }
 
+  func testBannerOpensSafariConnectSheet() {
+    // Fixture has no active enforcement surface, so the setup-first banner is
+    // deterministic; its CTA must open the one canonical connect sheet.
+    let app = launchTuning()
+
+    let banner = element(app, "tune-setup-first-banner")
+    XCTAssertTrue(banner.waitForExistence(timeout: 8), "setup-first banner never appeared")
+    app.buttons["Connect Safari"].firstMatch.tap()
+
+    XCTAssertTrue(
+      element(app, "safari-connect-sheet").waitForExistence(timeout: 6),
+      "banner CTA did not open the Safari connect sheet"
+    )
+    XCTAssertEqual(app.state, .runningForeground)
+  }
+
   func testXSiteShowsPlatformSafetyRow() {
     let app = launchTuning()
 

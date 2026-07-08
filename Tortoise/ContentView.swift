@@ -752,6 +752,7 @@ private struct MobileTuningScreen: View {
   @Binding var selectedSite: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  @State private var safariConnectPresented = false
   let setFeature: (String, Bool) -> Void
   let setFeatures: ([String], Bool) -> Void
   let setYoutubeProtection: (Bool) -> Void
@@ -796,7 +797,7 @@ private struct MobileTuningScreen: View {
       MobileSectionLabel(TuneScopeCopy.websitesLaneTitle)
 
       if scopeState.showSetupFirstBanner {
-        MobileTuneSetupFirstBanner(enable: { screenTime.openSafariExtensionSettings() })
+        MobileTuneSetupFirstBanner(enable: { safariConnectPresented = true })
       }
 
       scopeCard
@@ -869,6 +870,9 @@ private struct MobileTuningScreen: View {
         }
       }
     }
+    .sheet(isPresented: $safariConnectPresented) {
+      MobileSafariConnectSheet(screenTime: screenTime)
+    }
   }
 
   /// The honest answer to "what is enforcing these toggles?": the iPhone's own
@@ -918,14 +922,12 @@ private struct MobileTuningScreen: View {
     .accessibilityIdentifier("tune-scope-card")
   }
 
-  /// Attention states make the Safari chip actionable: setup problems open the
-  /// extension settings; a pending heartbeat opens the verification page.
+  /// Any attention state makes the Safari chip actionable: it opens the one
+  /// canonical connect sheet, which carries the enable/allow/verify branching.
   private var safariChipAction: (() -> Void)? {
     switch scopeState.iphoneSafari.status {
-    case .attention(.catchingUp):
-      return { screenTime.openSafariVerificationPage() }
     case .attention:
-      return { screenTime.openSafariExtensionSettings() }
+      return { safariConnectPresented = true }
     case .on, .off:
       return nil
     }
@@ -1236,6 +1238,7 @@ private struct MobileSetupNudge: View {
 private struct MobileIOSSetupCard: View {
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   @State private var pickerPresented = false
+  @State private var safariConnectPresented = false
 
   private static let steps = IOSEnforcementController.userSetupSteps
 
@@ -1311,6 +1314,9 @@ private struct MobileIOSSetupCard: View {
       }
     }
     .familyActivityPicker(isPresented: $pickerPresented, selection: $screenTime.selection)
+    .sheet(isPresented: $safariConnectPresented) {
+      MobileSafariConnectSheet(screenTime: screenTime)
+    }
     .onAppear {
       screenTime.refreshSetupStatus()
     }
@@ -1328,7 +1334,7 @@ private struct MobileIOSSetupCard: View {
     case .safariExtension:
       switch screenTime.safariExtensionState {
       case .enabledWaitingForHeartbeat:
-        return "Open Safari once"
+        return "Allow it in Safari"
       case .failed:
         return "Check failed — retry"
       default:
@@ -1348,14 +1354,10 @@ private struct MobileIOSSetupCard: View {
     case .targets:
       return screenTime.authorizationState == .approved ? (screenTime.hasSelection ? "Edit" : "Choose") : nil
     case .safariExtension:
-      switch screenTime.safariExtensionState {
-      case .connected:
-        return nil
-      case .enabledWaitingForHeartbeat:
-        return "Verify"
-      default:
-        return "Enable"
-      }
+      // One label for every unfinished state: the connect sheet carries the
+      // enable/allow/verify branching, because iOS can't tell us which of
+      // those the user still needs.
+      return screenTime.safariExtensionState == .connected ? nil : "Connect"
     case .mode:
       return screenTime.shieldingEnabled ? nil : "Turn on"
     case .account, .authorizationMode, .sync:
@@ -1384,11 +1386,7 @@ private struct MobileIOSSetupCard: View {
       guard !screenTime.sessionLockedActive else { return }
       pickerPresented = true
     case .safariExtension:
-      if screenTime.safariExtensionState == .enabledWaitingForHeartbeat {
-        screenTime.openSafariVerificationPage()
-      } else {
-        screenTime.openSafariExtensionSettings()
-      }
+      safariConnectPresented = true
     case .mode:
       screenTime.turnOn()
     case .sync, .account, .authorizationMode:
@@ -1947,6 +1945,98 @@ private struct MobileNativeAppsLaneCard: View {
 /// Shown only when nothing anywhere is enforcing the website tuners (Safari
 /// extension off and no fresh desktop profile). Toggles stay live — settings
 /// persist to the account — but the user is told plainly nothing acts yet.
+/// The one canonical "connect Safari" flow, launched from every Safari
+/// affordance (setup step, Tune banner, scope chip). iOS gives no API to read
+/// extension enablement, and an ENABLED extension still runs nowhere until
+/// the user allows it on websites inside Safari — so the honest instructions
+/// are always the same three steps. The extension's heartbeat auto-verifies
+/// the moment they're done; no state guessing.
+private struct MobileSafariConnectSheet: View {
+  @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 20) {
+      HStack {
+        Text("Connect Safari")
+          .font(.system(size: 19, weight: .bold))
+          .foregroundStyle(TortoiseDesign.primaryText)
+        Spacer()
+        if screenTime.safariExtensionConnected {
+          Label("Connected", systemImage: "checkmark.circle.fill")
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(TortoiseDesign.green)
+        }
+      }
+
+      step(
+        number: "1",
+        title: "Enable the extension",
+        detail: "Settings → Apps → Safari → Extensions → Tortoise.",
+        actionTitle: "Open Settings",
+        action: { screenTime.openSafariExtensionSettings() }
+      )
+      step(
+        number: "2",
+        title: "Allow it on websites",
+        detail: "In Safari, tap the extensions icon in the address bar → Tortoise → Always Allow → on Every Website. Without this, the extension is on but runs nowhere.",
+        actionTitle: nil,
+        action: nil
+      )
+      step(
+        number: "3",
+        title: "Open Safari to verify",
+        detail: "Tortoise checks in from the page automatically.",
+        actionTitle: "Open Safari",
+        action: { screenTime.openSafariVerificationPage() }
+      )
+
+      Spacer(minLength: 0)
+    }
+    .padding(22)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(TortoiseDesign.background)
+    .presentationDetents([.medium])
+    .presentationDragIndicator(.visible)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("safari-connect-sheet")
+    .onAppear {
+      screenTime.refreshSetupStatus()
+    }
+  }
+
+  private func step(
+    number: String,
+    title: String,
+    detail: String,
+    actionTitle: String?,
+    action: (() -> Void)?
+  ) -> some View {
+    HStack(alignment: .top, spacing: 12) {
+      Text(number)
+        .font(.system(size: 13, weight: .bold))
+        .foregroundStyle(TortoiseDesign.accent)
+        .frame(width: 22, height: 22)
+        .background(TortoiseDesign.accent.opacity(0.14), in: Circle())
+      VStack(alignment: .leading, spacing: 3) {
+        Text(title)
+          .font(.system(size: 14, weight: .bold))
+          .foregroundStyle(TortoiseDesign.primaryText)
+        Text(detail)
+          .font(.system(size: 12))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+          .fixedSize(horizontal: false, vertical: true)
+        if let actionTitle, let action {
+          Button(actionTitle, action: action)
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .padding(.top, 3)
+        }
+      }
+      Spacer(minLength: 0)
+    }
+  }
+}
+
 private struct MobileTuneSetupFirstBanner: View {
   let enable: () -> Void
 

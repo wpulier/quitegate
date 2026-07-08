@@ -167,15 +167,15 @@ enum TuneScopeCopy {
   static let websitesLaneTitle = "Websites"
   static let websitesLaneDetail = "Synced everywhere you browse"
   static let iphoneSafariChip = "Safari on this iPhone"
-  static let safariHintNeedsSetup = "Enable in Safari settings"
-  static let safariHintVerify = "Open Safari to verify"
+  static let safariHintNeedsSetup = "Tap to connect"
+  static let safariHintVerify = "Tap to verify"
   static let addComputerTitle = "Add your computer"
   static let addComputerDetail = "Tuning also works in Chrome and Firefox on desktop."
 
   // Zero-active-surface banner
   static let setupFirstTitle = "Nothing is enforcing these yet"
-  static let setupFirstDetail = "Turn on the Safari extension so tuning takes effect on this iPhone."
-  static let setupFirstCTA = "Enable Safari extension"
+  static let setupFirstDetail = "Connect the Safari extension so tuning takes effect on this iPhone — enable it, then allow it on websites in Safari."
+  static let setupFirstCTA = "Connect Safari"
 
   // Tune header
   static let tuneSubtitle = "Shape the websites you visit — in Safari here and in your computer's browsers."
