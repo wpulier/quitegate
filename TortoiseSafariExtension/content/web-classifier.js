@@ -340,6 +340,14 @@
     setTimeout(() => queueClassify(0), 1800);
   }
 
+  // Safari-extension verification handshake: the Tortoise app's "Verify" step
+  // opens yourtortoise.com in Safari (our own domain — no installed app can
+  // hijack it via Universal Links). One native policy pull from here records
+  // the heartbeat that flips the setup step to verified.
+  if (/(?:^|\.)yourtortoise\.com$/i.test(normalizeHostname(location.hostname))) {
+    sendMessage({ type: "quietgate.syncNativeSettings" });
+  }
+
   window[controllerKey] = {
     version: "2026.06.11.01",
     dispose() {

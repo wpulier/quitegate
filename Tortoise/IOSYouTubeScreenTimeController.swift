@@ -702,7 +702,11 @@ final class IOSEnforcementController: ObservableObject {
   }
 
   func openSafariVerificationPage() {
-    guard let url = URL(string: "https://youtube.com") else {
+    // Must be a domain no installed app claims via Universal Links — a
+    // youtube.com/x.com/instagram.com URL opens that APP, not Safari, and the
+    // extension can never heartbeat. Our own site always lands in Safari,
+    // where web-classifier.js performs the verification handshake.
+    guard let url = URL(string: "https://www.yourtortoise.com/?safari-check=1") else {
       return
     }
     UIApplication.shared.open(url)
