@@ -64,7 +64,7 @@ Set these in Vercel Production:
 
 ```bash
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
-CLERK_SECRET_KEY=sk_live_...
+CLERK_SECRET_KEY=<from Clerk dashboard — set in Vercel env only, never commit>
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 CLERK_JWT_AUDIENCE=tortoise-api
