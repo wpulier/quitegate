@@ -76,6 +76,7 @@
 		657F2FFA32B7C076D8B89CEA /* ReadinessCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D97FC9D9169521C3D064FC5 /* ReadinessCheck.swift */; };
 		67A953314D5B55EA2D0ACED0 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6414BAA4EF5831D696C0E1 /* LoginItemService.swift */; };
 		6AED7A3DAC4ACF70624A1396 /* ConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A8461B44A79C10190F70D06 /* ConnectionStatus.swift */; };
+		6C64DD5B0F2E69CE2D460B71 /* TuneScopeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193759D24964C1AF7B08797F /* TuneScopeModel.swift */; };
 		709C86648FA63A6B4CD54B57 /* BlockingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59EFB3CA4C513BC24BDF171 /* BlockingView.swift */; };
 		7204B51798C454A01FCB3FD5 /* blocked.js in Resources */ = {isa = PBXBuildFile; fileRef = 5B954448C3C9FEF37E3D0652 /* blocked.js */; };
 		7409F88899BD8DDEE7E5A15E /* BrowserTuningSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE2CBCB3FB5414A38AC61AF /* BrowserTuningSettings.swift */; };
@@ -154,8 +155,10 @@
 		D679E0BE8D81DE105F93851B /* BrowserExtensionBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9D0D6C462B904E4484093F /* BrowserExtensionBridgeTests.swift */; };
 		DA7B10BA71531BADB859B61B /* DomainNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */; };
 		E2706FF887583F7B49F586A1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CB16BD2B65FAC73392D34C8 /* Security.framework */; };
+		E3ABB6B6F8DFCA2D6EB257CD /* TuneScopeModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B377DDBFA5452ADBFEC796 /* TuneScopeModelTests.swift */; };
 		E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */; };
 		E9BF6A2093772B01DBE19349 /* BlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D288C7A057311BB070BB9CA /* BlockingProvider.swift */; };
+		EB6D6E1AB7CA5B10DC989017 /* TuneScopeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193759D24964C1AF7B08797F /* TuneScopeModel.swift */; };
 		EC071389E1E2CDCB8F835293 /* TuningCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */; };
 		EC30891BD52A0D3F0689E59D /* InstallationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A35DED8F7C74DB6B6B502D /* InstallationStore.swift */; };
 		EEA63F96F74571180223BDC4 /* BrowserBlockingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5C769F4D1164123462A4B /* BrowserBlockingProvider.swift */; };
@@ -239,6 +242,7 @@
 		0334F1007E06A8523AC503FE /* reddit.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = reddit.js; sourceTree = "<group>"; };
 		04DD9329A65855473A7041DE /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		05A31DDDECCBC62D89589294 /* AppBlocking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocking.swift; sourceTree = "<group>"; };
+		05B377DDBFA5452ADBFEC796 /* TuneScopeModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuneScopeModelTests.swift; sourceTree = "<group>"; };
 		06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserExtensionBridge.swift; sourceTree = "<group>"; };
 		087265EBD487F081769A0206 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		0A298AFE1684A25A4DDD00FD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -252,6 +256,7 @@
 		1241FE0B2B9FABFC3754F3CA /* ChromeExtension */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ChromeExtension; sourceTree = SOURCE_ROOT; };
 		17F98D0F82BE184B501B5A5B /* DevicePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePresentation.swift; sourceTree = "<group>"; };
 		18E168586E8F9F5A5939FF74 /* TimedSessionControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimedSessionControl.swift; sourceTree = "<group>"; };
+		193759D24964C1AF7B08797F /* TuneScopeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuneScopeModel.swift; sourceTree = "<group>"; };
 		1953A6B4EF35A3EA45AD6C26 /* TuneScreenModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuneScreenModelTests.swift; sourceTree = "<group>"; };
 		1EC598E41FA8C6EF4967E014 /* FocusWindowScheduleControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusWindowScheduleControl.swift; sourceTree = "<group>"; };
 		1F803AC6B5D759110B34FEAC /* reddit.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = reddit.css; sourceTree = "<group>"; };
@@ -716,6 +721,7 @@
 				E09838947772A802ABC8CD02 /* QRCodeTests.swift */,
 				AB61B61B851B95DBE9C93C83 /* SiteUsageMergeTests.swift */,
 				AA8CC8156BAE36B64FD6565B /* TortoisePolicyCatalogTests.swift */,
+				05B377DDBFA5452ADBFEC796 /* TuneScopeModelTests.swift */,
 				1953A6B4EF35A3EA45AD6C26 /* TuneScreenModelTests.swift */,
 				757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */,
 				AC28A6577094DDE91B1B73E0 /* TuningSyncInvariantTests.swift */,
@@ -761,6 +767,7 @@
 				390FFCD0D362707755EE6725 /* TortoiseAPIClient.swift */,
 				CD16A82D2B5139D57A101409 /* TortoiseApp.swift */,
 				428CCAE23F622CC0E04DC22D /* TortoiseModels.swift */,
+				193759D24964C1AF7B08797F /* TuneScopeModel.swift */,
 				C54A2A544D0DFDD5A4BD2B45 /* TuneScreenModel.swift */,
 				AFBB133F2C248AD9DFFA3676 /* TuningCatalog.swift */,
 				C5BEA2B5897D1D97326C1686 /* Resources */,
@@ -1150,6 +1157,7 @@
 				C02C20F3AAC030400E98F91E /* QRCodeTests.swift in Sources */,
 				F2C69EAD4A147CC9D3D3BA8A /* SiteUsageMergeTests.swift in Sources */,
 				F1A977F94DC0C35C6CC5A6AF /* TortoisePolicyCatalogTests.swift in Sources */,
+				E3ABB6B6F8DFCA2D6EB257CD /* TuneScopeModelTests.swift in Sources */,
 				2A186DDCEEB6314D8C995B55 /* TuneScreenModelTests.swift in Sources */,
 				9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */,
 				CDE2360F6B637182D8E13D1C /* TuningSyncInvariantTests.swift in Sources */,
@@ -1180,6 +1188,7 @@
 				2EE679A1C87A3FBBD244187E /* TortoiseAPIClient.swift in Sources */,
 				F354C5A5CDAAD045DF5617FF /* TortoiseApp.swift in Sources */,
 				D63FC3D276A14BA56B25250B /* TortoiseModels.swift in Sources */,
+				EB6D6E1AB7CA5B10DC989017 /* TuneScopeModel.swift in Sources */,
 				2DBB456D7C021E5BB9E1D784 /* TuneScreenModel.swift in Sources */,
 				97040AFC5CEF7EBFD33A5F42 /* TuningCatalog.swift in Sources */,
 			);
@@ -1249,6 +1258,7 @@
 				4717093D6464D14AEADC5363 /* SiteUsageMerge.swift in Sources */,
 				E4539F9D913E2C716AF843A4 /* TimedSessionControl.swift in Sources */,
 				1F268A49630164ED2D7210EF /* TortoiseModels.swift in Sources */,
+				6C64DD5B0F2E69CE2D460B71 /* TuneScopeModel.swift in Sources */,
 				D51FBA409C543016890554AF /* TuneScreenModel.swift in Sources */,
 				EC071389E1E2CDCB8F835293 /* TuningCatalog.swift in Sources */,
 				CAA0FAE2C4FD4D35B3AC1F7E /* TuningView.swift in Sources */,

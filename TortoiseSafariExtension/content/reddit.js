@@ -926,8 +926,19 @@ observer.observe(document.documentElement, {
   subtree: true
 });
 
+function handleVisibilityRepull() {
+  if (document.visibilityState === "visible") {
+    // Tab-return re-pull: a tuner flipped in the Tortoise app must apply to
+    // this already-open tab, not only to the next page load. (Safari-only
+    // addition; port to ChromeExtension once the Web Store review lands.)
+    syncNativeSettings();
+    scheduleApplySettings();
+  }
+}
+
 window.addEventListener("popstate", scheduleApplySettings);
 window.addEventListener("pageshow", scheduleApplySettings);
+window.addEventListener("visibilitychange", handleVisibilityRepull);
 
 usageController = window.__tortoiseSiteUsage?.initSiteUsageTracker({ siteID: "reddit" }) || null;
 
@@ -943,6 +954,7 @@ window.__quietgateRedditTunerController = {
     observer.disconnect();
     window.removeEventListener("popstate", scheduleApplySettings);
     window.removeEventListener("pageshow", scheduleApplySettings);
+    window.removeEventListener("visibilitychange", handleVisibilityRepull);
     quietGateBrowser.storage.onChanged.removeListener?.(handleStorageChange);
     usageController?.dispose?.();
     usageController = null;

@@ -289,11 +289,12 @@ private struct TortoiseMobileShell: View {
         selectedSite: $selectedSite,
         model: model,
         screenTime: screenTime,
-        browserProfiles: browserProfiles,
         setFeature: setTuningFeature,
         setFeatures: setTuningFeatures,
         setYoutubeProtection: setYoutubeProtection,
-        setDailyLimit: setDailyLimit
+        setDailyLimit: setDailyLimit,
+        openBlocking: { section = .blocking },
+        openDevices: { section = .devices }
       )
     case .blocking:
       MobileBlockingScreen(
@@ -314,12 +315,6 @@ private struct TortoiseMobileShell: View {
       return accessMode
     }
     return MobileAccessMode(iosMode: screenTime.enforcementMode) ?? .focus
-  }
-
-  private var browserProfiles: [MobileBrowserProfile] {
-    model.snapshot.devices
-      .filter(\.isBrowserProfile)
-      .map(MobileBrowserProfile.init(device:))
   }
 
   private func setAccessMode(_ mode: MobileAccessMode) {
@@ -751,13 +746,24 @@ private struct MobileTuningScreen: View {
   @Binding var selectedSite: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
-  let browserProfiles: [MobileBrowserProfile]
   let setFeature: (String, Bool) -> Void
   let setFeatures: ([String], Bool) -> Void
   let setYoutubeProtection: (Bool) -> Void
   let setDailyLimit: (Int) -> Void
+  let openBlocking: () -> Void
+  let openDevices: () -> Void
 
   private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
+
+  private var scopeState: TuneScopeState {
+    TuneScope.iosState(
+      safariExtensionState: screenTime.safariExtensionState,
+      safariAcknowledged: screenTime.safariExtensionAcknowledged,
+      safariHeartbeatFresh: screenTime.safariHeartbeatIsFresh,
+      devices: model.snapshot.devices,
+      now: Date()
+    )
+  }
 
   private var tuneSites: [TuneSite] {
     TuneScreen.sites(policy: tunePolicy, surface: .iosSafari)
@@ -776,10 +782,18 @@ private struct MobileTuningScreen: View {
       MobileHeader(
         kicker: nil,
         title: "Tune",
-        subtitle: "Strip the noisy parts of each site. Enforced wherever you're connected."
+        subtitle: TuneScopeCopy.tuneSubtitle
       )
 
-      MobileSectionLabel("Sites")
+      MobileNativeAppsLaneCard(openBlocking: openBlocking)
+
+      MobileSectionLabel(TuneScopeCopy.websitesLaneTitle)
+
+      if scopeState.showSetupFirstBanner {
+        MobileTuneSetupFirstBanner(enable: { screenTime.openSafariExtensionSettings() })
+      }
+
+      scopeCard
 
       LazyVGrid(
         columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
@@ -819,32 +833,6 @@ private struct MobileTuningScreen: View {
         }
 
         MobileCard {
-          VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-              Image(systemName: "shield.checkered")
-                .foregroundStyle(TortoiseDesign.green)
-              Text("Active on")
-                .font(.system(size: 13, weight: .bold))
-              Text("· browser profiles")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(TortoiseDesign.secondaryText)
-            }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 142), spacing: 8)], spacing: 8) {
-              if browserProfiles.isEmpty {
-                MobileEmptyState(
-                  title: "No browser profiles yet",
-                  detail: "Connect one from the Devices tab."
-                )
-              } else {
-                ForEach(browserProfiles) { profile in
-                  MobileScopeChip(avatar: profile.avatar, title: profile.title)
-                }
-              }
-            }
-          }
-        }
-
-        MobileCard {
           VStack(spacing: 0) {
             ForEach(Array(selectedSiteFeatures.enumerated()), id: \.element.id) { index, feature in
               if index > 0 {
@@ -862,7 +850,70 @@ private struct MobileTuningScreen: View {
             }
           }
         }
+
+        if let writeError = model.writeErrorMessage {
+          Label(writeError, systemImage: "exclamationmark.triangle")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.orange)
+            .accessibilityIdentifier("tune-write-error")
+        }
       }
+    }
+  }
+
+  /// The honest answer to "what is enforcing these toggles?": the iPhone's own
+  /// Safari extension (from the local controller — it is not a cloud device)
+  /// plus each connected desktop browser profile.
+  private var scopeCard: some View {
+    MobileCard {
+      VStack(alignment: .leading, spacing: 14) {
+        HStack(spacing: 8) {
+          Image(systemName: "shield.checkered")
+            .foregroundStyle(TortoiseDesign.green)
+          Text(TuneScopeCopy.websitesLaneDetail)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+        }
+        VStack(spacing: 8) {
+          MobileTuneScopeChip(entry: scopeState.iphoneSafari, action: safariChipAction)
+            .accessibilityIdentifier("tune-scope-iphone-safari")
+          ForEach(scopeState.desktopProfiles) { entry in
+            MobileTuneScopeChip(entry: entry)
+          }
+          if scopeState.showAddComputerAffordance {
+            Button(action: openDevices) {
+              HStack(spacing: 8) {
+                Image(systemName: "plus")
+                  .font(.system(size: 12, weight: .bold))
+                Text(TuneScopeCopy.addComputerTitle)
+                  .font(.system(size: 12, weight: .bold))
+                  .lineLimit(1)
+                Spacer(minLength: 0)
+              }
+              .foregroundStyle(TortoiseDesign.accent)
+              .padding(.horizontal, 9)
+              .padding(.vertical, 10)
+              .background(TortoiseDesign.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("tune-scope-add-computer")
+          }
+        }
+      }
+    }
+    .accessibilityIdentifier("tune-scope-card")
+  }
+
+  /// Attention states make the Safari chip actionable: setup problems open the
+  /// extension settings; a pending heartbeat opens the verification page.
+  private var safariChipAction: (() -> Void)? {
+    switch scopeState.iphoneSafari.status {
+    case .attention(.catchingUp):
+      return { screenTime.openSafariVerificationPage() }
+    case .attention:
+      return { screenTime.openSafariExtensionSettings() }
+    case .on, .off:
+      return nil
     }
   }
 
@@ -1843,20 +1894,124 @@ private struct MobileTikTokComingSoonTile: View {
 }
 
 
-private struct MobileScopeChip: View {
-  let avatar: String
-  let title: String
+/// The APPS lane: names what this iPhone can do to native apps (block, limit,
+/// schedule) and states the ceiling — tuning inside apps isn't possible — so
+/// the website tuners below are never mistaken for app controls.
+private struct MobileNativeAppsLaneCard: View {
+  let openBlocking: () -> Void
 
   var body: some View {
+    Button(action: openBlocking) {
+      MobileCard {
+        HStack(spacing: 12) {
+          Image(systemName: "square.grid.2x2")
+            .foregroundStyle(TortoiseDesign.accent)
+            .frame(width: 36, height: 36)
+            .background(TortoiseDesign.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+          VStack(alignment: .leading, spacing: 3) {
+            Text(TuneScopeCopy.appsLaneTitle)
+              .font(.system(size: 14, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Text(TuneScopeCopy.appsLaneDetail)
+              .font(.system(size: 12))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+              .multilineTextAlignment(.leading)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+          Spacer()
+          Image(systemName: "chevron.right")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+        }
+      }
+    }
+    .buttonStyle(.plain)
+    .accessibilityIdentifier("tune-apps-lane")
+  }
+}
+
+/// Shown only when nothing anywhere is enforcing the website tuners (Safari
+/// extension off and no fresh desktop profile). Toggles stay live — settings
+/// persist to the account — but the user is told plainly nothing acts yet.
+private struct MobileTuneSetupFirstBanner: View {
+  let enable: () -> Void
+
+  var body: some View {
+    MobileCard {
+      VStack(alignment: .leading, spacing: 8) {
+        Label(TuneScopeCopy.setupFirstTitle, systemImage: "exclamationmark.triangle.fill")
+          .font(.system(size: 14, weight: .bold))
+          .foregroundStyle(TortoiseDesign.orange)
+        Text(TuneScopeCopy.setupFirstDetail)
+          .font(.system(size: 12))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+        Button(TuneScopeCopy.setupFirstCTA, action: enable)
+          .buttonStyle(.borderedProminent)
+      }
+    }
+    .accessibilityIdentifier("tune-setup-first-banner")
+  }
+}
+
+private struct MobileTuneScopeChip: View {
+  let entry: TuneScopeEntry
+  var action: (() -> Void)? = nil
+
+  var body: some View {
+    if let action {
+      Button(action: action) { content }
+        .buttonStyle(.plain)
+    } else {
+      content
+    }
+  }
+
+  private var content: some View {
     HStack(spacing: 8) {
-      MobileAvatar(text: avatar, size: 24)
-      Text(title)
-        .font(.system(size: 12, weight: .bold))
-        .lineLimit(1)
+      icon
+      VStack(alignment: .leading, spacing: 1) {
+        Text(entry.title)
+          .font(.system(size: 12, weight: .bold))
+          .foregroundStyle(TortoiseDesign.primaryText)
+          .lineLimit(1)
+        if let detail = entry.detail {
+          Text(detail)
+            .font(.system(size: 10))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+            .lineLimit(1)
+        }
+      }
+      Spacer(minLength: 4)
+      HStack(spacing: 5) {
+        Text(MobileHubStatusStyle.label(for: entry.status))
+          .font(.system(size: 11, weight: .bold))
+          .foregroundStyle(MobileHubStatusStyle.color(for: entry.status))
+        Circle()
+          .fill(MobileHubStatusStyle.color(for: entry.status))
+          .frame(width: 7, height: 7)
+      }
     }
     .padding(.horizontal, 9)
     .padding(.vertical, 7)
     .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+  }
+
+  @ViewBuilder
+  private var icon: some View {
+    switch entry.kind {
+    case .iphoneSafari:
+      Image(systemName: "safari")
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.accent)
+        .frame(width: 24, height: 24)
+    case .desktopProfile:
+      MobileAvatar(text: initials, size: 24)
+    }
+  }
+
+  private var initials: String {
+    let letters = entry.title.split(separator: " ").prefix(2).compactMap(\.first)
+    return letters.isEmpty ? "T" : String(letters).uppercased()
   }
 }
 
@@ -2187,106 +2342,6 @@ private enum MobileUsageTab: String, CaseIterable, Identifiable {
     case .reddit: return "Reddit"
     case .tiktok: return "TikTok"
     }
-  }
-}
-
-private struct MobileBrowserProfile: Identifiable {
-  let id: String
-  let avatar: String
-  let title: String
-  let subtitle: String
-
-  init(id: String, avatar: String, title: String, subtitle: String) {
-    self.id = id
-    self.avatar = avatar
-    self.title = title
-    self.subtitle = subtitle
-  }
-
-  init(device: TortoiseDevice) {
-    let name = device.displayName
-    self.init(
-      id: device.id,
-      avatar: device.initials,
-      title: "\(device.platformLabel) · \(name)",
-      subtitle: device.statusSubtitle
-    )
-  }
-}
-
-// NOTE: `MobileDevicesScreen` now renders from the shared `DevicesHub`, so most
-// of what used to live here moved to `DevicePresentation.swift`. This trimmed
-// extension survives only because `MobileBrowserProfile.init(device:)` (used
-// by `MobileTuningScreen`'s "Active on · browser profiles" chips, an unrelated
-// screen) still calls `platformLabel` / `statusSubtitle`. Do not delete
-// without also updating that call site.
-private extension TortoiseDevice {
-  var platformLabel: String {
-    switch normalizedPlatform {
-    case "ios":
-      return "iPhone"
-    case "macos", "mac":
-      return "Mac"
-    case "chrome_extension", "chrome":
-      return "Chrome"
-    case "firefox_extension", "firefox":
-      return "Firefox"
-    case "safari_extension", "safari":
-      return "Safari"
-    default:
-      return platform?.isEmpty == false ? platform!.replacingOccurrences(of: "_", with: " ").capitalized : "Device"
-    }
-  }
-
-  var statusSubtitle: String {
-    let version = helperVersion ?? appVersion
-    let versionText = version.map { " · \($0)" } ?? ""
-    return "\(platformLabel)\(versionText) · \(lastSeenText)"
-  }
-
-  private var normalizedPlatform: String {
-    (platform ?? "").lowercased()
-  }
-
-  private var lastSeenText: String {
-    guard let lastSeenAt,
-          let date = ISO8601DateFormatter.tortoise.date(from: lastSeenAt) ?? ISO8601DateFormatter.tortoiseNoFractions.date(from: lastSeenAt) else {
-      return "not seen yet"
-    }
-    return "seen \(date.relativeDisplay)"
-  }
-}
-
-private extension ISO8601DateFormatter {
-  static let tortoise: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter
-  }()
-
-  static let tortoiseNoFractions: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime]
-    return formatter
-  }()
-}
-
-private extension Date {
-  var relativeDisplay: String {
-    let seconds = max(0, Int(Date().timeIntervalSince(self)))
-    if seconds < 60 {
-      return "just now"
-    }
-    let minutes = seconds / 60
-    if minutes < 60 {
-      return "\(minutes)m ago"
-    }
-    let hours = minutes / 60
-    if hours < 24 {
-      return "\(hours)h ago"
-    }
-    let days = hours / 24
-    return "\(days)d ago"
   }
 }
 

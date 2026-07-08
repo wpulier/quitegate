@@ -1601,6 +1601,12 @@ function handleVisibilityChange() {
   if (document.visibilityState === "hidden" && currentUsage) {
     persistUsage("hidden");
   }
+  if (document.visibilityState === "visible") {
+    // Tab-return re-pull: a tuner flipped in the Tortoise app must apply to
+    // this already-open tab, not only to the next page load. (Safari-only
+    // addition; port to ChromeExtension once the Web Store review lands.)
+    syncNativeSettings();
+  }
   scheduleApplySettings();
 }
 

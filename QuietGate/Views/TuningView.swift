@@ -189,18 +189,22 @@ struct TuningView: View {
   }
 
   private var scopeCountText: String {
-    let accountCount = scopeChips.filter { !$0.title.localizedCaseInsensitiveContains("iPhone") }.count
-    return "\(accountCount) accounts"
+    "\(connectorChips.count) accounts"
+  }
+
+  private var connectorChips: [TuningScopeChipModel] {
+    store.browserConnectors.flatMap { connector in
+      connector.connectedProfileLabels.map { label in
+        TuningScopeChipModel(avatar: avatar(for: label), title: "\(connector.displayName) · \(label)", status: .on)
+      }
+    }
   }
 
   private var scopeChips: [TuningScopeChipModel] {
-    let connected = store.browserConnectors.flatMap { connector in
-      connector.connectedProfileLabels.map { label in
-        TuningScopeChipModel(avatar: avatar(for: label), title: "\(connector.displayName) · \(label)", isOn: true)
-      }
+    let iphones = TuneScope.macIPhoneEntries(devices: accountStore.snapshot.devices, now: Date()).map { entry in
+      TuningScopeChipModel(avatar: avatar(for: entry.title), title: entry.title, status: entry.status)
     }
-
-    return connected
+    return connectorChips + iphones
   }
 
   private func toggleAll() {
@@ -423,7 +427,7 @@ private struct TuningScopeChip: View {
         .font(.system(size: 13, weight: .semibold))
         .foregroundStyle(QGDesign.primaryText)
       Circle()
-        .fill(chip.isOn ? QGDesign.green : QGDesign.tertiaryText)
+        .fill(chip.statusColor)
         .frame(width: 7, height: 7)
     }
     .padding(.horizontal, 9)
@@ -440,5 +444,13 @@ private struct TuningScopeChipModel: Identifiable {
   let id = UUID()
   let avatar: String
   let title: String
-  let isOn: Bool
+  let status: ConnectionStatus
+
+  var statusColor: Color {
+    switch status {
+    case .on: return QGDesign.green
+    case .attention: return QGDesign.orange
+    case .off: return QGDesign.tertiaryText
+    }
+  }
 }

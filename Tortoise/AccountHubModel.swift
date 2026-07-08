@@ -7,6 +7,10 @@ final class AccountHubModel: ObservableObject {
   @Published var snapshot = AccountHubSnapshot()
   @Published var isSyncing = false
   @Published var syncMessage = "Sign in to sync this device."
+  /// Set when a policy write fails so the screen the user flipped a control on
+  /// can say so in one line (the control itself snaps back to the unchanged
+  /// snapshot). Cleared by the next successful write.
+  @Published var writeErrorMessage: String?
 
   private let apiClient = TortoiseAPIClient()
 
@@ -153,6 +157,7 @@ final class AccountHubModel: ObservableObject {
       snapshot.policy = updatedEnvelope
       snapshot.lastSyncedAt = Date()
       syncMessage = "Tortoise settings are synced."
+      writeErrorMessage = nil
       return updatedEnvelope.policy
     } catch {
       if let apiError = error as? TortoiseAPIError,
@@ -160,8 +165,10 @@ final class AccountHubModel: ObservableObject {
          message.localizedCaseInsensitiveContains("changed") {
         await refresh(using: clerk)
         syncMessage = "Settings changed elsewhere. Refreshed policy; try again."
+        writeErrorMessage = "Settings changed elsewhere — flip it again."
       } else {
         syncMessage = error.localizedDescription
+        writeErrorMessage = "Couldn't save — check your connection."
       }
       return nil
     }
