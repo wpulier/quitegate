@@ -84,6 +84,50 @@ final class AppUpdateServiceTests: XCTestCase {
     XCTAssertNil(service.availableUpdate())
   }
 
+  // MARK: Release feed (published-version awareness)
+
+  func testReleaseTagParsing() {
+    XCTAssertEqual(
+      AppReleaseFeed.versionIdentifier(fromTag: "v1.1-2"),
+      AppVersionIdentifier(version: "1.1", build: "2")
+    )
+    XCTAssertEqual(
+      AppReleaseFeed.versionIdentifier(fromTag: "v1.0-202607031226"),
+      AppVersionIdentifier(version: "1.0", build: "202607031226")
+    )
+    XCTAssertEqual(
+      AppReleaseFeed.versionIdentifier(fromTag: "v2.0"),
+      AppVersionIdentifier(version: "2.0", build: "")
+    )
+    XCTAssertNil(AppReleaseFeed.versionIdentifier(fromTag: "1.1-2"))
+    XCTAssertNil(AppReleaseFeed.versionIdentifier(fromTag: "v"))
+    XCTAssertNil(AppReleaseFeed.versionIdentifier(fromTag: ""))
+  }
+
+  func testReleaseFeedJSONDecoding() throws {
+    let json = """
+    {"tag_name":"v1.2-14","html_url":"https://github.com/wpulier/quitegate/releases/tag/v1.2-14","name":"Tortoise 1.2 (14)"}
+    """
+    let release = try XCTUnwrap(AppReleaseFeed.remoteRelease(fromJSON: Data(json.utf8)))
+    XCTAssertEqual(release.version, AppVersionIdentifier(version: "1.2", build: "14"))
+    XCTAssertEqual(release.downloadURL, AppReleaseFeed.stableDownloadURL)
+    XCTAssertEqual(release.releaseURL.absoluteString, "https://github.com/wpulier/quitegate/releases/tag/v1.2-14")
+  }
+
+  func testReleaseFeedRejectsGarbage() {
+    XCTAssertNil(AppReleaseFeed.remoteRelease(fromJSON: Data("not json".utf8)))
+    XCTAssertNil(AppReleaseFeed.remoteRelease(fromJSON: Data(#"{"tag_name":"nightly","html_url":"https://x.y"}"#.utf8)))
+  }
+
+  func testRemoteVersionComparisonGatesOnNewer() {
+    // Same logic the store uses to decide whether to surface the Get button.
+    let current = AppVersionIdentifier(version: "1.1", build: "2")
+    XCTAssertTrue(current < AppVersionIdentifier(version: "1.1", build: "13"))
+    XCTAssertTrue(current < AppVersionIdentifier(version: "1.2", build: "1"))
+    XCTAssertFalse(current < AppVersionIdentifier(version: "1.1", build: "2"))
+    XCTAssertFalse(current < AppVersionIdentifier(version: "1.0", build: "99"))
+  }
+
   private func writeAppBundle(
     named name: String,
     version: String,

@@ -58,7 +58,7 @@ final class ProtectionStoreTests: XCTestCase {
     store.refreshAppUpdateStatus()
 
     XCTAssertFalse(store.appUpdateAvailable)
-    XCTAssertEqual(store.appUpdateDetail, "Tortoise is up to date.")
+    XCTAssertTrue(store.appUpdateDetail.hasPrefix("Tortoise is up to date"))
 
     let update = AppUpdateInfo(
       currentVersion: AppVersionIdentifier(version: "1.0", build: "1"),
@@ -74,6 +74,39 @@ final class ProtectionStoreTests: XCTestCase {
     await store.performInstalledAppUpdate()
 
     XCTAssertEqual(appUpdateService.relaunchedUpdates, [update])
+  }
+
+  func testStaleBrowserHeartbeatIsNotShownAsConnected() {
+    // Regression for the "extension uninstalled but the app says connected"
+    // report: a dead heartbeat used to map to connectedPending ("… is
+    // connected. Refresh…") forever. Stale must read as action-needed with an
+    // honest last-heard line, and must not count as a connected surface.
+    let store = ProtectionStore(
+      defaults: browserFirstDefaults(),
+      keychain: MemorySecretStore(),
+      extensionBridge: FakeBrowserExtensionBridge(),
+      browserInstallationChecker: installedBrowsers([.chrome])
+    )
+    store.browserHelperStates[.chrome] = .stale
+    store.browserHelperSnapshots[.chrome] = ChromeHelperSnapshot(
+      extensionID: "test-extension",
+      lastSeenAt: Date().addingTimeInterval(-3 * 24 * 60 * 60),
+      lastAppliedSettingsVersion: "1",
+      extensionVersion: "1.0",
+      blockedRuleCount: 0
+    )
+
+    let chrome = store.browserConnectors.first { $0.id == .chrome }
+    XCTAssertNotNil(chrome)
+    XCTAssertFalse(chrome?.isConnected ?? true, "a dead heartbeat must not read as connected")
+    XCTAssertTrue(
+      chrome?.state.detail.contains("hasn't heard from Chrome") ?? false,
+      "stale copy must say Tortoise lost contact, got: \(chrome?.state.detail ?? "nil")"
+    )
+    XCTAssertTrue(
+      chrome?.state.detail.contains("since") ?? false,
+      "stale copy should carry the last-heard time"
+    )
   }
 
   func testBuiltInProtectionRefreshCoalescesConcurrentRequests() async {

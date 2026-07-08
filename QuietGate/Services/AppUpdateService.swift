@@ -81,9 +81,73 @@ struct AppUpdateInfo: Equatable {
   }
 }
 
+/// A newer Tortoise published to the release feed (GitHub Releases). Distinct
+/// from `AppUpdateInfo`, which is a newer copy already sitting on this Mac.
+struct RemoteAppRelease: Equatable {
+  let version: AppVersionIdentifier
+  let downloadURL: URL
+  let releaseURL: URL
+}
+
+/// The published-release feed: parsing is pure and unit-tested; the fetch is a
+/// thin URLSession wrapper. Tags follow script/publish_github_release.sh
+/// ("v{version}-{build}"), and the stable asset URL always serves the newest DMG.
+enum AppReleaseFeed {
+  static let repo = "wpulier/quitegate"
+  static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!
+  static let stableDownloadURL = URL(string: "https://github.com/\(repo)/releases/latest/download/Tortoise.dmg")!
+
+  /// "v1.1-2" → version "1.1", build "2". Nil for anything else.
+  static func versionIdentifier(fromTag tag: String) -> AppVersionIdentifier? {
+    var trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.hasPrefix("v") else {
+      return nil
+    }
+    trimmed.removeFirst()
+    let parts = trimmed.split(separator: "-", maxSplits: 1)
+    guard let version = parts.first, !version.isEmpty else {
+      return nil
+    }
+    return AppVersionIdentifier(
+      version: String(version),
+      build: parts.count > 1 ? String(parts[1]) : ""
+    )
+  }
+
+  /// Decodes GitHub's "latest release" payload into a release, or nil when the
+  /// payload (or its tag) isn't one of ours.
+  static func remoteRelease(fromJSON data: Data) -> RemoteAppRelease? {
+    struct Payload: Decodable {
+      let tagName: String
+      let htmlUrl: String
+
+      enum CodingKeys: String, CodingKey {
+        case tagName = "tag_name"
+        case htmlUrl = "html_url"
+      }
+    }
+    guard let payload = try? JSONDecoder().decode(Payload.self, from: data),
+          let version = versionIdentifier(fromTag: payload.tagName),
+          let releaseURL = URL(string: payload.htmlUrl) else {
+      return nil
+    }
+    return RemoteAppRelease(
+      version: version,
+      downloadURL: stableDownloadURL,
+      releaseURL: releaseURL
+    )
+  }
+}
+
 protocol AppUpdateServicing {
   func availableUpdate() -> AppUpdateInfo?
   func relaunch(using update: AppUpdateInfo) async throws
+  func latestRemoteRelease() async -> RemoteAppRelease?
+}
+
+extension AppUpdateServicing {
+  /// Test doubles and previews don't hit the network.
+  func latestRemoteRelease() async -> RemoteAppRelease? { nil }
 }
 
 final class AppUpdateService: AppUpdateServicing {
@@ -156,6 +220,17 @@ final class AppUpdateService: AppUpdateServicing {
     await MainActor.run {
       NSApp.terminate(nil)
     }
+  }
+
+  func latestRemoteRelease() async -> RemoteAppRelease? {
+    var request = URLRequest(url: AppReleaseFeed.latestReleaseAPIURL)
+    request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+    request.timeoutInterval = 15
+    guard let (data, response) = try? await URLSession.shared.data(for: request),
+          (response as? HTTPURLResponse)?.statusCode == 200 else {
+      return nil
+    }
+    return AppReleaseFeed.remoteRelease(fromJSON: data)
   }
 
   private func installedVersion(at appURL: URL) -> AppVersionIdentifier? {

@@ -442,7 +442,12 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
     return .current
   }
 
-  private static let chromeHelperStaleInterval: TimeInterval = 24 * 60 * 60
+  /// How long without a heartbeat before the connector stops counting as
+  /// connected. The extension heartbeats constantly while the browser is open,
+  /// so two quiet hours means the browser is closed — or the extension was
+  /// removed. Either way "connected" would be a lie; the UI says when we last
+  /// heard from it and how to refresh.
+  private static let chromeHelperStaleInterval: TimeInterval = 2 * 60 * 60
 
   private static func defaultApplicationSupportDirectory() -> URL {
     FileManager.default.homeDirectoryForCurrentUser

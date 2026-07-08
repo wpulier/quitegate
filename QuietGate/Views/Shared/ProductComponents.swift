@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum QGDesign {
@@ -222,6 +223,7 @@ struct ProductHeader: View {
       Spacer(minLength: 16)
 
       if store.appUpdateAvailable {
+        // A newer copy is already on this Mac — relaunch into it.
         Button {
           store.relaunchToInstalledUpdate()
         } label: {
@@ -229,6 +231,15 @@ struct ProductHeader: View {
         }
         .buttonStyle(QGPrimaryButtonStyle())
         .disabled(store.isWorking)
+        .help(store.appUpdateDetail)
+      } else if let release = store.remoteAppRelease {
+        // A newer Tortoise is published but not downloaded yet.
+        Button {
+          NSWorkspace.shared.open(release.downloadURL)
+        } label: {
+          QGIconButtonLabel(title: "Get \(release.version.displayText)", systemImage: "arrow.down.circle")
+        }
+        .buttonStyle(QGPrimaryButtonStyle())
         .help(store.appUpdateDetail)
       } else {
         QGPill(text: "App up to date", tint: QGDesign.secondaryText)

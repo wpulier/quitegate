@@ -412,6 +412,8 @@ final class ProtectionStore: ObservableObject {
   private var nativeHostRefreshChecked = false
   @Published var builtInProtectionsSnapshot: BuiltInProtectionsSnapshot = .empty
   @Published private(set) var appUpdateInfo: AppUpdateInfo?
+  /// A newer Tortoise published to the release feed but not on this Mac yet.
+  @Published private(set) var remoteAppRelease: RemoteAppRelease?
   @Published var macOSLegacyProviderProfileInstalled = false
   @Published var macOSConfiguredLegacyProviderProfileInstalled = false
   @Published var legacyProviderRulesSyncPending: Bool
@@ -1090,7 +1092,17 @@ final class ProtectionStore: ObservableObject {
   }
 
   var appUpdateDetail: String {
-    appUpdateInfo?.detailText ?? "Tortoise is up to date."
+    if let appUpdateInfo {
+      return appUpdateInfo.detailText
+    }
+    if let remoteAppRelease {
+      return "Tortoise \(remoteAppRelease.version.displayText) is available. You have \(currentAppVersion?.displayText ?? "an older version")."
+    }
+    return "Tortoise is up to date (\(currentAppVersion?.displayText ?? "version unknown"))."
+  }
+
+  var currentAppVersion: AppVersionIdentifier? {
+    AppVersionIdentifier.fromInfoDictionary(Bundle.main.infoDictionary)
   }
 
   var blockingProviders: [BlockingProviderSnapshot] {
@@ -1676,13 +1688,13 @@ final class ProtectionStore: ObservableObject {
         "\(id.displayName) is connected. Tortoise is updating it with the latest settings."
       )
     case .stale:
-      if let selectedProfile = status.selectedProfileLabel {
-        return .connectedPending(
-          "\(id.displayName) is connected in \(selectedProfile). Refresh the browser connection if pages have not updated."
-        )
-      }
-      return .connectedPending(
-        "\(id.displayName) is connected. Refresh the browser connection if pages have not updated."
+      // A dead heartbeat is NOT "connected": the extension may have been
+      // removed from the browser, and the app claiming otherwise is the exact
+      // dishonesty users report. Say when we last heard from it and what to do.
+      let snapshot = browserHelperSnapshots[id] ?? (id == .chrome ? chromeHelperSnapshot : nil)
+      let sinceText = snapshot.map { " since \(Self.relativeTimeText($0.lastSeenAt))" } ?? " recently"
+      return .actionNeeded(
+        "Tortoise hasn't heard from \(id.displayName)\(sinceText). Open \(id.displayName) to refresh — if the Tortoise extension was removed there, reconnect it."
       )
     case .extensionNeedsReload:
       return .connectedPending(
@@ -1715,6 +1727,13 @@ final class ProtectionStore: ObservableObject {
 
   private func browserExtensionStatus(for id: BrowserConnectorID) -> ChromeExtensionStatus {
     browserExtensionStatuses[id] ?? (id == .chrome ? chromeExtensionStatus : .empty)
+  }
+
+  /// "2 hours ago" / "3 days ago" — for the honest stale-connector line.
+  static func relativeTimeText(_ date: Date, now: Date = Date()) -> String {
+    let formatter = RelativeDateTimeFormatter()
+    formatter.unitsStyle = .full
+    return formatter.localizedString(for: date, relativeTo: now)
   }
 
   private func browserHelperState(for id: BrowserConnectorID) -> ChromeHelperState {
@@ -3608,6 +3627,15 @@ final class ProtectionStore: ObservableObject {
 
   func refreshAppUpdateStatus() {
     appUpdateInfo = appUpdateService.availableUpdate()
+    Task { @MainActor [weak self] in
+      guard let self else { return }
+      let latest = await self.appUpdateService.latestRemoteRelease()
+      if let latest, let current = self.currentAppVersion, current < latest.version {
+        self.remoteAppRelease = latest
+      } else {
+        self.remoteAppRelease = nil
+      }
+    }
   }
 
   func relaunchToInstalledUpdate() {
