@@ -1479,6 +1479,7 @@ private struct MobileStepperButton: View {
         .frame(width: 28, height: 28)
     }
     .buttonStyle(.bordered)
+    .accessibilityIdentifier("stepper-\(systemImage)")
   }
 }
 

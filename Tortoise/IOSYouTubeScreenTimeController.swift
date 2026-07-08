@@ -42,7 +42,17 @@ final class IOSEnforcementController: ObservableObject {
 
   @Published var dailyLimitMinutes: Int {
     didSet {
-      dailyLimitMinutes = min(max(dailyLimitMinutes, 5), 480)
+      // On a @Published property, assigning from inside didSet re-fires
+      // didSet (unlike a plain stored property) — an unconditional clamp
+      // re-assign here recursed to stack overflow on the FIRST post-init
+      // write and killed TestFlight builds 1–7 at launch (policy sync writes
+      // this). Re-assign only when out of range; the nested didSet then takes
+      // the in-range path exactly once.
+      let clamped = min(max(dailyLimitMinutes, 5), 480)
+      guard dailyLimitMinutes == clamped else {
+        dailyLimitMinutes = clamped
+        return
+      }
       persistState()
       applyCurrentMode()
     }
@@ -50,13 +60,17 @@ final class IOSEnforcementController: ObservableObject {
 
   /// Stage 2: combined managed-apps daily limit (minutes). `nil` = off. Clamped
   /// 5–480 when set. Advisory OPEN governor — `applyCurrentMode()` re-arms the
-  /// `.tortoiseManagedAppsDaily` monitor. (Assigning within didSet does not
-  /// re-fire the observer, so the clamp converges — same pattern as
-  /// `dailyLimitMinutes`.)
+  /// `.tortoiseManagedAppsDaily` monitor. Same recursion hazard as
+  /// `dailyLimitMinutes`: @Published re-fires didSet on assignment from within
+  /// didSet, so the clamp must re-assign only when the value actually changes.
   @Published var managedAppsLimitMinutes: Int? {
     didSet {
       if let minutes = managedAppsLimitMinutes {
-        managedAppsLimitMinutes = ManagedAppsShield.clampManagedAppsLimitMinutes(minutes)
+        let clamped = ManagedAppsShield.clampManagedAppsLimitMinutes(minutes)
+        guard minutes == clamped else {
+          managedAppsLimitMinutes = clamped
+          return
+        }
       }
       persistState()
       applyCurrentMode()

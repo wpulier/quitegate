@@ -50,6 +50,34 @@ final class TabFlipUITests: XCTestCase {
     flipTabs(app, requireTabs: false)
   }
 
+  /// Regression guard for the real cause of "app auto closes on open"
+  /// (TestFlight builds 1–7): dailyLimitMinutes.didSet clamped by re-assigning
+  /// the property, and on a @Published property that re-fires didSet (unlike a
+  /// plain stored property) — infinite recursion, stack overflow, dead app on
+  /// the FIRST post-init write. The launch-time writer is the policy sync;
+  /// this stepper is the same code path made deterministic.
+  func testAdjustingDailyLimitDoesNotCrash() {
+    let app = XCUIApplication()
+    app.launchArguments = ["--tortoise-screenshot", "--tortoise-screenshot-section", "usage"]
+    app.launch()
+
+    let youtubeTab = app.buttons["YouTube"].firstMatch
+    XCTAssertTrue(youtubeTab.waitForExistence(timeout: 8), "Usage sub-tabs never appeared")
+    youtubeTab.tap()
+
+    let plus = app.buttons["stepper-plus"].firstMatch
+    XCTAssertTrue(plus.waitForExistence(timeout: 8), "daily-limit stepper never appeared")
+    plus.tap()
+    plus.tap()
+    app.buttons["stepper-minus"].firstMatch.tap()
+
+    XCTAssertTrue(
+      plus.waitForExistence(timeout: 4),
+      "stepper vanished after adjusting the limit; app state: \(app.state.rawValue)"
+    )
+    XCTAssertEqual(app.state, .runningForeground, "app left the foreground after a daily-limit write")
+  }
+
   private func flipTabs(_ app: XCUIApplication, requireTabs: Bool) {
     let tabTitles = ["Usage", "Tune", "Block", "Devices"]
     for round in 0..<3 {
