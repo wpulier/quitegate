@@ -8,15 +8,28 @@ import Foundation
 /// Open ("block under mode"). During a *locked* Strict session the commitment is
 /// frozen: the selection may grow but must not shrink or clear (precommitment).
 enum ManagedAppsShield {
-  /// Whether the managed-apps shield is applied for `mode`.
-  /// Focus and Strict shield; Open clears.
+  /// Whether the managed-apps store carries a shield for `mode`.
+  /// Focus and Strict shield the managed selection; Custom shields its own
+  /// picked group (same store, different source); Open clears.
   static func shouldShield(mode: IOSEnforcementMode) -> Bool {
     switch mode {
-    case .focus, .strict:
+    case .focus, .strict, .custom:
       return true
     case .open:
       return false
     }
+  }
+
+  /// The tokens Custom actually shields: the picked group minus the per-app
+  /// switches the user turned off.
+  static func customShieldTokens<Token: Hashable>(selected: Set<Token>, excluded: Set<Token>) -> Set<Token> {
+    selected.subtracting(excluded)
+  }
+
+  /// Per-app custom switches obey precommitment: while a locked session is
+  /// active a switch may turn ON (tighten) but never OFF (loosen).
+  static func canToggleCustomApp(lockedActive: Bool, turningOn: Bool) -> Bool {
+    turningOn || !lockedActive
   }
 
   /// A change from `old` to `new` *shrinks* the commitment when any previously
@@ -51,10 +64,16 @@ enum ManagedAppsShield {
     limitEnabled && hasSelection
   }
 
-  /// The adult web/media filter applies only in Strict with adult blocking on —
-  /// independent of any app/site selection.
+  /// The adult web/media filter applies in Strict (always rides the mode) and
+  /// in Custom (rides the group's own "Adult websites" toggle) — never in
+  /// Open/Focus, and always independent of any app/site selection.
   static func shouldApplyAdultFilter(mode: IOSEnforcementMode, adultEnabled: Bool) -> Bool {
-    mode == .strict && adultEnabled
+    switch mode {
+    case .strict, .custom:
+      return adultEnabled
+    case .open, .focus:
+      return false
+    }
   }
 
   /// Enforcement is "active" (for status reporting) when any of the enforcement

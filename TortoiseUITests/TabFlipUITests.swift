@@ -57,13 +57,16 @@ final class TabFlipUITests: XCTestCase {
   /// the FIRST post-init write. The launch-time writer is the policy sync;
   /// this stepper is the same code path made deterministic.
   func testAdjustingDailyLimitDoesNotCrash() {
-    // The YouTube limit stepper lives on Block since the iOS v1 redesign
-    // (Usage is pure display; the stepper moves into Tune's Apps surface in
-    // build 14). Fixture mode has no managed-apps selection, so the only
-    // steppers on Block are the YouTube limit's — firstMatch is deterministic.
+    // The YouTube limit stepper lives on Tune's "Apps on iPhone" surface since
+    // the iOS v1 redesign. Fixture mode has no managed-apps selection, so the
+    // only steppers there are the YouTube limit's — firstMatch is deterministic.
     let app = XCUIApplication()
-    app.launchArguments = ["--tortoise-screenshot", "--tortoise-screenshot-section", "blocking"]
+    app.launchArguments = ["--tortoise-screenshot", "--tortoise-screenshot-section", "tuning"]
     app.launch()
+
+    let appsSegment = app.staticTexts["Apps on iPhone"].firstMatch
+    XCTAssertTrue(appsSegment.waitForExistence(timeout: 8), "Apps surface segment never appeared")
+    appsSegment.tap()
 
     let plus = app.buttons["stepper-plus"].firstMatch
     XCTAssertTrue(plus.waitForExistence(timeout: 8), "daily-limit stepper never appeared")

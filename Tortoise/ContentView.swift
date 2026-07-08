@@ -277,6 +277,10 @@ private struct TortoiseMobileShell: View {
       .onChange(of: scenePhase) { _, newPhase in
         if newPhase == .active {
           screenTime.expireSessionIfNeeded()
+          // Re-read setup + heartbeat state on every return to the app: the
+          // user just enabled the extension in Settings or opened Safari, and
+          // stale UI here reads as "I did it and nothing happened".
+          screenTime.refreshSetupStatus()
         }
       }
 
@@ -310,8 +314,7 @@ private struct TortoiseMobileShell: View {
         screenTime: screenTime,
         accessMode: currentAccessMode,
         isSyncing: model.isSyncing,
-        selectMode: setAccessMode,
-        setDailyLimit: setDailyLimit
+        selectMode: setAccessMode
       )
     case .devices:
       MobileDevicesScreen(accountLabel: accountLabel, model: model, screenTime: screenTime)
@@ -319,6 +322,12 @@ private struct TortoiseMobileShell: View {
   }
 
   private var currentAccessMode: MobileAccessMode {
+    // Device-local Custom outranks the cloud label: the account policy schema
+    // can't represent it, so after any cloud refresh the policy still says
+    // focus/strict — relabeling the card would lie about what's enforcing.
+    if screenTime.enforcementMode == .custom {
+      return .custom
+    }
     if let mode = model.snapshot.policy?.policy.mode,
        let accessMode = MobileAccessMode(rawValue: mode) {
       return accessMode
@@ -331,6 +340,13 @@ private struct TortoiseMobileShell: View {
     if mode != .open && !screenTime.canTurnOn {
       section = .blocking
       screenTime.refreshSetupStatus()
+      return
+    }
+
+    // Custom is device-local by design (the cloud policy whitelist normalizes
+    // unknown modes to "focus"), so it deliberately skips the cloud PUT.
+    if mode == .custom {
+      screenTime.setMode(.custom)
       return
     }
 
@@ -675,182 +691,355 @@ private struct MobileUsageScreen: View {
   }
 }
 
+/// Block per the iOS v1 redesign: one question — what's off-limits right now?
+/// Four radio-style mode cards, each showing its actual contents at a glance
+/// (the user's REAL picked apps, never a hardcoded brand strip), plus the
+/// timed-session commitment folded at the bottom.
 private struct MobileBlockingScreen: View {
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   let accessMode: MobileAccessMode
   let isSyncing: Bool
   let selectMode: (MobileAccessMode) -> Void
-  let setDailyLimit: (Int) -> Void
 
   @State private var appsPickerPresented = false
+  @State private var customPickerPresented = false
+  @State private var sessionFoldOpen = false
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
+    VStack(alignment: .leading, spacing: 12) {
       MobileHeader(
         kicker: nil,
         title: "Block",
-        subtitle: "Set your mode and choose what's blocked on this iPhone."
+        subtitle: "Choose what's off-limits on this iPhone right now."
       )
 
-      VStack(spacing: 10) {
-        ForEach(MobileAccessMode.allCases) { mode in
-          Button {
-            selectMode(mode)
-          } label: {
-            MobileModeRow(mode: mode, isSelected: accessMode == mode)
-          }
-          .buttonStyle(.plain)
-          .disabled(isSyncing || screenTime.sessionLockedActive)
-        }
+      ForEach(MobileAccessMode.allCases) { mode in
+        modeCard(mode)
       }
 
-      MobileCard {
-        VStack(alignment: .leading, spacing: 14) {
-          Text("Commit to a session")
-            .font(.system(size: 16, weight: .bold))
-            .foregroundStyle(TortoiseDesign.primaryText)
-          Text("A locked Strict session can't be ended or weakened early - that's the point.")
-            .font(.system(size: 13))
-            .foregroundStyle(TortoiseDesign.secondaryText)
+      sessionFoldCard
 
-          if screenTime.sessionActive {
-            HStack(spacing: 10) {
-              Text(screenTime.sessionStatusLine)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(TortoiseDesign.primaryText)
-              Spacer(minLength: 8)
-              if screenTime.sessionLockedActive {
-                Label("Locked until it ends", systemImage: "lock.fill")
-                  .font(.system(size: 12, weight: .bold))
-                  .foregroundStyle(TortoiseDesign.secondaryText)
-              } else {
-                Button("End session") {
-                  screenTime.endSession()
-                }
-                .font(.system(size: 12, weight: .bold))
-                .buttonStyle(.bordered)
-              }
-            }
-          }
-
-          HStack(spacing: 8) {
-            MobileSessionButton("Focus · 25m") {
-              screenTime.startSession(mode: .focus, duration: 25 * 60, locked: false)
-            }
-            .disabled(screenTime.sessionLockedActive)
-            MobileSessionButton("Focus · 1h") {
-              screenTime.startSession(mode: .focus, duration: 60 * 60, locked: false)
-            }
-            .disabled(screenTime.sessionLockedActive)
-            MobileSessionButton("Lock Strict · 2h", systemImage: "lock") {
-              screenTime.startSession(mode: .strict, duration: 2 * 3600, locked: true)
-            }
-            .disabled(screenTime.sessionLockedActive)
-          }
-        }
+      if let writeError = model.writeErrorMessage {
+        Label(writeError, systemImage: "exclamationmark.triangle")
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(TortoiseDesign.orange)
       }
+    }
+    .familyActivityPicker(isPresented: $appsPickerPresented, selection: managedAppsBinding)
+    .familyActivityPicker(isPresented: $customPickerPresented, selection: customBinding)
+  }
 
-      MobileCard {
-        HStack(alignment: .top, spacing: 12) {
-          Image(systemName: "iphone.gen3")
-            .foregroundStyle(TortoiseDesign.accent)
-          Text("On iPhone, blocks run through the Tortoise app and Screen Time. Keep Tortoise allowed in Settings > Screen Time for full enforcement.")
-            .font(.system(size: 13))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-            .fixedSize(horizontal: false, vertical: true)
+  // MARK: mode cards
+
+  private func modeCard(_ mode: MobileAccessMode) -> some View {
+    let isSelected = accessMode == mode
+    return VStack(alignment: .leading, spacing: 0) {
+      Button {
+        selectMode(mode)
+      } label: {
+        HStack(spacing: 13) {
+          Image(systemName: mode.systemImage)
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(isSelected ? mode.accent : TortoiseDesign.secondaryText)
+            .frame(width: 38, height: 38)
+            .background(
+              isSelected ? mode.accent.opacity(0.16) : TortoiseDesign.elevatedPanel,
+              in: RoundedRectangle(cornerRadius: 11, style: .continuous)
+            )
+          VStack(alignment: .leading, spacing: 2) {
+            Text(mode.title)
+              .font(.system(size: 16, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Text(mode.detail)
+              .font(.system(size: 12.5))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+              .multilineTextAlignment(.leading)
+          }
+          Spacer(minLength: 8)
+          Image(systemName: "checkmark.circle.fill")
+            .font(.system(size: 20))
+            .foregroundStyle(mode.accent)
+            .opacity(isSelected ? 1 : 0)
         }
+        .contentShape(Rectangle())
       }
+      .buttonStyle(.plain)
+      .disabled(isSyncing || screenTime.sessionLockedActive)
 
-      MobileCard {
-        VStack(alignment: .leading, spacing: 14) {
-          HStack(spacing: 8) {
-            MobileSectionLabel("Apps")
-            Spacer(minLength: 8)
-            Button(screenTime.hasManagedAppsSelection ? "Edit" : "Choose apps") {
-              presentAppsPicker()
-            }
-            .font(.system(size: 12, weight: .bold))
-            .buttonStyle(.bordered)
-            .disabled(screenTime.authorizationState != .approved || screenTime.sessionLockedActive)
-          }
+      modeContents(mode, isSelected: isSelected)
+    }
+    .padding(15)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .strokeBorder(isSelected ? mode.accent : TortoiseDesign.hairline, lineWidth: isSelected ? 1.5 : 1)
+    }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("block-mode-\(mode.rawValue)")
+  }
 
-          Text(screenTime.managedAppsSummary)
-            .font(.system(size: 13))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-            .fixedSize(horizontal: false, vertical: true)
-
-          if screenTime.hasManagedAppsSelection {
-            VStack(alignment: .leading, spacing: 10) {
-              ForEach(Array(screenTime.managedAppsSelection.applicationTokens), id: \.self) { token in
-                Label(token)
-                  .labelStyle(.titleAndIcon)
-                  .font(.system(size: 14))
-                  .foregroundStyle(TortoiseDesign.primaryText)
-              }
-              ForEach(Array(screenTime.managedAppsSelection.categoryTokens), id: \.self) { token in
-                Label(token)
-                  .labelStyle(.titleAndIcon)
-                  .font(.system(size: 14))
-                  .foregroundStyle(TortoiseDesign.primaryText)
-              }
-              if !screenTime.managedAppsSelection.webDomainTokens.isEmpty {
-                let domainCount = screenTime.managedAppsSelection.webDomainTokens.count
-                Text("\(domainCount) web domain\(domainCount == 1 ? "" : "s")")
-                  .font(.system(size: 13, weight: .semibold))
-                  .foregroundStyle(TortoiseDesign.secondaryText)
-              }
-            }
-            .padding(.top, 2)
-          }
-
-          if screenTime.hasManagedAppsSelection {
-            MobileDivider()
-
-            HStack(spacing: 10) {
-              VStack(alignment: .leading, spacing: 3) {
-                Text("Daily limit")
-                  .font(.system(size: 13, weight: .bold))
-                  .foregroundStyle(TortoiseDesign.primaryText)
-                Text(screenTime.managedAppsLimitSummary)
-                  .font(.system(size: 12))
-                  .foregroundStyle(TortoiseDesign.secondaryText)
-                  .fixedSize(horizontal: false, vertical: true)
-              }
-              Spacer(minLength: 8)
-              MobileSwitch(
-                isOn: Binding(
-                  get: { screenTime.managedAppsLimitEnabled },
-                  set: { screenTime.setManagedAppsLimitEnabled($0) }
-                ),
-                isEnabled: !screenTime.sessionLockedActive
-              )
-            }
-
-            if screenTime.managedAppsLimitEnabled {
-              HStack(spacing: 8) {
-                Spacer()
-                MobileStepperButton(systemImage: "minus") {
-                  screenTime.adjustManagedAppsLimit(by: -5)
-                }
-                .disabled(screenTime.sessionLockedActive)
-                Text("\(screenTime.managedAppsLimitDisplayMinutes)m")
-                  .font(.system(size: 13, weight: .bold))
-                  .frame(width: 48)
-                MobileStepperButton(systemImage: "plus") {
-                  screenTime.adjustManagedAppsLimit(by: 5)
-                }
-                .disabled(screenTime.sessionLockedActive)
-              }
-            }
-          }
-        }
-      }
-      .familyActivityPicker(isPresented: $appsPickerPresented, selection: managedAppsBinding)
-
-      MobileIOSYouTubeLimitCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
+  /// Each mode shows its ACTUAL contents at a glance — honest previews built
+  /// from the user's real selections.
+  @ViewBuilder
+  private func modeContents(_ mode: MobileAccessMode, isSelected: Bool) -> some View {
+    switch mode {
+    case .open:
+      EmptyView()
+    case .focus:
+      selectionPreview(
+        selection: screenTime.managedAppsSelection,
+        adultChip: false,
+        emptyHint: "No apps chosen yet",
+        showEdit: isSelected,
+        editAction: presentAppsPicker
+      )
+    case .strict:
+      selectionPreview(
+        selection: screenTime.managedAppsSelection,
+        adultChip: true,
+        emptyHint: "Adult sites blocked — choose apps to block more",
+        showEdit: isSelected,
+        editAction: presentAppsPicker
+      )
+    case .custom:
+      customContents(isSelected: isSelected)
     }
   }
+
+  private func selectionPreview(
+    selection: FamilyActivitySelection,
+    adultChip: Bool,
+    emptyHint: String,
+    showEdit: Bool,
+    editAction: @escaping () -> Void
+  ) -> some View {
+    let tokens = Array(selection.applicationTokens.prefix(5))
+    let extra = selection.applicationTokens.count - tokens.count
+    let domainCount = selection.webDomainTokens.count
+    return HStack(spacing: 9) {
+      if tokens.isEmpty && !adultChip {
+        Text(emptyHint)
+          .font(.system(size: 12))
+          .foregroundStyle(TortoiseDesign.tertiaryText)
+      } else {
+        HStack(spacing: 6) {
+          ForEach(tokens, id: \.self) { token in
+            Label(token)
+              .labelStyle(.iconOnly)
+              .frame(width: 26, height: 26)
+              .background(Color.white.opacity(0.10), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+          }
+          if extra > 0 {
+            Text("+\(extra)")
+              .font(.system(size: 11, weight: .bold))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+              .frame(width: 26, height: 26)
+              .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+          }
+          if adultChip {
+            HStack(spacing: 4) {
+              Image(systemName: "shield.fill")
+                .font(.system(size: 10, weight: .bold))
+              Text("adult sites")
+                .font(.system(size: 11, weight: .bold))
+            }
+            .foregroundStyle(TortoiseDesign.orange)
+            .padding(.horizontal, 8)
+            .frame(height: 26)
+            .background(TortoiseDesign.orange.opacity(0.16), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+          }
+        }
+        if domainCount > 0 {
+          Text("+\(domainCount) site\(domainCount == 1 ? "" : "s")")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.tertiaryText)
+        }
+      }
+      Spacer(minLength: 0)
+      if showEdit {
+        Button("Edit", action: editAction)
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundStyle(TortoiseDesign.accent)
+          .buttonStyle(.plain)
+          .disabled(screenTime.authorizationState != .approved || screenTime.sessionLockedActive)
+      }
+    }
+    .padding(.top, 12)
+  }
+
+  /// Custom expands in place to the per-app on/off list — the "per app" path.
+  @ViewBuilder
+  private func customContents(isSelected: Bool) -> some View {
+    HStack(spacing: 9) {
+      Text(customSummary)
+        .font(.system(size: 12))
+        .foregroundStyle(TortoiseDesign.tertiaryText)
+      Spacer(minLength: 0)
+      if isSelected {
+        Button(screenTime.hasCustomSelection ? "Edit" : "Choose apps") {
+          presentCustomPicker()
+        }
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.accent)
+        .buttonStyle(.plain)
+        .disabled(screenTime.authorizationState != .approved || screenTime.sessionLockedActive)
+      }
+    }
+    .padding(.top, 12)
+
+    if isSelected {
+      VStack(spacing: 0) {
+        ForEach(Array(screenTime.customSelection.applicationTokens), id: \.self) { token in
+          MobileDivider()
+            .padding(.vertical, 10)
+          HStack(spacing: 12) {
+            Label(token)
+              .labelStyle(.titleAndIcon)
+              .font(.system(size: 14, weight: .semibold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Spacer(minLength: 8)
+            MobileSwitch(
+              isOn: Binding(
+                get: { !screenTime.customExcludedApps.contains(token) },
+                set: { screenTime.setCustomApp(token, isOn: $0) }
+              ),
+              isEnabled: !(screenTime.sessionLockedActive && !screenTime.customExcludedApps.contains(token))
+            )
+          }
+        }
+
+        if screenTime.customSelection.webDomainTokens.count > 0 {
+          MobileDivider()
+            .padding(.vertical, 10)
+          HStack {
+            Text("\(screenTime.customSelection.webDomainTokens.count) website\(screenTime.customSelection.webDomainTokens.count == 1 ? "" : "s") blocked")
+              .font(.system(size: 13))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+            Spacer()
+          }
+        }
+
+        MobileDivider()
+          .padding(.vertical, 10)
+        HStack(spacing: 12) {
+          Image(systemName: "shield")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.orange)
+            .frame(width: 30, height: 30)
+            .background(TortoiseDesign.orange.opacity(0.16), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+          Text("Adult websites")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.primaryText)
+          Spacer(minLength: 8)
+          MobileSwitch(
+            isOn: Binding(
+              get: { screenTime.customAdultEnabled },
+              set: { screenTime.setCustomAdultEnabled($0) }
+            ),
+            isEnabled: !(screenTime.sessionLockedActive && screenTime.customAdultEnabled)
+          )
+        }
+
+        Text("Custom applies on this iPhone.")
+          .font(.system(size: 11))
+          .foregroundStyle(TortoiseDesign.tertiaryText)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.top, 10)
+      }
+    }
+  }
+
+  private var customSummary: String {
+    let appCount = screenTime.customSelection.applicationTokens.count
+    guard appCount > 0 || !screenTime.customSelection.webDomainTokens.isEmpty else {
+      return "Nothing selected yet"
+    }
+    let onCount = appCount - screenTime.customExcludedApps.count
+    return "\(onCount) of \(appCount) app\(appCount == 1 ? "" : "s") blocked"
+  }
+
+  // MARK: timed session (folded)
+
+  private var sessionFoldCard: some View {
+    let isOpen = sessionFoldOpen || screenTime.sessionActive
+    return VStack(alignment: .leading, spacing: 0) {
+      Button {
+        withAnimation(.easeInOut(duration: 0.25)) {
+          sessionFoldOpen.toggle()
+        }
+      } label: {
+        HStack(spacing: 11) {
+          Image(systemName: "timer")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+          VStack(alignment: .leading, spacing: 1) {
+            Text("Lock in for a set time")
+              .font(.system(size: 14.5, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Text(screenTime.sessionActive ? screenTime.sessionStatusLine : "Optional — commit and it won't turn off early")
+              .font(.system(size: 12))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+          }
+          Spacer(minLength: 8)
+          Image(systemName: "chevron.down")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(TortoiseDesign.tertiaryText)
+            .rotationEffect(.degrees(isOpen ? 180 : 0))
+        }
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+
+      if isOpen {
+        if screenTime.sessionActive {
+          HStack(spacing: 10) {
+            Spacer(minLength: 0)
+            if screenTime.sessionLockedActive {
+              Label("Locked until it ends", systemImage: "lock.fill")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(TortoiseDesign.secondaryText)
+            } else {
+              Button("End session") {
+                screenTime.endSession()
+              }
+              .font(.system(size: 12, weight: .bold))
+              .buttonStyle(.bordered)
+            }
+          }
+          .padding(.top, 12)
+        }
+
+        HStack(spacing: 8) {
+          MobileSessionButton("Focus · 25m") {
+            screenTime.startSession(mode: .focus, duration: 25 * 60, locked: false)
+          }
+          .disabled(screenTime.sessionLockedActive)
+          MobileSessionButton("Focus · 1h") {
+            screenTime.startSession(mode: .focus, duration: 60 * 60, locked: false)
+          }
+          .disabled(screenTime.sessionLockedActive)
+          MobileSessionButton("Lock Strict · 2h", systemImage: "lock") {
+            screenTime.startSession(mode: .strict, duration: 2 * 3600, locked: true)
+          }
+          .disabled(screenTime.sessionLockedActive)
+        }
+        .padding(.top, 12)
+      }
+    }
+    .padding(15)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(TortoiseDesign.panel.opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .strokeBorder(TortoiseDesign.hairline)
+    }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("block-session-fold")
+  }
+
+  // MARK: pickers
 
   /// Routes every picker write through the controller's guard so the locked
   /// session freeze holds even while the picker is open. The getter reflects the
@@ -862,23 +1051,47 @@ private struct MobileBlockingScreen: View {
     )
   }
 
+  private var customBinding: Binding<FamilyActivitySelection> {
+    Binding(
+      get: { screenTime.customSelection },
+      set: { screenTime.setCustomSelection($0) }
+    )
+  }
+
   private func presentAppsPicker() {
     guard !screenTime.sessionLockedActive else { return }
     appsPickerPresented = true
   }
+
+  private func presentCustomPicker() {
+    guard !screenTime.sessionLockedActive else { return }
+    customPickerPresented = true
+  }
 }
 
+/// Tune per the iOS v1 redesign: a segmented control splits the two real
+/// surfaces — reshape sites IN THE BROWSER (per-site accordions, one open at
+/// a time, curated hero toggles + an "All settings" fold) vs APPS ON IPHONE
+/// (daily limits; Apple allows nothing inside apps). Neither fully blocks —
+/// that's the Block tab, and the copy says so.
 private struct MobileTuningScreen: View {
   @Binding var selectedSite: String
   @ObservedObject var model: AccountHubModel
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
   @State private var safariConnectPresented = false
+  @State private var surface: TuneSurfaceTab = .browser
+  @State private var allSettingsOpenSites: Set<String> = []
   let setFeature: (String, Bool) -> Void
   let setFeatures: ([String], Bool) -> Void
   let setYoutubeProtection: (Bool) -> Void
   let setDailyLimit: (Int) -> Void
   let openBlocking: () -> Void
   let openDevices: () -> Void
+
+  enum TuneSurfaceTab {
+    case browser
+    case device
+  }
 
   private var tunePolicy: TortoisePolicy? { model.snapshot.policy?.policy }
 
@@ -896,98 +1109,27 @@ private struct MobileTuningScreen: View {
     TuneScreen.sites(policy: tunePolicy, surface: .iosSafari)
   }
 
-  private var selectedTuneSite: TuneSite? {
-    tuneSites.first { $0.id == selectedSite }
-  }
-
-  private var selectedSiteFeatures: [TuneFeature] {
-    TuneScreen.features(forSiteID: selectedSite, policy: tunePolicy, surface: .iosSafari)
-  }
-
   var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
+    VStack(alignment: .leading, spacing: 14) {
       MobileHeader(
         kicker: nil,
         title: "Tune",
         subtitle: TuneScopeCopy.tuneSubtitle
       )
 
-      MobileNativeAppsLaneCard(openBlocking: openBlocking)
+      surfacePicker
 
-      MobileSectionLabel(TuneScopeCopy.websitesLaneTitle)
-
-      if scopeState.showSetupFirstBanner {
-        MobileTuneSetupFirstBanner(enable: { safariConnectPresented = true })
+      if surface == .browser {
+        browserSurface
+      } else {
+        deviceSurface
       }
 
-      scopeCard
-
-      LazyVGrid(
-        columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
-        spacing: 10
-      ) {
-        ForEach(tuneSites) { site in
-          Button {
-            selectedSite = site.id
-          } label: {
-            MobileSiteTile(site: site, isSelected: selectedSite == site.id)
-          }
-          .buttonStyle(.plain)
-        }
-
-        MobileTikTokComingSoonTile()
-      }
-
-      if let selectedTuneSite {
-        MobileCard {
-          HStack(spacing: 12) {
-            MobileTuneBrandMark(assetName: selectedTuneSite.brandAssetName, size: 44, cornerRadius: 10)
-            VStack(alignment: .leading, spacing: 3) {
-              Text("\(selectedTuneSite.title) cleanup")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(TortoiseDesign.primaryText)
-              Text("\(enabledFeatureCount)/\(selectedSiteFeatures.count) hidden")
-                .font(.system(size: 13))
-                .foregroundStyle(TortoiseDesign.secondaryText)
-            }
-            Spacer()
-            Button(tuningActionTitle) {
-              performTuningAction()
-            }
-            .buttonStyle(.bordered)
-            .disabled(model.isSyncing || screenTime.sessionLockedActive)
-          }
-        }
-
-        if selectedTuneSite.id == "x" {
-          MobileXPlatformSafetyRow()
-        }
-
-        MobileCard {
-          VStack(spacing: 0) {
-            ForEach(Array(selectedSiteFeatures.enumerated()), id: \.element.id) { index, feature in
-              if index > 0 {
-                MobileDivider()
-                  .padding(.vertical, 13)
-              }
-              MobileTuningFeatureRow(
-                feature: feature,
-                isOn: Binding(
-                  get: { feature.isOn },
-                  set: { setFeature(feature.id, $0) }
-                ),
-                isEnabled: !model.isSyncing && !screenTime.sessionLockedActive
-              )
-            }
-          }
-        }
-
-        if let writeError = model.writeErrorMessage {
-          Label(writeError, systemImage: "exclamationmark.triangle")
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(TortoiseDesign.orange)
-            .accessibilityIdentifier("tune-write-error")
-        }
+      if let writeError = model.writeErrorMessage {
+        Label(writeError, systemImage: "exclamationmark.triangle")
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(TortoiseDesign.orange)
+          .accessibilityIdentifier("tune-write-error")
       }
     }
     .sheet(isPresented: $safariConnectPresented) {
@@ -995,110 +1137,299 @@ private struct MobileTuningScreen: View {
     }
   }
 
-  /// The honest answer to "what is enforcing these toggles?": the iPhone's own
-  /// Safari extension (from the local controller — it is not a cloud device)
-  /// plus each connected desktop browser profile.
-  private var scopeCard: some View {
-    MobileCard {
-      VStack(alignment: .leading, spacing: 14) {
-        HStack(spacing: 8) {
-          Image(systemName: "shield.checkered")
-            .foregroundStyle(TortoiseDesign.green)
-          Text(TuneScopeCopy.websitesLaneDetail)
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-        }
-        VStack(spacing: 8) {
-          MobileTuneScopeChip(entry: scopeState.iphoneSafari, action: safariChipAction)
-            .accessibilityIdentifier("tune-scope-iphone-safari")
-          ForEach(scopeState.desktopProfiles) { entry in
-            MobileTuneScopeChip(entry: entry)
+  // MARK: surface picker
+
+  private var surfacePicker: some View {
+    HStack(spacing: 6) {
+      surfaceSegment(.browser, title: TuneScopeCopy.browserSurfaceTitle, systemImage: "safari")
+      surfaceSegment(.device, title: TuneScopeCopy.deviceSurfaceTitle, systemImage: "iphone")
+    }
+    .padding(5)
+    .background(TortoiseDesign.elevatedPanel.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 14, style: .continuous)
+        .strokeBorder(TortoiseDesign.hairline)
+    }
+  }
+
+  private func surfaceSegment(_ tab: TuneSurfaceTab, title: String, systemImage: String) -> some View {
+    Button {
+      withAnimation(.easeInOut(duration: 0.2)) {
+        surface = tab
+      }
+    } label: {
+      HStack(spacing: 7) {
+        Image(systemName: systemImage)
+          .font(.system(size: 13, weight: .semibold))
+        Text(title)
+          .font(.system(size: 13, weight: .bold))
+      }
+      .foregroundStyle(surface == tab ? .white : TortoiseDesign.secondaryText)
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, 10)
+      .background(
+        surface == tab ? TortoiseDesign.accent : .clear,
+        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+      )
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+  }
+
+  // MARK: browser surface
+
+  @ViewBuilder
+  private var browserSurface: some View {
+    if scopeState.showSetupFirstBanner {
+      MobileTuneSetupFirstBanner(enable: { safariConnectPresented = true })
+    } else if let line = activeSurfaceLine {
+      HStack(spacing: 8) {
+        Image(systemName: "shield")
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundStyle(TortoiseDesign.green)
+        Text(line)
+          .font(.system(size: 12))
+          .foregroundStyle(TortoiseDesign.secondaryText)
+      }
+      .padding(.horizontal, 2)
+    }
+
+    ForEach(tuneSites) { site in
+      siteAccordion(site)
+    }
+
+    MobileTikTokComingSoonTile()
+  }
+
+  private func siteAccordion(_ site: TuneSite) -> some View {
+    let isOpen = selectedSite == site.id
+    let featured = TuneScreen.featuredFeatures(forSiteID: site.id, policy: tunePolicy, surface: .iosSafari)
+    let remaining = TuneScreen.remainingFeatures(forSiteID: site.id, policy: tunePolicy, surface: .iosSafari)
+    let quieted = featured.filter(\.isOn).count
+
+    return MobileCard {
+      VStack(alignment: .leading, spacing: 0) {
+        Button {
+          withAnimation(.easeInOut(duration: 0.25)) {
+            selectedSite = isOpen ? "" : site.id
           }
-          if scopeState.showAddComputerAffordance {
-            Button(action: openDevices) {
-              HStack(spacing: 8) {
-                Image(systemName: "plus")
-                  .font(.system(size: 12, weight: .bold))
-                Text(TuneScopeCopy.addComputerTitle)
-                  .font(.system(size: 12, weight: .bold))
-                  .lineLimit(1)
-                Spacer(minLength: 0)
-              }
-              .foregroundStyle(TortoiseDesign.accent)
-              .padding(.horizontal, 9)
-              .padding(.vertical, 10)
-              .background(TortoiseDesign.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+        } label: {
+          HStack(spacing: 13) {
+            MobileTuneBrandMark(assetName: site.brandAssetName, size: 44, cornerRadius: 12)
+            VStack(alignment: .leading, spacing: 2) {
+              Text(site.title)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(TortoiseDesign.primaryText)
+              Text("\(quieted) of \(featured.count) quieted")
+                .font(.system(size: 13))
+                .foregroundStyle(TortoiseDesign.secondaryText)
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("tune-scope-add-computer")
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.down")
+              .font(.system(size: 13, weight: .bold))
+              .foregroundStyle(TortoiseDesign.tertiaryText)
+              .rotationEffect(.degrees(isOpen ? 180 : 0))
           }
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+
+        if isOpen {
+          if site.id == "x" {
+            MobileXPlatformSafetyRow()
+              .padding(.top, 12)
+          }
+
+          VStack(spacing: 0) {
+            ForEach(featured) { feature in
+              featureRow(feature)
+            }
+
+            allSettingsFold(site: site, remaining: remaining)
+          }
+          .padding(.top, 4)
         }
       }
     }
-    // .contain makes the card its own accessibility container: without it the
-    // card identifier propagates onto the chips and CLOBBERS their identifiers
-    // whenever a chip renders as a Button (any attention state).
     .accessibilityElement(children: .contain)
-    .accessibilityIdentifier("tune-scope-card")
+    .accessibilityIdentifier("tune-site-\(site.id)")
   }
 
-  /// Any attention state makes the Safari chip actionable: it opens the one
-  /// canonical connect sheet, which carries the enable/allow/verify branching.
-  private var safariChipAction: (() -> Void)? {
-    switch scopeState.iphoneSafari.status {
-    case .attention:
-      return { safariConnectPresented = true }
-    case .on, .off:
+  private func featureRow(_ feature: TuneFeature) -> some View {
+    VStack(spacing: 0) {
+      MobileDivider()
+        .padding(.vertical, 12)
+      MobileTuningFeatureRow(
+        feature: feature,
+        isOn: Binding(
+          get: { feature.isOn },
+          set: { setFeature(feature.id, $0) }
+        ),
+        isEnabled: !model.isSyncing && !screenTime.sessionLockedActive
+      )
+    }
+  }
+
+  private func allSettingsFold(site: TuneSite, remaining: [TuneFeature]) -> some View {
+    let isOpen = allSettingsOpenSites.contains(site.id)
+    return VStack(spacing: 0) {
+      MobileDivider()
+        .padding(.vertical, 12)
+      Button {
+        withAnimation(.easeInOut(duration: 0.25)) {
+          if isOpen {
+            allSettingsOpenSites.remove(site.id)
+          } else {
+            allSettingsOpenSites.insert(site.id)
+          }
+        }
+      } label: {
+        HStack(spacing: 10) {
+          Image(systemName: "slider.horizontal.3")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+          Text(TuneScopeCopy.allSettingsTitle)
+            .font(.system(size: 13.5, weight: .bold))
+            .foregroundStyle(TortoiseDesign.primaryText)
+          Spacer(minLength: 8)
+          Text("\(remaining.filter(\.isOn).count) of \(remaining.count) on")
+            .font(.system(size: 12))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+          Image(systemName: "chevron.down")
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(TortoiseDesign.tertiaryText)
+            .rotationEffect(.degrees(isOpen ? 180 : 0))
+        }
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityIdentifier("tune-all-settings-\(site.id)")
+
+      if isOpen {
+        ForEach(remaining) { feature in
+          featureRow(feature)
+        }
+      }
+    }
+  }
+
+  /// Honest one-liner naming what's actually enforcing right now; nil when
+  /// nothing is (the setup-first banner owns that state).
+  private var activeSurfaceLine: String? {
+    var parts: [String] = []
+    if scopeState.iphoneSafari.status == .on {
+      parts.append("Safari on this iPhone")
+    }
+    let activeBrands = Set(
+      scopeState.desktopProfiles
+        .filter { $0.status == .on }
+        .compactMap { entry -> String? in
+          if case .desktopProfile(let brand) = entry.kind {
+            return brand.capitalized
+          }
+          return nil
+        }
+    ).sorted()
+    if !activeBrands.isEmpty {
+      parts.append("\(activeBrands.joined(separator: " & ")) on your computer")
+    }
+    guard !parts.isEmpty else {
       return nil
     }
+    return "Active in \(parts.joined(separator: " & "))"
   }
 
-  private var enabledFeatureCount: Int {
-    selectedSiteFeatures.filter(\.isOn).count
-  }
+  // MARK: apps-on-iPhone surface
 
-  /// Only the features this surface (iOS Safari) can actually enforce. The bulk
-  /// "Hide all" / "Reset all" action must stay within this subset defensively,
-  /// even though every iOS Safari feature is enforceable today.
-  private var enforceableSiteFeatures: [TuneFeature] {
-    selectedSiteFeatures.filter(\.isEnforceable)
-  }
+  @ViewBuilder
+  private var deviceSurface: some View {
+    HStack(alignment: .top, spacing: 9) {
+      Image(systemName: "info.circle")
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.tertiaryText)
+        .padding(.top, 1)
+      Text(TuneScopeCopy.deviceSurfaceNote)
+        .font(.system(size: 12))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(.horizontal, 2)
 
-  private var enabledEnforceableFeatureCount: Int {
-    enforceableSiteFeatures.filter(\.isOn).count
-  }
+    MobileIOSYouTubeLimitCard(screenTime: screenTime, setDailyLimit: setDailyLimit)
 
-  private var tuningActionTitle: String {
-    if selectedSite == TuningCatalog.youtubeSiteID {
-      if !screenTime.shieldingEnabled && !screenTime.canTurnOn {
-        return "Finish setup"
+    combinedLimitCard
+
+    Button(action: openBlocking) {
+      MobileCard {
+        HStack(spacing: 12) {
+          Image(systemName: "shield")
+            .foregroundStyle(TortoiseDesign.accent)
+            .frame(width: 36, height: 36)
+            .background(TortoiseDesign.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+          VStack(alignment: .leading, spacing: 3) {
+            Text("Blocking apps outright")
+              .font(.system(size: 14, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Text("Making an app fully off-limits lives in the Block tab.")
+              .font(.system(size: 12))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+          }
+          Spacer()
+          Image(systemName: "chevron.right")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+        }
       }
-      return screenTime.shieldingEnabled ? "Turn off" : "Turn on"
     }
-    let countableFeatures = enforceableSiteFeatures.count
-    guard countableFeatures > 0 else {
-      return "Connect"
-    }
-    return enabledEnforceableFeatureCount == countableFeatures ? "Reset all" : "Hide all"
+    .buttonStyle(.plain)
   }
 
-  private func performTuningAction() {
-    if selectedSite == TuningCatalog.youtubeSiteID {
-      setYoutubeProtection(!screenTime.shieldingEnabled)
-      return
-    }
-    toggleAll()
-  }
+  /// The combined daily limit across the user's chosen apps — the one limit
+  /// iOS supports today (per-app steppers arrive with the per-app machinery).
+  private var combinedLimitCard: some View {
+    MobileCard {
+      VStack(alignment: .leading, spacing: 12) {
+        HStack(spacing: 10) {
+          VStack(alignment: .leading, spacing: 3) {
+            Text("All chosen apps together")
+              .font(.system(size: 14, weight: .bold))
+              .foregroundStyle(TortoiseDesign.primaryText)
+            Text(screenTime.hasManagedAppsSelection
+              ? screenTime.managedAppsLimitSummary
+              : "Choose apps in Block first — then cap their combined time here.")
+              .font(.system(size: 12))
+              .foregroundStyle(TortoiseDesign.secondaryText)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+          Spacer(minLength: 8)
+          MobileSwitch(
+            isOn: Binding(
+              get: { screenTime.managedAppsLimitEnabled },
+              set: { screenTime.setManagedAppsLimitEnabled($0) }
+            ),
+            isEnabled: screenTime.hasManagedAppsSelection && !screenTime.sessionLockedActive
+          )
+        }
 
-  private func toggleAll() {
-    let countableFeatures = enforceableSiteFeatures.count
-    guard countableFeatures > 0 else {
-      return
+        if screenTime.managedAppsLimitEnabled {
+          HStack(spacing: 8) {
+            Spacer()
+            MobileStepperButton(systemImage: "minus") {
+              screenTime.adjustManagedAppsLimit(by: -5)
+            }
+            .disabled(screenTime.sessionLockedActive)
+            Text("\(screenTime.managedAppsLimitDisplayMinutes)m")
+              .font(.system(size: 13, weight: .bold))
+              .frame(width: 48)
+            MobileStepperButton(systemImage: "plus") {
+              screenTime.adjustManagedAppsLimit(by: 5)
+            }
+            .disabled(screenTime.sessionLockedActive)
+          }
+        }
+      }
     }
-    let next = enabledEnforceableFeatureCount != countableFeatures
-    setFeatures(enforceableSiteFeatures.map(\.id), next)
   }
-
 }
 
 /// Devices per the iOS v1 redesign: just access & setup. One account card
@@ -2003,37 +2334,6 @@ private struct MobileAccountRow: View {
   }
 }
 
-private struct MobileModeRow: View {
-  let mode: MobileAccessMode
-  let isSelected: Bool
-
-  var body: some View {
-    HStack(spacing: 13) {
-      Image(systemName: mode.systemImage)
-        .foregroundStyle(isSelected ? TortoiseDesign.accent : TortoiseDesign.secondaryText)
-        .frame(width: 24)
-      VStack(alignment: .leading, spacing: 4) {
-        Text(mode.title)
-          .font(.system(size: 15, weight: .bold))
-        Text(mode.detail)
-          .font(.system(size: 12))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-      }
-      Spacer()
-      if isSelected {
-        Image(systemName: "checkmark.circle.fill")
-          .foregroundStyle(TortoiseDesign.accent)
-      }
-    }
-    .padding(14)
-    .background(TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-    .overlay {
-      RoundedRectangle(cornerRadius: 15, style: .continuous)
-        .strokeBorder(isSelected ? TortoiseDesign.accent : TortoiseDesign.hairline)
-    }
-  }
-}
-
 private struct MobileSessionButton: View {
   let title: String
   var systemImage: String?
@@ -2079,32 +2379,6 @@ private struct MobileSwitch: View {
     }
     .buttonStyle(.plain)
     .opacity(isEnabled ? 1 : 0.45)
-  }
-}
-
-private struct MobileSiteTile: View {
-  let site: TuneSite
-  let isSelected: Bool
-
-  var body: some View {
-    HStack(spacing: 10) {
-      MobileTuneBrandMark(assetName: site.brandAssetName, size: 34, cornerRadius: 8)
-      VStack(alignment: .leading, spacing: 2) {
-        Text(site.title)
-          .font(.system(size: 14, weight: .bold))
-        Text("\(site.enabledCount)/\(site.totalCount)")
-          .font(.system(size: 12, weight: .bold))
-          .foregroundStyle(TortoiseDesign.secondaryText)
-      }
-      Spacer()
-    }
-    .padding(12)
-    .frame(maxWidth: .infinity, minHeight: 66)
-    .background(isSelected ? TortoiseDesign.accent.opacity(0.18) : TortoiseDesign.panel, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-    .overlay {
-      RoundedRectangle(cornerRadius: 14, style: .continuous)
-        .strokeBorder(isSelected ? TortoiseDesign.accent : TortoiseDesign.hairline)
-    }
   }
 }
 
@@ -2176,42 +2450,6 @@ private struct MobileTikTokComingSoonTile: View {
 }
 
 
-/// The APPS lane: names what this iPhone can do to native apps (block, limit,
-/// schedule) and states the ceiling — tuning inside apps isn't possible — so
-/// the website tuners below are never mistaken for app controls.
-private struct MobileNativeAppsLaneCard: View {
-  let openBlocking: () -> Void
-
-  var body: some View {
-    Button(action: openBlocking) {
-      MobileCard {
-        HStack(spacing: 12) {
-          Image(systemName: "square.grid.2x2")
-            .foregroundStyle(TortoiseDesign.accent)
-            .frame(width: 36, height: 36)
-            .background(TortoiseDesign.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-          VStack(alignment: .leading, spacing: 3) {
-            Text(TuneScopeCopy.appsLaneTitle)
-              .font(.system(size: 14, weight: .bold))
-              .foregroundStyle(TortoiseDesign.primaryText)
-            Text(TuneScopeCopy.appsLaneDetail)
-              .font(.system(size: 12))
-              .foregroundStyle(TortoiseDesign.secondaryText)
-              .multilineTextAlignment(.leading)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-          Spacer()
-          Image(systemName: "chevron.right")
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-        }
-      }
-    }
-    .buttonStyle(.plain)
-    .accessibilityIdentifier("tune-apps-lane")
-  }
-}
-
 /// Shown only when nothing anywhere is enforcing the website tuners (Safari
 /// extension off and no fresh desktop profile). Toggles stay live — settings
 /// persist to the account — but the user is told plainly nothing acts yet.
@@ -2223,42 +2461,60 @@ private struct MobileNativeAppsLaneCard: View {
 /// the moment they're done; no state guessing.
 private struct MobileSafariConnectSheet: View {
   @ObservedObject var screenTime: IOSYouTubeScreenTimeController
+  @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.dismiss) private var dismiss
 
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
-      HStack {
-        Text("Connect Safari")
-          .font(.system(size: 19, weight: .bold))
-          .foregroundStyle(TortoiseDesign.primaryText)
-        Spacer()
-        if screenTime.safariExtensionConnected {
-          Label("Connected", systemImage: "checkmark.circle.fill")
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(TortoiseDesign.green)
-        }
-      }
+      Text("Connect Safari")
+        .font(.system(size: 19, weight: .bold))
+        .foregroundStyle(TortoiseDesign.primaryText)
 
-      step(
-        number: "1",
-        title: "Enable the extension",
-        detail: "Settings → Apps → Safari → Extensions → Tortoise.",
-        actionTitle: "Open Settings",
-        action: { screenTime.openSafariExtensionSettings() }
-      )
-      step(
-        number: "2",
-        title: "Allow it on websites",
-        detail: "In Safari, tap the extensions icon in the address bar → Tortoise → Always Allow → on Every Website. Without this, the extension is on but runs nowhere.",
-        actionTitle: nil,
-        action: nil
-      )
-      step(
-        number: "3",
-        title: "Open Safari to verify",
-        detail: "Tortoise checks in from the page automatically.",
-        actionTitle: "Open Safari",
-        action: { screenTime.openSafariVerificationPage() }
-      )
+      if screenTime.safariExtensionConnected {
+        // Success replaces the instructions — coming back from Safari with
+        // the heartbeat landed must LOOK different, not quietly identical.
+        VStack(alignment: .leading, spacing: 10) {
+          Label("Connected", systemImage: "checkmark.circle.fill")
+            .font(.system(size: 16, weight: .bold))
+            .foregroundStyle(TortoiseDesign.green)
+          Text("The extension checked in from Safari. Tuning is live on this iPhone.")
+            .font(.system(size: 13))
+            .foregroundStyle(TortoiseDesign.secondaryText)
+            .fixedSize(horizontal: false, vertical: true)
+          Button("Done") { dismiss() }
+            .buttonStyle(.borderedProminent)
+            .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(TortoiseDesign.green.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+          RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(TortoiseDesign.green.opacity(0.30))
+        }
+      } else {
+        step(
+          number: "1",
+          title: "Enable the extension",
+          detail: "Settings → Apps → Safari → Extensions → Tortoise.",
+          actionTitle: "Open Settings",
+          action: { screenTime.openSafariExtensionSettings() }
+        )
+        step(
+          number: "2",
+          title: "Allow it on websites",
+          detail: "In Safari, tap the extensions icon in the address bar → Tortoise → Always Allow → on Every Website. Without this, the extension is on but runs nowhere.",
+          actionTitle: nil,
+          action: nil
+        )
+        step(
+          number: "3",
+          title: "Open Safari to verify",
+          detail: "Tortoise checks in from the page automatically — come back here and this sheet turns green.",
+          actionTitle: "Open Safari",
+          action: { screenTime.openSafariVerificationPage() }
+        )
+      }
 
       Spacer(minLength: 0)
     }
@@ -2271,6 +2527,13 @@ private struct MobileSafariConnectSheet: View {
     .accessibilityIdentifier("safari-connect-sheet")
     .onAppear {
       screenTime.refreshSetupStatus()
+    }
+    .onChange(of: scenePhase) { _, newPhase in
+      // The user bounces to Settings/Safari and back with this sheet open;
+      // re-read state on every return so the sheet reacts to what they did.
+      if newPhase == .active {
+        screenTime.refreshSetupStatus()
+      }
     }
   }
 
@@ -2400,81 +2663,25 @@ private struct MobileXPlatformSafetyRow: View {
   }
 }
 
-private struct MobileTuneScopeChip: View {
-  let entry: TuneScopeEntry
-  var action: (() -> Void)? = nil
-
-  var body: some View {
-    if let action {
-      Button(action: action) { content }
-        .buttonStyle(.plain)
-    } else {
-      content
-    }
-  }
-
-  private var content: some View {
-    HStack(spacing: 8) {
-      icon
-      VStack(alignment: .leading, spacing: 1) {
-        Text(entry.title)
-          .font(.system(size: 12, weight: .bold))
-          .foregroundStyle(TortoiseDesign.primaryText)
-          .lineLimit(1)
-        if let detail = entry.detail {
-          Text(detail)
-            .font(.system(size: 10))
-            .foregroundStyle(TortoiseDesign.secondaryText)
-            .lineLimit(1)
-        }
-      }
-      Spacer(minLength: 4)
-      HStack(spacing: 5) {
-        Text(MobileHubStatusStyle.label(for: entry.status))
-          .font(.system(size: 11, weight: .bold))
-          .foregroundStyle(MobileHubStatusStyle.color(for: entry.status))
-        Circle()
-          .fill(MobileHubStatusStyle.color(for: entry.status))
-          .frame(width: 7, height: 7)
-      }
-    }
-    .padding(.horizontal, 9)
-    .padding(.vertical, 7)
-    .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-  }
-
-  @ViewBuilder
-  private var icon: some View {
-    switch entry.kind {
-    case .iphoneSafari:
-      Image(systemName: "safari")
-        .font(.system(size: 15, weight: .semibold))
-        .foregroundStyle(TortoiseDesign.accent)
-        .frame(width: 24, height: 24)
-    case .desktopProfile:
-      MobileAvatar(text: initials, size: 24)
-    }
-  }
-
-  private var initials: String {
-    let letters = entry.title.split(separator: " ").prefix(2).compactMap(\.first)
-    return letters.isEmpty ? "T" : String(letters).uppercased()
-  }
-}
-
 private struct MobileTuningFeatureRow: View {
   let feature: TuneFeature
   @Binding var isOn: Bool
   var isEnabled = true
 
   var body: some View {
-    HStack(spacing: 12) {
-      VStack(alignment: .leading, spacing: 5) {
+    HStack(spacing: 13) {
+      Image(systemName: feature.systemImage)
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundStyle(TortoiseDesign.secondaryText)
+        .frame(width: 34, height: 34)
+        .background(TortoiseDesign.elevatedPanel, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+      VStack(alignment: .leading, spacing: 3) {
         Text(feature.title)
-          .font(.system(size: 14, weight: .bold))
+          .font(.system(size: 14, weight: .semibold))
         Text(feature.detail)
           .font(.system(size: 12))
           .foregroundStyle(TortoiseDesign.secondaryText)
+          .fixedSize(horizontal: false, vertical: true)
       }
       Spacer()
       MobileSwitch(isOn: $isOn, isEnabled: isEnabled)
@@ -2586,24 +2793,42 @@ private enum MobileAccessMode: String, CaseIterable, Identifiable {
   case open
   case focus
   case strict
+  case custom
 
   var id: String { rawValue }
 
-  var title: String { rawValue.capitalized }
+  var title: String {
+    switch self {
+    case .custom: return "Custom group"
+    default: return rawValue.capitalized
+    }
+  }
 
   var systemImage: String {
     switch self {
     case .open: return "circle"
     case .focus: return "scope"
     case .strict: return "lock.shield"
+    case .custom: return "slider.horizontal.3"
     }
   }
 
   var detail: String {
     switch self {
-    case .open: return "Clear iOS shields, monitoring, and Safari tuners."
-    case .focus: return "Apply selected app/site shields and focus Safari tuners."
-    case .strict: return "Apply immediate shields, adult filtering, Safari tuners, and daily limits."
+    case .open: return "Nothing blocked. Everything's on."
+    case .focus: return "Blocks the apps and sites you chose."
+    case .strict: return "Same picks + adult sites. Lockable."
+    case .custom: return "Pick exactly what to block, app by app."
+    }
+  }
+
+  /// The selection accent per the mockup: Open green, Focus/Custom blue,
+  /// Strict purple.
+  var accent: Color {
+    switch self {
+    case .open: return TortoiseDesign.green
+    case .focus, .custom: return TortoiseDesign.accent
+    case .strict: return TortoiseDesign.purple
     }
   }
 
@@ -2615,6 +2840,8 @@ private enum MobileAccessMode: String, CaseIterable, Identifiable {
       return .focus
     case .strict:
       return .strict
+    case .custom:
+      return .custom
     }
   }
 
@@ -2626,6 +2853,8 @@ private enum MobileAccessMode: String, CaseIterable, Identifiable {
       self = .focus
     case .strict:
       self = .strict
+    case .custom:
+      self = .custom
     }
   }
 }

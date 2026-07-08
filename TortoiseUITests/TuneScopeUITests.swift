@@ -1,13 +1,13 @@
 import XCTest
 
-/// Guards the two-lane Tune tab: the APPS lane (native block/limit/schedule,
-/// with the honest "no tuning inside apps" framing) and the WEBSITES lane whose
-/// scope card must always name Safari-on-this-iPhone as a surface — the exact
-/// dishonesty the old "browser profiles only" card shipped with.
+/// Guards the redesigned Tune tab (segmented surfaces + per-site accordions)
+/// and the redesigned Block tab (radio mode cards + folded session). Fixture
+/// mode has no synced policy and no connected surface, so the zero states
+/// asserted here are deterministic.
 final class TuneScopeUITests: XCTestCase {
-  private func launchTuning() -> XCUIApplication {
+  private func launch(section: String = "tuning") -> XCUIApplication {
     let app = XCUIApplication()
-    app.launchArguments = ["--tortoise-screenshot", "--tortoise-screenshot-section", "tuning"]
+    app.launchArguments = ["--tortoise-screenshot", "--tortoise-screenshot-section", section]
     app.launch()
     return app
   }
@@ -16,33 +16,36 @@ final class TuneScopeUITests: XCTestCase {
     app.descendants(matching: .any).matching(identifier: identifier).firstMatch
   }
 
-  func testTuneShowsTwoLanes() {
-    let app = launchTuning()
+  func testTuneShowsSurfacesAndAccordions() {
+    let app = launch()
 
-    XCTAssertTrue(element(app, "tune-apps-lane").waitForExistence(timeout: 8), "APPS lane card never appeared")
-    XCTAssertTrue(element(app, "tune-scope-card").waitForExistence(timeout: 4), "WEBSITES scope card never appeared")
-    XCTAssertTrue(
-      element(app, "tune-scope-iphone-safari").waitForExistence(timeout: 4),
-      "the Safari-on-this-iPhone chip must always be present"
-    )
-    XCTAssertEqual(app.state, .runningForeground, "app left the foreground rendering the Tune tab")
+    XCTAssertTrue(app.staticTexts["In the browser"].firstMatch.waitForExistence(timeout: 8), "browser segment never appeared")
+    XCTAssertTrue(app.staticTexts["Apps on iPhone"].firstMatch.exists, "apps segment never appeared")
+    XCTAssertTrue(element(app, "tune-site-youtube").waitForExistence(timeout: 4), "YouTube accordion never appeared")
+    XCTAssertTrue(element(app, "tune-site-x").exists, "X accordion never appeared")
+    XCTAssertEqual(app.state, .runningForeground)
   }
 
-  func testAppsLaneNavigatesToBlock() {
-    let app = launchTuning()
+  func testAppsSurfaceShowsLimits() {
+    let app = launch()
 
-    let appsLane = element(app, "tune-apps-lane")
-    XCTAssertTrue(appsLane.waitForExistence(timeout: 8), "APPS lane card never appeared")
-    appsLane.tap()
+    app.staticTexts["Apps on iPhone"].firstMatch.tap()
 
-    XCTAssertTrue(app.staticTexts["Block"].firstMatch.waitForExistence(timeout: 8), "tapping the APPS lane card did not reach Block")
+    XCTAssertTrue(
+      app.staticTexts["YouTube daily limit"].firstMatch.waitForExistence(timeout: 6),
+      "Apps surface did not show the YouTube limit"
+    )
+    XCTAssertTrue(
+      app.staticTexts["All chosen apps together"].firstMatch.exists,
+      "Apps surface did not show the combined limit"
+    )
     XCTAssertEqual(app.state, .runningForeground)
   }
 
   func testBannerOpensSafariConnectSheet() {
     // Fixture has no active enforcement surface, so the setup-first banner is
     // deterministic; its CTA must open the one canonical connect sheet.
-    let app = launchTuning()
+    let app = launch()
 
     let banner = element(app, "tune-setup-first-banner")
     XCTAssertTrue(banner.waitForExistence(timeout: 8), "setup-first banner never appeared")
@@ -55,32 +58,63 @@ final class TuneScopeUITests: XCTestCase {
     XCTAssertEqual(app.state, .runningForeground)
   }
 
-  func testXSiteShowsPlatformSafetyRow() {
-    let app = launchTuning()
+  func testXAccordionShowsPlatformSafetyRow() {
+    let app = launch()
 
-    let xTile = app.staticTexts["X"].firstMatch
-    XCTAssertTrue(xTile.waitForExistence(timeout: 8), "X site tile never appeared")
-    if !xTile.isHittable {
+    let xAccordion = element(app, "tune-site-x")
+    XCTAssertTrue(xAccordion.waitForExistence(timeout: 8), "X accordion never appeared")
+    if !xAccordion.isHittable {
       app.swipeUp()
     }
-    xTile.tap()
+    xAccordion.tap()
 
     XCTAssertTrue(
       element(app, "tune-x-platform-safety").waitForExistence(timeout: 6),
-      "the X account-setting honesty row must lead the X tuning card"
+      "the X account-setting honesty row must lead the open X accordion"
     )
     XCTAssertEqual(app.state, .runningForeground)
   }
 
-  func testAddComputerNavigatesToDevices() {
-    // Fixture mode has no cloud devices, so the add-computer affordance is deterministic.
-    let app = launchTuning()
+  func testAllSettingsFoldExpands() {
+    let app = launch()
 
-    let addComputer = element(app, "tune-scope-add-computer")
-    XCTAssertTrue(addComputer.waitForExistence(timeout: 8), "add-computer affordance never appeared")
-    addComputer.tap()
+    // YouTube opens by default (selectedSite initial value); its curated rows
+    // end in the All settings fold.
+    let fold = element(app, "tune-all-settings-youtube")
+    XCTAssertTrue(fold.waitForExistence(timeout: 8), "All settings fold never appeared")
+    if !fold.isHittable {
+      app.swipeUp()
+    }
+    fold.tap()
 
-    XCTAssertTrue(app.staticTexts["Devices"].firstMatch.waitForExistence(timeout: 8), "tapping add-computer did not reach Devices")
+    // A deep-catalog toggle only reachable through the fold (exact
+    // BrowserTuningFeature titles):
+    XCTAssertTrue(
+      app.staticTexts["Disable Autoplay"].firstMatch.waitForExistence(timeout: 6)
+        || app.staticTexts["Hide End Screen Feed"].firstMatch.waitForExistence(timeout: 2),
+      "expanding All settings did not reveal the full catalog"
+    )
+    XCTAssertEqual(app.state, .runningForeground)
+  }
+
+  func testBlockShowsFourModeCardsAndSessionFold() {
+    let app = launch(section: "blocking")
+
+    XCTAssertTrue(element(app, "block-mode-open").waitForExistence(timeout: 8), "Open card never appeared")
+    XCTAssertTrue(element(app, "block-mode-focus").exists, "Focus card never appeared")
+    XCTAssertTrue(element(app, "block-mode-strict").exists, "Strict card never appeared")
+    XCTAssertTrue(element(app, "block-mode-custom").exists, "Custom card never appeared")
+
+    let fold = element(app, "block-session-fold")
+    XCTAssertTrue(fold.waitForExistence(timeout: 4), "session fold never appeared")
+    if !fold.isHittable {
+      app.swipeUp()
+    }
+    fold.tap()
+    XCTAssertTrue(
+      app.buttons["Focus · 25m"].firstMatch.waitForExistence(timeout: 4),
+      "expanding the session fold did not reveal the session buttons"
+    )
     XCTAssertEqual(app.state, .runningForeground)
   }
 }

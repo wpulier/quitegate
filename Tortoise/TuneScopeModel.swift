@@ -159,18 +159,16 @@ enum TuneScope {
 /// rule: name what a control affects (the websites / the apps), never the
 /// mechanism (extensions), and always pair a state with its next step.
 enum TuneScopeCopy {
-  // APPS lane (this iPhone)
-  static let appsLaneTitle = "Apps on this iPhone"
-  static let appsLaneDetail = "Block, daily limit, schedule. Apple doesn't allow tuning inside apps."
+  // Surface segments (iOS v1 redesign)
+  static let browserSurfaceTitle = "In the browser"
+  static let deviceSurfaceTitle = "Apps on iPhone"
+  static let deviceSurfaceNote = "Apple won't let anything reshape what's inside an installed app. What you can do here: cap how long your chosen apps run each day."
+  static let allSettingsTitle = "All settings"
 
-  // WEBSITES lane
-  static let websitesLaneTitle = "Websites"
-  static let websitesLaneDetail = "Synced everywhere you browse"
+  // Scope chips / hints
   static let iphoneSafariChip = "Safari on this iPhone"
   static let safariHintNeedsSetup = "Tap to connect"
   static let safariHintVerify = "Tap to verify"
-  static let addComputerTitle = "Add your computer"
-  static let addComputerDetail = "Tuning also works in Chrome and Firefox on desktop."
 
   // Zero-active-surface banner
   static let setupFirstTitle = "Nothing is enforcing these yet"
@@ -178,5 +176,5 @@ enum TuneScopeCopy {
   static let setupFirstCTA = "Connect Safari"
 
   // Tune header
-  static let tuneSubtitle = "Shape the websites you visit — in Safari here and in your computer's browsers."
+  static let tuneSubtitle = "Two ways to calm things down. Reshape sites in your browser, or set limits on the apps installed here. Neither one fully blocks — that's the Block tab."
 }

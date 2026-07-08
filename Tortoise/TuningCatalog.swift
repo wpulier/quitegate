@@ -93,4 +93,18 @@ enum TuningCatalog {
   static func siteID(forFeatureID id: String) -> String? {
     features.first { $0.id == id }?.siteID
   }
+
+  /// The curated "hero" toggles each site's Tune accordion leads with (iOS v1
+  /// redesign, docs/design/ios-v1-handoff/). Everything else stays reachable
+  /// behind the accordion's "All settings" row.
+  private static let featuredBySite: [String: [String]] = [
+    "youtube": ["youtubeHome", "youtubeShorts", "youtubeComments", "youtubeDailyLimit"],
+    "x": ["xSensitiveMedia", "xVideos", "xExploreTrends"],
+    "instagram": ["instagramReels", "instagramExplore", "instagramStories"],
+    "reddit": ["redditPopularAll", "redditMedia"],
+  ]
+
+  static func featuredFeatureIDs(for siteID: String) -> [String] {
+    featuredBySite[siteID] ?? []
+  }
 }

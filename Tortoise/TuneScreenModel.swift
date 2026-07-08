@@ -16,6 +16,7 @@ struct TuneFeature: Identifiable, Equatable {
   let id: String
   let title: String
   let detail: String
+  let systemImage: String
   let isOn: Bool
   let isEnforceable: Bool
 }
@@ -45,10 +46,24 @@ enum TuneScreen {
         id: id,
         title: feature.title,
         detail: feature.detail,
+        systemImage: feature.systemImage,
         isOn: policy?.browser?.features[id] == true,
         isEnforceable: enforceable
       )
     }
+  }
+
+  /// The curated hero rows for a site's Tune accordion, in catalog-featured
+  /// order, followed by the rest for its "All settings" fold.
+  static func featuredFeatures(forSiteID siteID: String, policy: TortoisePolicy?, surface: TuningSurface) -> [TuneFeature] {
+    let featured = TuningCatalog.featuredFeatureIDs(for: siteID)
+    let all = features(forSiteID: siteID, policy: policy, surface: surface)
+    return featured.compactMap { id in all.first { $0.id == id } }
+  }
+
+  static func remainingFeatures(forSiteID siteID: String, policy: TortoisePolicy?, surface: TuningSurface) -> [TuneFeature] {
+    let featured = Set(TuningCatalog.featuredFeatureIDs(for: siteID))
+    return features(forSiteID: siteID, policy: policy, surface: surface).filter { !featured.contains($0.id) }
   }
 
   /// The per-feature map handed to the iOS Safari web extension: the real policy

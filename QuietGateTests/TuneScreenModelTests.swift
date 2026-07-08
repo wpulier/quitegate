@@ -56,6 +56,26 @@ final class TuneScreenModelTests: XCTestCase {
     }
   }
 
+  func testFeaturedAndRemainingPartitionEverySite() {
+    // The accordion's curated rows + its "All settings" fold must together be
+    // exactly the site's catalog features — nothing duplicated, nothing lost.
+    for site in TuningCatalog.sites {
+      let featured = TuneScreen.featuredFeatures(forSiteID: site.id, policy: nil, surface: .iosSafari)
+      let remaining = TuneScreen.remainingFeatures(forSiteID: site.id, policy: nil, surface: .iosSafari)
+      XCTAssertEqual(featured.map(\.id), TuningCatalog.featuredFeatureIDs(for: site.id))
+      XCTAssertEqual(
+        Set(featured.map(\.id)).union(remaining.map(\.id)),
+        Set(site.featureIDs)
+      )
+      XCTAssertTrue(Set(featured.map(\.id)).isDisjoint(with: remaining.map(\.id)))
+    }
+  }
+
+  func testFeatureCarriesSystemImage() {
+    let features = TuneScreen.features(forSiteID: "youtube", policy: nil, surface: .iosSafari)
+    XCTAssertTrue(features.allSatisfy { !$0.systemImage.isEmpty })
+  }
+
   func testIosSafariEnforcedFeaturesReflectRealPolicy() {
     let safari = TuneScreen.iosSafariEnforcedFeatures(
       policy: policy(featuresOn: ["youtubeShorts", "instagramReels", "instagramNotifications"])

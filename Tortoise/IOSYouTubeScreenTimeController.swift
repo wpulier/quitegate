@@ -86,6 +86,12 @@ final class IOSEnforcementController: ObservableObject {
     }
   }
 
+  /// Device-local Custom mode state. Set only through the setters below (which
+  /// carry the locked-session guards) — no didSet side effects by design.
+  @Published private(set) var customSelection: FamilyActivitySelection
+  @Published private(set) var customExcludedApps: Set<ApplicationToken>
+  @Published private(set) var customAdultEnabled: Bool
+
   @Published private(set) var authorizationState: IOSScreenTimeAuthorizationState = .notDetermined
   @Published private(set) var statusMessage: String = "Choose setup type, allow Screen Time, then select apps and sites."
   @Published private(set) var scheduleActive = false
@@ -110,6 +116,9 @@ final class IOSEnforcementController: ObservableObject {
     let persisted = Self.loadState()
     selection = Self.expandedSelection(IOSEnforcementSharedStore.loadSelection())
     managedAppsSelection = Self.expandedSelection(IOSEnforcementSharedStore.loadManagedAppsSelection())
+    customSelection = Self.expandedSelection(IOSEnforcementSharedStore.loadCustomSelection())
+    customExcludedApps = IOSEnforcementSharedStore.loadCustomExcludedApps()
+    customAdultEnabled = IOSEnforcementSharedStore.loadCustomAdultEnabled()
     shieldingEnabled = persisted.shieldingEnabled
     authorizationMode = persisted.authorizationMode
     enforcementMode = persisted.enforcementMode
@@ -309,8 +318,8 @@ final class IOSEnforcementController: ObservableObject {
   private var enforcementActive: Bool {
     ManagedAppsShield.isEnforcementActive(
       youtubeSelected: hasSelection,
-      managedAppsSelected: hasManagedAppsSelection,
-      adultFilterOn: ManagedAppsShield.shouldApplyAdultFilter(mode: enforcementMode, adultEnabled: shieldingEnabled)
+      managedAppsSelected: enforcementMode == .custom ? customEffectiveSelection != nil : hasManagedAppsSelection,
+      adultFilterOn: ManagedAppsShield.shouldApplyAdultFilter(mode: enforcementMode, adultEnabled: adultFilterInputEnabled)
     )
   }
 
@@ -600,6 +609,74 @@ final class IOSEnforcementController: ObservableObject {
     applyCurrentMode()
   }
 
+  // MARK: Custom group (device-local Block mode)
+
+  /// Applies a new Custom-group selection through the same precommitment guard
+  /// as the managed selection: while a locked session is active it may only
+  /// grow. Excluded switches are pruned to stay ⊆ the picked apps.
+  func setCustomSelection(_ newValue: FamilyActivitySelection) {
+    let expanded = Self.expandedSelection(newValue)
+    let shrinks =
+      ManagedAppsShield.isShrink(
+        old: customSelection.applicationTokens, new: expanded.applicationTokens) ||
+      ManagedAppsShield.isShrink(
+        old: customSelection.categoryTokens, new: expanded.categoryTokens) ||
+      ManagedAppsShield.isShrink(
+        old: customSelection.webDomainTokens, new: expanded.webDomainTokens)
+
+    guard ManagedAppsShield.canApplyEdit(lockedActive: sessionLockedActive, isShrink: shrinks) else {
+      return
+    }
+
+    customSelection = expanded
+    customExcludedApps = customExcludedApps.intersection(expanded.applicationTokens)
+    IOSEnforcementSharedStore.saveCustomSelection(expanded)
+    IOSEnforcementSharedStore.saveCustomExcludedApps(customExcludedApps)
+    applyCurrentMode()
+  }
+
+  /// Per-app on/off inside the Custom group. Locked sessions allow tightening
+  /// (ON) but never loosening (OFF) — `ManagedAppsShield.canToggleCustomApp`.
+  func setCustomApp(_ token: ApplicationToken, isOn: Bool) {
+    guard ManagedAppsShield.canToggleCustomApp(lockedActive: sessionLockedActive, turningOn: isOn) else {
+      return
+    }
+    if isOn {
+      customExcludedApps.remove(token)
+    } else {
+      customExcludedApps.insert(token)
+    }
+    IOSEnforcementSharedStore.saveCustomExcludedApps(customExcludedApps)
+    applyCurrentMode()
+  }
+
+  /// The Custom group's adult-websites toggle. Tighten-only while locked.
+  func setCustomAdultEnabled(_ enabled: Bool) {
+    guard enabled || !sessionLockedActive else { return }
+    customAdultEnabled = enabled
+    IOSEnforcementSharedStore.saveCustomAdultEnabled(enabled)
+    applyCurrentMode()
+  }
+
+  var hasCustomSelection: Bool {
+    !customSelection.applicationTokens.isEmpty || !customSelection.webDomainTokens.isEmpty
+  }
+
+  /// What Custom actually shields right now: picked apps minus off-switches,
+  /// plus picked web domains. Nil when nothing effective remains.
+  var customEffectiveSelection: FamilyActivitySelection? {
+    var effective = FamilyActivitySelection(includeEntireCategory: true)
+    effective.applicationTokens = ManagedAppsShield.customShieldTokens(
+      selected: customSelection.applicationTokens,
+      excluded: customExcludedApps
+    )
+    effective.webDomainTokens = customSelection.webDomainTokens
+    if effective.applicationTokens.isEmpty && effective.webDomainTokens.isEmpty {
+      return nil
+    }
+    return effective
+  }
+
   /// Turns the combined managed-apps daily limit on (default 30m) or off. Advisory
   /// OPEN governor; disabled while a locked session is active (the apps are blocked
   /// outright then, so the limit is moot — spec §4/§7).
@@ -792,22 +869,27 @@ final class IOSEnforcementController: ObservableObject {
     let managedAppsShielded = applyManagedAppsShield()
     reconcileManagedAppsLimitMonitoring()
 
-    let shouldEnforce = shieldingEnabled && enforcementMode != .open && canApplyShielding
+    // Custom deliberately takes the light branch: it shields its OWN group via
+    // applyManagedAppsShield() above and never applies the YouTube selection
+    // or arms the YouTube daily monitor.
+    let shouldEnforce = shieldingEnabled
+      && (enforcementMode == .focus || enforcementMode == .strict)
+      && canApplyShielding
     if !shouldEnforce {
       IOSEnforcementShieldApplier.clearAllStores()
       activityCenter.stopMonitoring([.tortoiseDaily])
       scheduleActive = false
-      // Independence fix: the Strict adult filter rides MODE, not the YouTube
-      // selection — re-apply it after clearAllStores() wiped immediateStore, and
-      // write the REAL-mode Safari policy (not a forced `.open`), so Strict's
-      // adult web/media filter holds even with no YouTube target picked.
+      // Independence fix: the Strict/Custom adult filter rides MODE, not the
+      // YouTube selection — re-apply it after clearAllStores() wiped
+      // immediateStore, and write the REAL-mode Safari policy (not a forced
+      // `.open`), so the adult web/media filter holds with no YouTube target.
       reconcileAdultWebFilter()
       writeSafariPolicy()
       let adultActive = ManagedAppsShield.shouldApplyAdultFilter(
-        mode: enforcementMode, adultEnabled: shieldingEnabled)
+        mode: enforcementMode, adultEnabled: adultFilterInputEnabled)
       syncHealth = (managedAppsShielded || adultActive)
         ? "Screen Time and Safari policy current"
-        : "Open mode"
+        : (enforcementMode == .custom ? "Custom group is empty" : "Open mode")
       saveSnapshot(lastError: lastError)
       return
     }
@@ -831,15 +913,34 @@ final class IOSEnforcementController: ObservableObject {
   /// with the YouTube shield automatically.
   @discardableResult
   private func applyManagedAppsShield() -> Bool {
-    let shouldShield = ManagedAppsShield.shouldShield(mode: enforcementMode)
-      && authorizationState.isApproved
-      && hasManagedAppsSelection
-    if shouldShield {
-      IOSEnforcementShieldApplier.applyShield(managedAppsSelection, to: managedAppsStore)
-    } else {
+    guard ManagedAppsShield.shouldShield(mode: enforcementMode),
+          authorizationState.isApproved,
+          let source = managedAppsShieldSource else {
       managedAppsStore.clearAllSettings()
+      return false
     }
-    return shouldShield
+    IOSEnforcementShieldApplier.applyShield(source, to: managedAppsStore)
+    return true
+  }
+
+  /// What the `.tortoiseManagedApps` store shields under the current mode:
+  /// Focus/Strict → the managed selection; Custom → its own picked group
+  /// (minus per-app off-switches); Open → nothing.
+  private var managedAppsShieldSource: FamilyActivitySelection? {
+    switch enforcementMode {
+    case .focus, .strict:
+      return hasManagedAppsSelection ? managedAppsSelection : nil
+    case .custom:
+      return customEffectiveSelection
+    case .open:
+      return nil
+    }
+  }
+
+  /// The `adultEnabled` input to `ManagedAppsShield.shouldApplyAdultFilter`:
+  /// Strict rides the on-switch; Custom rides its own adult toggle.
+  private var adultFilterInputEnabled: Bool {
+    enforcementMode == .custom ? (shieldingEnabled && customAdultEnabled) : shieldingEnabled
   }
 
   /// Stage 2: arms/re-arms the combined managed-apps daily-limit monitor in its OWN
@@ -890,7 +991,7 @@ final class IOSEnforcementController: ObservableObject {
   /// YouTube target. On the enforce branch `applySelection(...)` already sets it.
   private func reconcileAdultWebFilter() {
     let apply = ManagedAppsShield.shouldApplyAdultFilter(
-      mode: enforcementMode, adultEnabled: shieldingEnabled)
+      mode: enforcementMode, adultEnabled: adultFilterInputEnabled)
     immediateStore.webContent.blockedByFilter = apply ? .auto() : nil
     immediateStore.media.denyExplicitContent = apply ? true : nil
   }
@@ -933,7 +1034,7 @@ final class IOSEnforcementController: ObservableObject {
     var policy = SafariExtensionPolicy.policy(
       for: mode,
       dailyLimitMinutes: dailyLimitMinutes,
-      adultWebFilterEnabled: mode == .strict
+      adultWebFilterEnabled: mode == .strict || (mode == .custom && customAdultEnabled)
     )
     if !policyFeatures.isEmpty {
       policy.features = policyFeatures  // real per-feature state (Safari-enforceable only) overrides the mode preset
@@ -948,7 +1049,8 @@ final class IOSEnforcementController: ObservableObject {
       authorizationMode: authorizationMode,
       shieldingEnabled: shieldingEnabled,
       dailyLimitMinutes: dailyLimitMinutes,
-      adultWebFilterEnabled: enforcementMode == .strict && shieldingEnabled,
+      adultWebFilterEnabled: ManagedAppsShield.shouldApplyAdultFilter(
+        mode: enforcementMode, adultEnabled: adultFilterInputEnabled),
       safariExtensionEnabled: safariExtensionConnected || safariExtensionAcknowledged,
       selectedApplicationCount: selection.applicationTokens.count,
       selectedCategoryCount: selection.categoryTokens.count,
@@ -973,6 +1075,8 @@ final class IOSEnforcementController: ObservableObject {
     switch authorizationState {
     case .approved where shieldingEnabled && enforcementMode == .strict && enforcementActive:
       statusMessage = "Strict is active. Selected apps/sites are shielded, Safari tuners are on, and the daily limit monitor is running."
+    case .approved where shieldingEnabled && enforcementMode == .custom && enforcementActive:
+      statusMessage = "Custom is active. Your picked group is blocked on this iPhone."
     case .approved where shieldingEnabled && enforcementActive:
       statusMessage = "Focus is active. Selected apps/sites are shielded and Safari tuners are synced."
     case .approved where enforcementActive:

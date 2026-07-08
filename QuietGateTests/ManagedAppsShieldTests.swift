@@ -165,4 +165,52 @@ final class ManagedAppsShieldTests: XCTestCase {
     let decoded = try JSONDecoder().decode(IOSEnforcementSnapshot.self, from: Data(legacy.utf8))
     XCTAssertNil(decoded.managedAppsLimitMinutes)
   }
+
+  // MARK: Custom mode (device-local Block group)
+
+  func testCustomModeShieldsAndOpenDoesNot() {
+    XCTAssertTrue(ManagedAppsShield.shouldShield(mode: .custom))
+    XCTAssertFalse(ManagedAppsShield.shouldShield(mode: .open))
+  }
+
+  func testCustomShieldTokensSubtractsExcluded() {
+    XCTAssertEqual(
+      ManagedAppsShield.customShieldTokens(selected: Set(["a", "b", "c"]), excluded: Set(["b"])),
+      Set(["a", "c"])
+    )
+    XCTAssertEqual(
+      ManagedAppsShield.customShieldTokens(selected: Set(["a"]), excluded: Set(["a"])),
+      Set<String>()
+    )
+    // Excluded tokens not in the selection are ignored, never invented.
+    XCTAssertEqual(
+      ManagedAppsShield.customShieldTokens(selected: Set(["a"]), excluded: Set(["z"])),
+      Set(["a"])
+    )
+  }
+
+  func testCustomAppTogglePrecommitmentMatrix() {
+    // Unlocked: anything goes. Locked: tighten (ON) allowed, loosen (OFF) refused.
+    XCTAssertTrue(ManagedAppsShield.canToggleCustomApp(lockedActive: false, turningOn: true))
+    XCTAssertTrue(ManagedAppsShield.canToggleCustomApp(lockedActive: false, turningOn: false))
+    XCTAssertTrue(ManagedAppsShield.canToggleCustomApp(lockedActive: true, turningOn: true))
+    XCTAssertFalse(ManagedAppsShield.canToggleCustomApp(lockedActive: true, turningOn: false))
+  }
+
+  func testAdultFilterModeMatrixIncludesCustom() {
+    // Strict and Custom ride their adult flag; Open/Focus never apply it.
+    XCTAssertTrue(ManagedAppsShield.shouldApplyAdultFilter(mode: .strict, adultEnabled: true))
+    XCTAssertTrue(ManagedAppsShield.shouldApplyAdultFilter(mode: .custom, adultEnabled: true))
+    XCTAssertFalse(ManagedAppsShield.shouldApplyAdultFilter(mode: .custom, adultEnabled: false))
+    XCTAssertFalse(ManagedAppsShield.shouldApplyAdultFilter(mode: .focus, adultEnabled: true))
+    XCTAssertFalse(ManagedAppsShield.shouldApplyAdultFilter(mode: .open, adultEnabled: true))
+  }
+
+  func testCustomModeSnapshotRoundTrips() throws {
+    // The monitor extension decodes the snapshot; "custom" must survive.
+    var snapshot = IOSEnforcementSnapshot.empty
+    snapshot.mode = .custom
+    let decoded = try JSONDecoder().decode(IOSEnforcementSnapshot.self, from: JSONEncoder().encode(snapshot))
+    XCTAssertEqual(decoded.mode, .custom)
+  }
 }

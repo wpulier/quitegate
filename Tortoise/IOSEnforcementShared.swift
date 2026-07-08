@@ -17,6 +17,11 @@ enum IOSEnforcementMode: String, Codable, CaseIterable, Identifiable {
   case open
   case focus
   case strict
+  /// Device-local only: the account policy schema knows open/focus/strict, so
+  /// Custom never syncs to the cloud (the client normalizes unknown modes to
+  /// "focus" and the Mac coerces them too). Enforced entirely on this iPhone
+  /// from its own picked group.
+  case custom
 
   var id: String { rawValue }
 }
@@ -173,6 +178,18 @@ struct SafariExtensionPolicy: Codable, Equatable {
         browserID: "ios-safari",
         browserProfile: open.browserProfile
       )
+    case .custom:
+      // Custom's app shield is Screen-Time-side; Safari keeps the focus
+      // feature preset (real per-feature flags override it at write time)
+      // plus the adult fallback when the group's adult toggle is on.
+      return SafariExtensionPolicy(
+        mode: .custom,
+        features: focusFeatures,
+        options: ["youtubeDailyLimitMinutes": dailyLimitMinutes],
+        blockedDomains: adultWebFilterEnabled ? adultFallbackDomains : [],
+        browserID: "ios-safari",
+        browserProfile: open.browserProfile
+      )
     }
   }
 
@@ -280,6 +297,52 @@ enum IOSEnforcementSharedStore {
       return
     }
     defaults.set(data, forKey: managedAppsSelectionKey)
+  }
+
+  // MARK: Custom group (device-local Block mode)
+
+  private static let customSelectionKey = "TortoiseIOSCustomSelection"
+  private static let customExcludedAppsKey = "TortoiseIOSCustomExcludedApps"
+  private static let customAdultEnabledKey = "TortoiseIOSCustomAdultEnabled"
+
+  static func loadCustomSelection() -> FamilyActivitySelection {
+    guard let data = defaults.data(forKey: customSelectionKey),
+          let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
+      return FamilyActivitySelection()
+    }
+    return selection
+  }
+
+  static func saveCustomSelection(_ selection: FamilyActivitySelection) {
+    guard let data = try? JSONEncoder().encode(selection) else {
+      return
+    }
+    defaults.set(data, forKey: customSelectionKey)
+  }
+
+  static func loadCustomExcludedApps() -> Set<ApplicationToken> {
+    guard let data = defaults.data(forKey: customExcludedAppsKey),
+          let tokens = try? JSONDecoder().decode(Set<ApplicationToken>.self, from: data) else {
+      return []
+    }
+    return tokens
+  }
+
+  static func saveCustomExcludedApps(_ tokens: Set<ApplicationToken>) {
+    guard let data = try? JSONEncoder().encode(tokens) else {
+      return
+    }
+    defaults.set(data, forKey: customExcludedAppsKey)
+  }
+
+  /// Defaults to true — a custom "what's off-limits" group blocking adult
+  /// sites unless opted out is the honest default for this product.
+  static func loadCustomAdultEnabled() -> Bool {
+    defaults.object(forKey: customAdultEnabledKey) as? Bool ?? true
+  }
+
+  static func saveCustomAdultEnabled(_ enabled: Bool) {
+    defaults.set(enabled, forKey: customAdultEnabledKey)
   }
   #endif
 

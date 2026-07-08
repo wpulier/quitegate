@@ -33,4 +33,21 @@ final class TuningCatalogTests: XCTestCase {
     XCTAssertTrue(TuningCatalog.enabledFeatureFlags(for: "open").values.allSatisfy { $0 == false })
     XCTAssertTrue(TuningCatalog.enabledFeatureFlags(for: "strict").values.allSatisfy { $0 == true })
   }
+
+  func testFeaturedSetsAreNonEmptySiteSubsets() {
+    // Every site's Tune accordion leads with a curated set; each curated id
+    // must exist in that site's catalog list (or it would render a dead row).
+    for site in TuningCatalog.sites {
+      let featured = TuningCatalog.featuredFeatureIDs(for: site.id)
+      XCTAssertFalse(featured.isEmpty, "\(site.id) has no featured toggles")
+      XCTAssertLessThan(featured.count, site.featureIDs.count, "\(site.id) features everything — nothing left for All settings")
+      for id in featured {
+        XCTAssertTrue(site.featureIDs.contains(id), "\(site.id) features unknown id \(id)")
+      }
+    }
+  }
+
+  func testFeaturedUnknownSiteIsEmpty() {
+    XCTAssertTrue(TuningCatalog.featuredFeatureIDs(for: "tiktok").isEmpty)
+  }
 }
