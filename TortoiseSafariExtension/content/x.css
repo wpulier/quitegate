@@ -56,6 +56,46 @@ html .qg-x-placeholder-detail {
   color: rgb(83, 100, 113) !important;
 }
 
+/* Screen-until-verified: with either explicit filter on (html.qg-x-screening,
+   set by x.js from settings), post media is blurred BY DEFAULT from the first
+   frame — pure CSS, no JS in the hot path. JS verdicts only ever REVEAL by
+   adding .qg-x-screen-clear to a surface; the :not(.qg-x-screen-clear *)
+   guard un-blurs nested media once its surface is cleared. Container
+   surfaces blur their children (not themselves) so the pending label stays
+   crisp; leaf img/video blur directly and carry no label. */
+html.qg-x-screening article [data-testid="tweetPhoto"]:not(.qg-x-screen-clear):not(.qg-x-screen-clear *) > *,
+html.qg-x-screening article [data-testid="videoComponent"]:not(.qg-x-screen-clear):not(.qg-x-screen-clear *) > *,
+html.qg-x-screening article [data-testid="videoPlayer"]:not(.qg-x-screen-clear):not(.qg-x-screen-clear *) > *,
+html.qg-x-screening article [data-testid="card.wrapper"]:not(.qg-x-screen-clear):not(.qg-x-screen-clear *) > *,
+html.qg-x-screening article img[src*="pbs.twimg.com/media/"]:not(.qg-x-screen-clear):not(.qg-x-screen-clear *),
+html.qg-x-screening article img[src*="pbs.twimg.com/ext_tw_video_thumb/"]:not(.qg-x-screen-clear):not(.qg-x-screen-clear *),
+html.qg-x-screening article img[src*="pbs.twimg.com/amplify_video_thumb/"]:not(.qg-x-screen-clear):not(.qg-x-screen-clear *),
+html.qg-x-screening article video:not(.qg-x-screen-clear):not(.qg-x-screen-clear *) {
+  filter: blur(36px) saturate(0.4) !important;
+}
+
+html.qg-x-screening .qg-x-screen-pending {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+}
+
+html.qg-x-screening .qg-x-screen-pending::after {
+  content: attr(data-qg-screen-label);
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 30 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 12px !important;
+  background: rgba(15, 20, 25, 0.42) !important;
+  color: rgb(255, 255, 255) !important;
+  text-align: center !important;
+  font: 600 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
 html.qg-x-explore-trends [data-testid="trend"],
 html.qg-x-explore-trends [aria-label*="Trending"],
 html.qg-x-explore-trends [aria-label="Timeline: Trending now"],

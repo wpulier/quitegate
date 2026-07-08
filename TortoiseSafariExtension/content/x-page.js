@@ -244,21 +244,92 @@
 
   const AUTHOR_HANDLE_PATTERN = /^[a-z0-9_]{1,15}$/;
 
+  // Account-level cues, deliberately TIGHTER than x.js's per-post cue regex:
+  // one bio match blocklists the whole account instantly, so only markers
+  // that are near-certain adult-account signals belong here.
+  const ACCOUNT_BIO_CUE = /(?:🔞|\b(?:nsfw|18\+|xxx|porn(?:hub|star|ography)?|onlyfans|only\s*fans|fansly|redgifs|adults?\s+only|explicit\s+content)\b)/i;
+  const ACCOUNT_BIO_DOMAINS = [
+    "onlyfans.com",
+    "fansly.com",
+    "redgifs.com",
+    "pornhub.com",
+    "xvideos.com",
+    "xnxx.com",
+    "xhamster.com",
+    "redtube.com",
+    "youporn.com",
+    "spankbang.com",
+    "stripchat.com",
+    "chaturbate.com",
+    "cam4.com",
+    "manyvids.com",
+    "erome.com",
+    "fapello.com"
+  ];
+
   function normalizedAuthorHandle(value) {
     const handle = String(value || "").trim().replace(/^@/, "").toLowerCase();
     return AUTHOR_HANDLE_PATTERN.test(handle) ? handle : null;
+  }
+
+  function collectBioStrings(value, parts, depth = 0) {
+    if (!isObject(value) || depth > 4) {
+      return;
+    }
+    for (const [key, child] of Object.entries(value)) {
+      if (typeof child === "string" && /^(description|name|expanded_url|display_url|url)$/.test(key)) {
+        parts.push(child);
+      } else if (isObject(child)) {
+        collectBioStrings(child, parts, depth + 1);
+      }
+    }
+  }
+
+  /// Adult-account check against everything the author object says about
+  /// itself: bio text, display name, and pinned/bio link URLs.
+  function authorBioIsExplicit(userResult) {
+    if (!isObject(userResult)) {
+      return false;
+    }
+    const parts = [];
+    for (const source of [
+      userResult.legacy?.description,
+      userResult.profile_bio?.description,
+      userResult.description,
+      userResult.legacy?.name,
+      userResult.core?.name,
+      userResult.name
+    ]) {
+      if (typeof source === "string") {
+        parts.push(source);
+      }
+    }
+    collectBioStrings(userResult.legacy?.entities, parts);
+    collectBioStrings(userResult.profile_bio?.entities, parts);
+
+    const bioText = parts.join(" ").toLowerCase();
+    if (!bioText) {
+      return false;
+    }
+    return ACCOUNT_BIO_CUE.test(bioText) ||
+      ACCOUNT_BIO_DOMAINS.some((domain) => bioText.includes(domain));
+  }
+
+  function authorUserResult(root) {
+    const userResult =
+      root?.core?.user_results?.result ||
+      root?.user_results?.result ||
+      root?.user ||
+      root?.author;
+    return isObject(userResult) ? userResult : null;
   }
 
   // The tweet's canonical author slot only — never entities.user_mentions or
   // quoted/retweeted subtrees, so mentioned and quoted users are not blamed
   // for someone else's sensitive post.
   function authorHandleForTweet(root) {
-    const userResult =
-      root?.core?.user_results?.result ||
-      root?.user_results?.result ||
-      root?.user ||
-      root?.author;
-    if (!isObject(userResult)) {
+    const userResult = authorUserResult(root);
+    if (!userResult) {
       return null;
     }
     return normalizedAuthorHandle(
@@ -292,6 +363,8 @@
     const mediaURLs = new Set();
     const mediaIDs = new Set();
     const sensitiveAuthorPairs = new Map();
+    const walkedTweetIDs = new Set();
+    const adultBioTweetIDs = new Set();
     const seen = new WeakSet();
     let visited = 0;
 
@@ -301,6 +374,26 @@
       }
       seen.add(value);
       visited += 1;
+
+      // Every tweet root the payload carries, sensitive or not — clean
+      // verdicts (walked minus sensitive minus adult-bio-authored) are what
+      // un-screen media in screen-until-verified mode. An adult bio is
+      // account-level evidence: it convicts the author on their FIRST post,
+      // no per-post strikes needed.
+      if (looksLikeTweet(value)) {
+        const walkedID = rootTweetID(value);
+        if (walkedID) {
+          walkedTweetIDs.add(walkedID);
+          const userResult = authorUserResult(value);
+          if (userResult && authorBioIsExplicit(userResult)) {
+            adultBioTweetIDs.add(walkedID);
+            const handle = authorHandleForTweet(value);
+            if (handle) {
+              sensitiveAuthorPairs.set(`${handle}:bio`, { handle, tweetID: walkedID, account: true });
+            }
+          }
+        }
+      }
 
       if (hasSensitiveSignal(value)) {
         for (const id of contextTweetIDs(value, ancestors)) {
@@ -326,11 +419,18 @@
     }
 
     walk(payload, []);
+    // Sensitive attribution can land on ids the tweet-root scan also saw;
+    // sensitive always wins, so clean is walked minus sensitive minus
+    // anything an adult-bio account posted.
+    const cleanTweetIDs = [...walkedTweetIDs].filter(
+      (id) => !tweetIDs.has(id) && !adultBioTweetIDs.has(id)
+    );
     return {
       tweetIDs: [...tweetIDs],
       mediaURLs: [...mediaURLs],
       mediaIDs: [...mediaIDs],
-      sensitiveAuthors: [...sensitiveAuthorPairs.values()]
+      sensitiveAuthors: [...sensitiveAuthorPairs.values()],
+      cleanTweetIDs
     };
   }
 
@@ -341,7 +441,8 @@
         metadata.tweetIDs.length === 0 &&
         metadata.mediaURLs.length === 0 &&
         metadata.mediaIDs.length === 0 &&
-        metadata.sensitiveAuthors.length === 0
+        metadata.sensitiveAuthors.length === 0 &&
+        metadata.cleanTweetIDs.length === 0
       ) {
         return;
       }

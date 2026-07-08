@@ -1,5 +1,5 @@
 (() => {
-const TUNER_VERSION = "2026.07.08.1500";
+const TUNER_VERSION = "2026.07.08.1900";
 const existingController = window.__quietgateXTunerController;
 if (existingController?.version === TUNER_VERSION) {
   existingController.refresh?.();
@@ -40,6 +40,8 @@ const HIDDEN_CLASS = "qg-x-hidden-media";
 const PLACEHOLDER_CLASS = "qg-x-explicit-placeholder";
 const MANAGED_MEDIA_CLASSES = [
   HIDDEN_CLASS,
+  "qg-x-screen-pending",
+  "qg-x-screen-clear",
   "qg-x-sensitive-media-surface",
   "qg-x-explicit-post",
   "qg-x-explicit-author",
@@ -122,6 +124,19 @@ const sensitiveMediaURLHints = new Set();
 const sensitiveMediaIDs = new Set();
 const explicitProfileHandles = new Set();
 
+// Screen-until-verified: when either explicit filter is on, post media is
+// blurred BY DEFAULT (pure CSS under html.qg-x-screening, so it holds from
+// the first frame even if everything else breaks) and is revealed only when
+// the page detector delivers a clean verdict for the post — or the user taps
+// through. Reveals are tracked by post id, not element, because X recycles
+// DOM nodes across different tweets while scrolling.
+const SCREENING_HTML_CLASS = "qg-x-screening";
+const SCREEN_PENDING_CLASS = "qg-x-screen-pending";
+const SCREEN_CLEAR_CLASS = "qg-x-screen-clear";
+const SCREEN_LABEL = "Screened by Tortoise — tap to show";
+const cleanPostIDs = new Set();
+const revealedPostIDs = new Set();
+
 // Author-level blocking: an account confirmed explicit gets ALL its posts
 // hidden in every view (feed included), catching the unlabeled posts that
 // per-post cues miss. Confirmation needs AUTHOR_FLAG_THRESHOLD distinct
@@ -169,12 +184,19 @@ function mergeFlaggedAuthors(values, { persist }) {
 }
 
 /// One (author, flagged tweet) observation. Returns true when it pushed the
-/// author over the threshold into the persistent blocklist.
-function recordSensitiveAuthorPair(rawHandle, rawTweetID) {
+/// author over the threshold into the persistent blocklist. Account-level
+/// evidence (an adult bio, per the page detector) convicts on the first
+/// observation — the threshold only guards against blaming an account for a
+/// single post-level signal.
+function recordSensitiveAuthorPair(rawHandle, rawTweetID, accountLevel = false) {
   const handle = normalizedAuthorHandle(rawHandle);
   const tweetID = String(rawTweetID || "").trim();
   if (!handle || !NUMERIC_ID_PATTERN.test(tweetID) || flaggedExplicitAuthors.has(handle)) {
     return false;
+  }
+
+  if (accountLevel) {
+    return mergeFlaggedAuthors([handle], { persist: true });
   }
 
   let tweetIDsForHandle = pendingAuthorTweetIDs.get(handle);
@@ -268,6 +290,8 @@ document.documentElement.dataset.quietgateXProfileFallbackPostCount = "0";
 document.documentElement.dataset.quietgateXSearchMediaCount = "0";
 document.documentElement.dataset.quietgateXSearchResultCount = "0";
 document.documentElement.dataset.quietgateXFlaggedAuthorCount = "0";
+document.documentElement.dataset.quietgateXCleanPostCount = "0";
+document.documentElement.dataset.quietgateXScreenPendingCount = "0";
 document.documentElement.dataset.quietgateXLastDecision = "";
 
 function normalizedMediaURLHint(value) {
@@ -365,19 +389,21 @@ function handlePageDetectorMessage(event) {
   const postIDsChanged = addBoundedValues(sensitivePostIDs, event.data.tweetIDs, normalizedPostID);
   const mediaURLsChanged = addBoundedValues(sensitiveMediaURLHints, event.data.mediaURLs, normalizedMediaURLHint);
   const mediaIDsChanged = addBoundedValues(sensitiveMediaIDs, event.data.mediaIDs, normalizedMediaID);
+  const cleanIDsChanged = addBoundedValues(cleanPostIDs, event.data.cleanTweetIDs, normalizedPostID);
   document.documentElement.dataset.quietgateXSensitivePostCount = String(sensitivePostIDs.size);
   document.documentElement.dataset.quietgateXSensitiveMediaCount = String(sensitiveMediaIDs.size);
+  document.documentElement.dataset.quietgateXCleanPostCount = String(cleanPostIDs.size);
 
   let authorsChanged = false;
   if (Array.isArray(event.data.sensitiveAuthors)) {
     for (const pair of event.data.sensitiveAuthors.slice(0, MAX_AUTHOR_PAIRS_PER_MESSAGE)) {
-      if (recordSensitiveAuthorPair(pair?.handle, pair?.tweetID)) {
+      if (recordSensitiveAuthorPair(pair?.handle, pair?.tweetID, pair?.account === true)) {
         authorsChanged = true;
       }
     }
   }
 
-  if (postIDsChanged || mediaURLsChanged || mediaIDsChanged || authorsChanged) {
+  if (postIDsChanged || mediaURLsChanged || mediaIDsChanged || cleanIDsChanged || authorsChanged) {
     scheduleApplySettings();
   }
 }
@@ -1172,6 +1198,7 @@ function clearManagedSurfaces() {
   document.documentElement.dataset.quietgateXProfileFallbackPostCount = "0";
   document.documentElement.dataset.quietgateXSearchMediaCount = "0";
   document.documentElement.dataset.quietgateXSearchResultCount = "0";
+  document.documentElement.dataset.quietgateXScreenPendingCount = "0";
   document.documentElement.dataset.quietgateXLastDecision = "";
 }
 
@@ -1204,6 +1231,7 @@ function markMediaSurfaces(features) {
   const explicitCueEnabled = features.xExplicitContent || features.xSensitiveMedia;
   let searchMediaHiddenCount = 0;
   let searchResultHiddenCount = 0;
+  let screenPendingCount = 0;
   const posts = postContainers();
   recordAdultDecision(null);
   if ((explicitCueEnabled || features.xExplicitSearch) && hasExplicitSearchMediaCue()) {
@@ -1319,6 +1347,10 @@ function markMediaSurfaces(features) {
         hiddenSurfaces.add(surface);
       }
     }
+
+    if (explicitCueEnabled) {
+      screenPendingCount += applyScreeningVerdict(post, allMediaSurfaces, hiddenSurfaces, hiddenPosts);
+    }
   }
 
   cleanupExplicitPlaceholders(placeholders);
@@ -1328,6 +1360,66 @@ function markMediaSurfaces(features) {
   document.documentElement.dataset.quietgateXExplicitPostCount = String(
     hiddenPosts.size + placeholders.size
   );
+  document.documentElement.dataset.quietgateXScreenPendingCount = String(screenPendingCount);
+}
+
+/// Screen-until-verified verdict for one post's media: reveal (clear class)
+/// only when the page detector confirmed every one of the post's tweet ids
+/// clean — or the user tapped through. Everything else stays under the
+/// CSS-default blur and gets the labelled pending overlay. Returns how many
+/// surfaces are left pending, for the diagnostics counter.
+function applyScreeningVerdict(post, mediaSurfaces, hiddenSurfaces, hiddenPosts) {
+  if (hiddenPosts.has(post) || post.closest?.(`.${HIDDEN_CLASS}`)) {
+    return 0;
+  }
+
+  // "Some clean, none sensitive": embedded quote tweets ride along in the
+  // outer tweet's payload so they always carry their own verdict, while a
+  // mere text link to another tweet must not keep verified media screened.
+  const statusIDs = statusIDsForPost(post);
+  const verifiedClean =
+    statusIDs.some((id) => cleanPostIDs.has(id)) &&
+    !statusIDs.some((id) => sensitivePostIDs.has(id));
+  const userRevealed = statusIDs.some((id) => revealedPostIDs.has(id));
+  const reveal = verifiedClean || userRevealed;
+
+  let pending = 0;
+  for (const surface of dedupeSurfaces(mediaSurfaces)) {
+    if (hiddenSurfaces.has(surface)) {
+      continue;
+    }
+    surface.classList.toggle(SCREEN_CLEAR_CLASS, reveal);
+    surface.classList.toggle(SCREEN_PENDING_CLASS, !reveal);
+    if (reveal) {
+      delete surface.dataset.qgScreenLabel;
+    } else {
+      surface.dataset.qgScreenLabel = SCREEN_LABEL;
+      pending += 1;
+    }
+  }
+  return pending;
+}
+
+/// Tap-to-reveal for screened media. Capture phase so the tap neither opens
+/// the tweet nor starts the video; the reveal is recorded by post id, so it
+/// survives X recycling the DOM node for a different tweet.
+function handleScreenRevealTap(event) {
+  const surface = event.target?.closest?.(`.${SCREEN_PENDING_CLASS}`);
+  if (!surface) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const post = surface.closest('article[role="article"], [data-testid="cellInnerDiv"]') || surface;
+  for (const id of statusIDsForPost(post)) {
+    revealedPostIDs.add(id);
+  }
+  surface.classList.remove(SCREEN_PENDING_CLASS);
+  surface.classList.add(SCREEN_CLEAR_CLASS);
+  delete surface.dataset.qgScreenLabel;
+  scheduleApplySettings();
 }
 
 function applySettings() {
@@ -1336,6 +1428,13 @@ function applySettings() {
   for (const [feature, className] of Object.entries(FEATURE_CLASSES)) {
     document.documentElement.classList.toggle(className, Boolean(features[feature]));
   }
+
+  // Fail-closed default: with either explicit filter on, this class blurs all
+  // post media via pure CSS; JS verdicts only ever REVEAL.
+  document.documentElement.classList.toggle(
+    SCREENING_HTML_CLASS,
+    Boolean(features.xSensitiveMedia || features.xExplicitContent)
+  );
 
   markMediaSurfaces(features);
 }
@@ -1410,6 +1509,7 @@ window.addEventListener("popstate", scheduleApplySettings);
 window.addEventListener("pageshow", scheduleApplySettings);
 window.addEventListener("visibilitychange", handleVisibilityRepull);
 window.addEventListener("message", handlePageDetectorMessage);
+document.addEventListener("click", handleScreenRevealTap, true);
 
 function refreshController() {
   injectPageDetectorScript();
@@ -1431,6 +1531,8 @@ window.__quietgateXTunerController = {
     window.removeEventListener("pageshow", scheduleApplySettings);
     window.removeEventListener("visibilitychange", handleVisibilityRepull);
     window.removeEventListener("message", handlePageDetectorMessage);
+    document.removeEventListener("click", handleScreenRevealTap, true);
+    document.documentElement.classList.remove(SCREENING_HTML_CLASS);
     quietGateBrowser.storage.onChanged.removeListener?.(handleStorageChange);
     usageController?.dispose?.();
     usageController = null;

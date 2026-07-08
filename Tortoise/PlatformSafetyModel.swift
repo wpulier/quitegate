@@ -29,14 +29,16 @@ enum XPlatformSafety {
   }
 
   static func detail(for status: Status) -> String {
+    let base: String
     switch status {
     case .unknown:
-      return XPlatformSafetyCopy.unknownDetail
+      base = XPlatformSafetyCopy.unknownDetail
     case .exposed:
-      return XPlatformSafetyCopy.exposedDetail
+      base = XPlatformSafetyCopy.exposedDetail
     case .protected:
-      return XPlatformSafetyCopy.protectedDetail
+      base = XPlatformSafetyCopy.protectedDetail
     }
+    return base + " " + XPlatformSafetyCopy.screeningNote
   }
 
   /// The row's action title; nil when there is nothing left to do.
@@ -59,4 +61,6 @@ enum XPlatformSafetyCopy {
   static let unknownDetail = "X can hide sensitive media itself. Open your X setting once — Tortoise reads it and remembers."
   static let unknownCTA = "Check X setting"
   static let protectedDetail = "X hides media it flags as sensitive. Tortoise cleans up the rest."
+  /// Appended to every status detail: what screen-until-verified means here.
+  static let screeningNote = "New media stays blurred in Safari until Tortoise verifies the post and its account — tap a blurred post to show it."
 }
