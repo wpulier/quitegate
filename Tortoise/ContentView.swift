@@ -106,9 +106,9 @@ private enum TortoiseScreenshot {
     let environmentSection = ProcessInfo.processInfo.environment["TORTOISE_SCREENSHOT_SECTION"]
     let argumentSection = value(after: "--tortoise-screenshot-section")
     guard let section = environmentSection ?? argumentSection else {
-      return .usage
+      return .devices
     }
-    return MobileSection(rawValue: section) ?? .usage
+    return MobileSection(rawValue: section) ?? .devices
   }
 
   private static func value(after flag: String) -> String? {
@@ -199,7 +199,7 @@ private struct TortoiseMobileShell: View {
     accountLabel: String,
     model: AccountHubModel,
     clerk: Clerk,
-    initialSection: MobileSection = .usage,
+    initialSection: MobileSection = .devices,
     refresh: @escaping () async -> Void
   ) {
     self.accountLabel = accountLabel
@@ -389,32 +389,27 @@ private struct TortoiseMobileShell: View {
   }
 
   private var bottomTabBar: some View {
-    VStack(spacing: 7) {
-      HStack(spacing: 0) {
-        ForEach(MobileSection.allCases) { tab in
-          Button {
-            section = tab
-          } label: {
-            VStack(spacing: 4) {
-              Image(systemName: tab.systemImage)
-                .font(.system(size: 20, weight: .semibold))
-              Text(tab.title)
-                .font(.system(size: 10.5, weight: section == tab ? .bold : .semibold))
-            }
-            .foregroundStyle(section == tab ? TortoiseDesign.accent : TortoiseDesign.tertiaryText)
-            .frame(maxWidth: .infinity)
+    HStack(spacing: 0) {
+      ForEach(MobileSection.allCases) { tab in
+        Button {
+          section = tab
+        } label: {
+          VStack(spacing: 4) {
+            Image(systemName: tab.systemImage)
+              .symbolVariant(section == tab ? .fill : .none)
+              .font(.system(size: 20, weight: .semibold))
+            Text(tab.title)
+              .font(.system(size: 10.5, weight: section == tab ? .bold : .semibold))
           }
-          .buttonStyle(.plain)
+          .foregroundStyle(section == tab ? TortoiseDesign.accent : TortoiseDesign.tertiaryText)
+          .frame(maxWidth: .infinity)
         }
+        .buttonStyle(.plain)
       }
-      .padding(.top, 12)
-
-      Capsule()
-        .fill(Color.white.opacity(0.45))
-        .frame(width: 134, height: 5)
-        .padding(.bottom, 8)
     }
-    .background(.ultraThinMaterial)
+    .padding(.top, 12)
+    .padding(.bottom, 6)
+    .background(.ultraThinMaterial, ignoresSafeAreaEdges: .bottom)
     .overlay(alignment: .top) {
       Rectangle()
         .fill(TortoiseDesign.hairline)
@@ -1954,11 +1949,13 @@ private enum MobileHubStatusStyle {
   }
 }
 
+/// Case order is the tab order. Devices leads — it's where setup lives, and
+/// it mirrors the Mac app's Devices / Tune / Usage navigation.
 private enum MobileSection: String, CaseIterable, Identifiable {
-  case usage
+  case devices
   case tuning
   case blocking
-  case devices
+  case usage
 
   var id: String { rawValue }
 
