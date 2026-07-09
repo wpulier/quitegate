@@ -1,3 +1,4 @@
+import AppKit
 import ClerkKit
 import ClerkKitUI
 import SwiftUI
@@ -237,17 +238,61 @@ private struct MacSignedOutLanding: View {
   }
 }
 
+/// The persistent window bar: app name, the running version (always visible —
+/// "what version am I on?" should never require a hover), the mode pill, and
+/// the update affordance the moment a newer Tortoise exists anywhere.
 private struct QGWindowBar: View {
+  @EnvironmentObject private var store: ProtectionStore
   let modeText: String
 
   var body: some View {
     ZStack {
-      Text("Tortoise")
-        .font(.system(size: 13, weight: .semibold))
-        .foregroundStyle(QGDesign.secondaryText)
+      HStack(spacing: 8) {
+        Text("Tortoise")
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundStyle(QGDesign.secondaryText)
+        if let version = store.currentAppVersion {
+          Text("v\(version.displayText)")
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(QGDesign.tertiaryText)
+            .help(store.appUpdateDetail)
+        }
+      }
 
       HStack {
         Spacer()
+
+        if store.appUpdateAvailable {
+          Button {
+            store.relaunchToInstalledUpdate()
+          } label: {
+            Label("Update ready — relaunch", systemImage: "arrow.triangle.2.circlepath")
+              .font(.system(size: 12, weight: .bold))
+          }
+          .buttonStyle(.plain)
+          .foregroundStyle(QGDesign.green)
+          .padding(.horizontal, 11)
+          .padding(.vertical, 6)
+          .background(QGDesign.green.opacity(0.16), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+          .disabled(store.isWorking)
+          .help(store.appUpdateDetail)
+          .padding(.trailing, 10)
+        } else if let release = store.remoteAppRelease {
+          Button {
+            NSWorkspace.shared.open(release.downloadURL)
+          } label: {
+            Label("Get \(release.version.displayText)", systemImage: "arrow.down.circle")
+              .font(.system(size: 12, weight: .bold))
+          }
+          .buttonStyle(.plain)
+          .foregroundStyle(QGDesign.green)
+          .padding(.horizontal, 11)
+          .padding(.vertical, 6)
+          .background(QGDesign.green.opacity(0.16), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+          .help(store.appUpdateDetail)
+          .padding(.trailing, 10)
+        }
+
         HStack(spacing: 7) {
           Circle()
             .fill(QGDesign.accent)
