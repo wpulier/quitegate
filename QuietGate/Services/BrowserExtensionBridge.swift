@@ -208,6 +208,15 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
           continue
         }
 
+        // Uninstalling leaves a TOMBSTONE entry (permissions, content settings,
+        // path…) that Chrome keeps for a future reinstall — but only an actually
+        // installed extension carries "state" (and usually "manifest"). Without
+        // that evidence the profile must not count as having the extension, or
+        // uninstalled profiles show as active forever.
+        guard extensionSettings["state"] != nil || extensionSettings["manifest"] != nil else {
+          continue
+        }
+
         sawExtensionSettings = true
         if extensionSettings["state"] as? Int == 0 {
           sawDisabledState = true

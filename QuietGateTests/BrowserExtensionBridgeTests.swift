@@ -385,6 +385,61 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     )
   }
 
+  func testUninstallTombstoneDoesNotCountAsInstalledProfile() throws {
+    // Uninstalling the extension leaves a leftovers entry in Secure
+    // Preferences (path, permissions, content settings…) with NO "state" and
+    // NO "manifest" — Chrome keeps it for a future reinstall. Counting that
+    // tombstone as an installed profile made the Tune scope claim tuning was
+    // active in browsers that no longer have the extension at all.
+    let root = try temporaryDirectory()
+    let chromeURL = root.appendingPathComponent("Chrome", isDirectory: true)
+    let ghostProfileURL = chromeURL.appendingPathComponent("Default", isDirectory: true)
+    let liveProfileURL = chromeURL.appendingPathComponent("Profile 10", isDirectory: true)
+    try FileManager.default.createDirectory(at: ghostProfileURL, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(at: liveProfileURL, withIntermediateDirectories: true)
+    try writeLocalState(selectedProfile: "Default", to: chromeURL)
+    try writeChromePreferences(
+      [
+        "extensions": [
+          "settings": [
+            "fedpnejbgmllajjlfkahlnjbgfmjjmmf": [
+              "path": "fedpnejbgmllajjlfkahlnjbgfmjjmmf/1.0",
+              "granted_permissions": ["api": ["storage"]],
+              "content_settings": [],
+              "was_installed_by_default": false
+            ]
+          ]
+        ]
+      ],
+      to: ghostProfileURL.appendingPathComponent("Secure Preferences")
+    )
+    try writeChromePreferences(
+      [
+        "extensions": [
+          "settings": [
+            "fedpnejbgmllajjlfkahlnjbgfmjjmmf": [
+              "state": 1,
+              "path": "fedpnejbgmllajjlfkahlnjbgfmjjmmf/1.0"
+            ]
+          ]
+        ]
+      ],
+      to: liveProfileURL.appendingPathComponent("Preferences")
+    )
+
+    let bridge = BrowserExtensionBridge(
+      applicationSupportDirectory: root.appendingPathComponent("Application Support"),
+      nativeHostScriptURL: root.appendingPathComponent("quietgate-native-host"),
+      nativeMessagingHostsDirectory: root.appendingPathComponent("NativeMessagingHosts"),
+      chromeUserDataDirectoryURL: chromeURL,
+      runningChromeCommandsProvider: { [] }
+    )
+
+    let status = bridge.extensionStatus(for: .chrome)
+    XCTAssertEqual(status.loadedProfiles, ["Profile 10"], "only the profile with real install evidence counts")
+    XCTAssertFalse(status.loadedProfiles.contains("Default"), "the tombstone profile must not count as installed")
+  }
+
   func testChromeHelperStateIgnoresHeartbeatFromDifferentSelectedProfile() throws {
     let root = try temporaryDirectory()
     let applicationSupportURL = root.appendingPathComponent("Application Support")
@@ -1077,6 +1132,9 @@ final class BrowserExtensionBridgeTests: XCTestCase {
         "extensions": [
           "settings": [
             "fedpnejbgmllajjlfkahlnjbgfmjjmmf": [
+              // Real installed entries always carry "state" — an entry without
+              // it (or "manifest") is an uninstall tombstone and must not count.
+              "state": 1,
               "location": 4,
               "path": "/tmp/QuietGate/ChromeExtension",
             ]

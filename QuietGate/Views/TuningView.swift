@@ -189,13 +189,21 @@ struct TuningView: View {
   }
 
   private var scopeCountText: String {
-    "\(connectorChips.count) accounts"
+    let active = scopeChips.filter { $0.status == .on }.count
+    return "\(active) active"
   }
 
+  /// One chip per profile that actually has the extension — carrying the
+  /// CONNECTOR's live status, never a hardcoded green: a profile whose
+  /// browser hasn't heartbeated must not claim tuning is active there.
   private var connectorChips: [TuningScopeChipModel] {
     store.browserConnectors.flatMap { connector in
       connector.connectedProfileLabels.map { label in
-        TuningScopeChipModel(avatar: avatar(for: label), title: "\(connector.displayName) · \(label)", status: .on)
+        TuningScopeChipModel(
+          avatar: avatar(for: label),
+          title: "\(connector.displayName) · \(label)",
+          status: connector.isConnected ? .on : .attention(.stale)
+        )
       }
     }
   }
