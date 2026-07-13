@@ -109,6 +109,11 @@ struct ContentView: View {
     .task {
       store.refreshAppUpdateStatus()
     }
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+      // SwiftUI's scene phase does not reliably cycle when a macOS user moves
+      // between apps, so listen to AppKit for update checks on every return.
+      store.refreshAppUpdateStatus()
+    }
     .onChange(of: scenePhase) { _, newPhase in
       if newPhase == .active {
         store.refreshAppUpdateStatus()
