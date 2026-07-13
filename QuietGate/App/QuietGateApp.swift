@@ -27,6 +27,7 @@ struct QuietGateApp: App {
   @StateObject private var store: ProtectionStore
   @StateObject private var appBlockingStore: AppBlockingStore
   @StateObject private var accountStore: MacAccountStore
+  @StateObject private var appUpdater: AppUpdateCoordinator
   private let clerk: Clerk
 
   init() {
@@ -34,6 +35,11 @@ struct QuietGateApp: App {
     _store = StateObject(wrappedValue: Self.makeStore())
     _appBlockingStore = StateObject(wrappedValue: AppBlockingStore())
     _accountStore = StateObject(wrappedValue: MacAccountStore())
+    _appUpdater = StateObject(
+      wrappedValue: AppUpdateCoordinator(
+        startUpdater: !ProcessInfo.processInfo.isRunningUnitTests
+      )
+    )
   }
 
   var body: some Scene {
@@ -43,6 +49,7 @@ struct QuietGateApp: App {
         .environmentObject(store)
         .environmentObject(appBlockingStore)
         .environmentObject(accountStore)
+        .environmentObject(appUpdater)
         .task {
           guard !ProcessInfo.processInfo.isRunningUnitTests else {
             return
@@ -58,7 +65,7 @@ struct QuietGateApp: App {
       CommandGroup(replacing: .newItem) {}
       CommandGroup(after: .appInfo) {
         Button("Check for Updates…") {
-          store.refreshAppUpdateStatus()
+          appUpdater.checkForUpdates()
         }
         .keyboardShortcut("u", modifiers: [.command, .shift])
       }
@@ -77,6 +84,7 @@ struct QuietGateApp: App {
         .environmentObject(store)
         .environmentObject(appBlockingStore)
         .environmentObject(accountStore)
+        .environmentObject(appUpdater)
     } label: {
       Image(systemName: store.mode.systemImage)
     }

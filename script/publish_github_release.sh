@@ -12,6 +12,7 @@ Publishes a notarized Tortoise DMG to GitHub Releases and prints the download UR
 Requires:
   - git origin remote configured
   - gh CLI installed and authenticated
+  - Sparkle's sign_update tool and the Tortoise signing key in Keychain
   - a notarized/stapled DMG, not a local preview DMG
 USAGE
 }
@@ -23,6 +24,26 @@ fail() {
 
 log() {
   printf '[QuietGate publish] %s\n' "$*"
+}
+
+find_sparkle_sign_update() {
+  local candidate
+
+  if [[ -n "${SPARKLE_SIGN_UPDATE:-}" && -x "${SPARKLE_SIGN_UPDATE}" ]]; then
+    printf '%s\n' "$SPARKLE_SIGN_UPDATE"
+    return 0
+  fi
+
+  for candidate in \
+    "$ROOT_DIR/build/PublicRelease/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update" \
+    "$ROOT_DIR/build/SparkleSetup/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update"; do
+    if [[ -x "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 if [[ -z "$DMG_PATH" || "${DMG_PATH:-}" == "--help" || "${DMG_PATH:-}" == "-h" ]]; then
@@ -37,6 +58,8 @@ cd "$ROOT_DIR"
 command -v gh >/dev/null 2>&1 || fail "GitHub CLI is not installed."
 git remote get-url origin >/dev/null 2>&1 || fail "No git origin remote is configured."
 gh auth status >/dev/null 2>&1 || fail "GitHub CLI is not authenticated. Run: gh auth login"
+sign_update="$(find_sparkle_sign_update)" \
+  || fail "Sparkle sign_update was not found. Resolve the Sparkle package first or set SPARKLE_SIGN_UPDATE."
 
 "$ROOT_DIR/script/verify_installer_dmg.sh" --public "$DMG_PATH" >/dev/null
 
@@ -50,6 +73,7 @@ else
 fi
 
 tag="v${version}-${build}"
+feed_tag="macos-appcast"
 sha256="$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')"
 notes_file="$(mktemp)"
 asset_dir="$(mktemp -d)"
@@ -59,8 +83,10 @@ stable_sha="$asset_dir/Tortoise.dmg.sha256"
 legacy_dmg="$asset_dir/QuietGate.dmg"
 legacy_sha="$asset_dir/QuietGate.dmg.sha256"
 versioned_sha="$asset_dir/$filename.sha256"
+appcast="$asset_dir/appcast.xml"
 repo="$(gh repo view --json nameWithOwner --jq '.nameWithOwner')"
 asset_url="https://github.com/$repo/releases/download/$tag/$filename"
+sparkle_asset_url="https://github.com/$repo/releases/download/$tag/Tortoise.dmg"
 stable_url="https://github.com/$repo/releases/latest/download/Tortoise.dmg"
 legacy_url="https://github.com/$repo/releases/latest/download/QuietGate.dmg"
 
@@ -70,14 +96,45 @@ printf '%s  %s\n' "$sha256" "$filename" > "$versioned_sha"
 printf '%s  Tortoise.dmg\n' "$sha256" > "$stable_sha"
 printf '%s  QuietGate.dmg\n' "$sha256" > "$legacy_sha"
 
+signature_attributes="$(
+  "$sign_update" --account com.yourtortoise.Tortoise "$stable_dmg"
+)" || fail "Sparkle could not sign the update. Confirm the Tortoise Ed25519 key is available in Keychain."
+ed_signature="$(printf '%s\n' "$signature_attributes" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')"
+file_length="$(printf '%s\n' "$signature_attributes" | sed -n 's/.*length="\([0-9]*\)".*/\1/p')"
+[[ -n "$ed_signature" && -n "$file_length" ]] \
+  || fail "Sparkle returned an unexpected signature: $signature_attributes"
+
+pub_date="$(LC_ALL=C date -R)"
+cat > "$appcast" <<APPCAST
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Tortoise Updates</title>
+    <link>https://www.yourtortoise.com</link>
+    <description>Signed updates for Tortoise on macOS.</description>
+    <language>en</language>
+    <item>
+      <title>Tortoise ${version} (${build})</title>
+      <pubDate>${pub_date}</pubDate>
+      <sparkle:version>${build}</sparkle:version>
+      <sparkle:shortVersionString>${version}</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="${sparkle_asset_url}"
+        length="${file_length}"
+        type="application/octet-stream"
+        sparkle:edSignature="${ed_signature}" />
+    </item>
+  </channel>
+</rss>
+APPCAST
+
 cat > "$notes_file" <<NOTES
 Tortoise ${version} build ${build}
 
 Install:
-1. Download the DMG.
-2. Open it.
-3. Drag Tortoise to Applications.
-4. Open Tortoise and follow Setup.
+- Existing users on build 20 or newer update inside Tortoise; it installs and relaunches automatically.
+- For a first install, download the DMG, drag Tortoise to Applications, and open it.
 
 SHA-256:
 ${sha256}
@@ -97,11 +154,22 @@ if gh release view "$tag" >/dev/null 2>&1; then
 fi
 
 log "Creating GitHub Release $tag"
-gh release create "$tag" "$DMG_PATH" "$versioned_sha" "$stable_dmg" "$stable_sha" "$legacy_dmg" "$legacy_sha" \
+gh release create "$tag" "$DMG_PATH" "$versioned_sha" "$stable_dmg" "$stable_sha" "$legacy_dmg" "$legacy_sha" "$appcast" \
   --title "Tortoise ${version} (${build})" \
   --notes-file "$notes_file"
 
 release_url="$(gh release view "$tag" --json url --jq '.url')"
+
+if gh release view "$feed_tag" >/dev/null 2>&1; then
+  log "Updating stable Sparkle feed"
+  gh release upload "$feed_tag" "$appcast" --clobber
+else
+  log "Creating stable Sparkle feed"
+  gh release create "$feed_tag" "$appcast" \
+    --title "Tortoise macOS update feed" \
+    --notes "Machine-readable signed update feed for the Tortoise macOS app." \
+    --prerelease
+fi
 
 log "Release page: $release_url"
 log "Direct download: $asset_url"

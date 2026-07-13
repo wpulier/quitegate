@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00C6B887554BB32406577F68 /* LegacyProviderReadbackError.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC52F9B0A5882A50FB5BA117 /* LegacyProviderReadbackError.swift */; };
+		01630D9F2A1B83232BB5BA43 /* AppUpdateCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6580C246AF90AA2952D7B5CF /* AppUpdateCoordinator.swift */; };
 		01E09F52B17A5C73BB6D6A9D /* AccessModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C9E1289903D976640AFF9D /* AccessModeTests.swift */; };
 		029A084EC6564B7EE8B8E6A7 /* QuietGateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E69CC08B524B0AEA0A44D42F /* QuietGateApp.swift */; };
 		033ED0398C4323B5E6FD7513 /* IOSYouTubeScreenTimeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFA98961060B02E33E4F2E5 /* IOSYouTubeScreenTimeController.swift */; };
@@ -120,6 +121,7 @@
 		A31661E70FC2477294B8FBEF /* LaunchRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64068B2176796EB698696941 /* LaunchRecoveryTests.swift */; };
 		A57B5F50051812166AA4DBFD /* youtube.css in Resources */ = {isa = PBXBuildFile; fileRef = 4215B60EEEBE5EB74944D34B /* youtube.css */; };
 		A6799A41F5AE0F688DA31B0A /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68CA11AB044A28A3D7FAC1D0 /* SafariWebExtensionHandler.swift */; };
+		A69AD8B1365F03B67981399F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 65A53849C8D0AAFEB3FD631F /* Sparkle */; };
 		AA5A23A16B0FE2E3FE9FB253 /* LegacyProviderMacServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0ABC9EBAF390D937D23278C /* LegacyProviderMacServices.swift */; };
 		ABFC9437D9A0C375B7E191C5 /* IOSSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273DAEE65592F418FA16396A /* IOSSession.swift */; };
 		AD444AE42F87DCA8F0927C2C /* PlatformControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60AE1C57CC050901354EC9E0 /* PlatformControls.swift */; };
@@ -303,6 +305,7 @@
 		5FABC8634F2CB724D2D0E5D5 /* UsageHistoryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageHistoryModel.swift; sourceTree = "<group>"; };
 		60AE1C57CC050901354EC9E0 /* PlatformControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformControls.swift; sourceTree = "<group>"; };
 		64068B2176796EB698696941 /* LaunchRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchRecoveryTests.swift; sourceTree = "<group>"; };
+		6580C246AF90AA2952D7B5CF /* AppUpdateCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateCoordinator.swift; sourceTree = "<group>"; };
 		658E7943694A952A7343ECDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		67481EEAFE4705285370B181 /* AppUpdateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateServiceTests.swift; sourceTree = "<group>"; };
 		68CA11AB044A28A3D7FAC1D0 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
@@ -410,6 +413,7 @@
 				E2706FF887583F7B49F586A1 /* Security.framework in Frameworks */,
 				092E300E5FE386FB11403794 /* ClerkKit in Frameworks */,
 				CFB2092CDEC79C1B8474E74D /* ClerkKitUI in Frameworks */,
+				A69AD8B1365F03B67981399F /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -584,6 +588,7 @@
 			isa = PBXGroup;
 			children = (
 				94B45B7DD873347247534A6C /* ApplicationBlockingService.swift */,
+				6580C246AF90AA2952D7B5CF /* AppUpdateCoordinator.swift */,
 				9A4E779C54400A7FC44E8947 /* AppUpdateService.swift */,
 				06EE9032A91537D35D9371EA /* BrowserExtensionBridge.swift */,
 				811D08F2DACF85FC73C01202 /* DomainNormalizer.swift */,
@@ -825,6 +830,7 @@
 			packageProductDependencies = (
 				01791AB8AB4316D2C80E7829 /* ClerkKit */,
 				1A7E1E0E78487A031EB52298 /* ClerkKitUI */,
+				65A53849C8D0AAFEB3FD631F /* Sparkle */,
 			);
 			productName = QuietGate;
 			productReference = 0C83EBBC9802A1BFFC76350D /* QuietGate.app */;
@@ -1015,6 +1021,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				7E21BEA6C7B4FE8C168EC920 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				808A9CFE234DF257780D4EF4 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AE6AE2ACAE9921CD861AEBD2 /* Products */;
@@ -1230,6 +1237,7 @@
 				5564FC6BFB401B843F1DADEE /* AppBlocking.swift in Sources */,
 				C6F9F6D563541CE58A33F909 /* AppBlockingStore.swift in Sources */,
 				C98AE14C6515CE4327EFCDD6 /* AppConfig.swift in Sources */,
+				01630D9F2A1B83232BB5BA43 /* AppUpdateCoordinator.swift in Sources */,
 				1F2B54B7CB29F001397F5511 /* AppUpdateService.swift in Sources */,
 				BFD740EBC2EE5EFF07CE5F3E /* ApplicationBlockingService.swift in Sources */,
 				D0736EBD1524D2B62BC90181 /* AppsView.swift in Sources */,
@@ -1417,7 +1425,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1500,7 +1508,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -1907,6 +1915,14 @@
 				minimumVersion = 1.2.6;
 			};
 		};
+		808A9CFE234DF257780D4EF4 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.9.4;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1919,6 +1935,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7E21BEA6C7B4FE8C168EC920 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkKitUI;
+		};
+		65A53849C8D0AAFEB3FD631F /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 808A9CFE234DF257780D4EF4 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 		79402AF2122CB30C0AA7587B /* ClerkKit */ = {
 			isa = XCSwiftPackageProductDependency;

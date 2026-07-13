@@ -206,6 +206,7 @@ struct ProductPage<Content: View>: View {
 
 struct ProductHeader: View {
   @EnvironmentObject private var store: ProtectionStore
+  @EnvironmentObject private var appUpdater: AppUpdateCoordinator
   let title: String
   let subtitle: String
   let systemImage: String
@@ -232,15 +233,19 @@ struct ProductHeader: View {
         .buttonStyle(QGPrimaryButtonStyle())
         .disabled(store.isWorking)
         .help(store.appUpdateDetail)
-      } else if let release = store.remoteAppRelease {
-        // A newer Tortoise is published but not downloaded yet.
+      } else if store.remoteAppRelease != nil {
+        // Sparkle downloads, verifies, installs, and relaunches the app in place.
         Button {
-          NSWorkspace.shared.open(release.downloadURL)
+          appUpdater.installLatestUpdate()
         } label: {
-          QGIconButtonLabel(title: "New update available", systemImage: "arrow.down.circle")
+          QGIconButtonLabel(
+            title: appUpdater.actionTitle,
+            systemImage: appUpdater.actionSystemImage
+          )
         }
         .buttonStyle(QGPrimaryButtonStyle())
-        .help(store.appUpdateDetail)
+        .disabled(appUpdater.actionDisabled)
+        .help(appUpdater.detailText)
       } else {
         QGPill(text: "App up to date", tint: QGDesign.secondaryText)
           .help(store.appUpdateDetail)

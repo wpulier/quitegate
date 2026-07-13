@@ -49,6 +49,14 @@
 	<string>https://chromewebstore.google.com/detail/fedpnejbgmllajjlfkahlnjbgfmjjmmf</string>
 	<key>QuietGateFirefoxExtensionStoreURL</key>
 	<string></string>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/wpulier/quitegate/releases/download/macos-appcast/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>Gh7jn17Ex+ECUQYfLR16+GXnFdD5qpTOb1+QzNDWkvM=</string>
 	<key>TORTOISE_API_BASE_URL</key>
 	<string>$(TORTOISE_API_BASE_URL)</string>
 </dict>

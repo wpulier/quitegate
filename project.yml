@@ -8,13 +8,16 @@ settings:
   base:
     DEVELOPMENT_TEAM: SY7TABCD5M
     MARKETING_VERSION: "1.1"
-    CURRENT_PROJECT_VERSION: "19"
+    CURRENT_PROJECT_VERSION: "20"
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
 packages:
   Clerk:
     url: https://github.com/clerk/clerk-ios
     from: "1.2.6"
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: "2.9.4"
 targets:
   QuietGate:
     type: application
@@ -78,6 +81,8 @@ targets:
         product: ClerkKit
       - package: Clerk
         product: ClerkKitUI
+      - package: Sparkle
+        product: Sparkle
     configFiles:
       Debug: Secrets.xcconfig
       Release: Secrets.xcconfig

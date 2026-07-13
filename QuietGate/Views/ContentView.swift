@@ -36,6 +36,7 @@ struct ContentView: View {
   @EnvironmentObject private var store: ProtectionStore
   @EnvironmentObject private var appBlockingStore: AppBlockingStore
   @EnvironmentObject private var accountStore: MacAccountStore
+  @EnvironmentObject private var appUpdater: AppUpdateCoordinator
   @SceneStorage("quietgate.selectedSection") private var selectedSectionID =
     AppSection.devices.rawValue
   @State private var authViewIsPresented = false
@@ -69,6 +70,16 @@ struct ContentView: View {
         protectionStore: store,
         appBlockingStore: appBlockingStore
       )
+    }
+    .task {
+      store.refreshAppUpdateStatus()
+      appUpdater.checkForUpdatesInBackground()
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+      // SwiftUI's scene phase does not reliably cycle when a macOS user moves
+      // between apps, so listen to AppKit for update checks on every return.
+      store.refreshAppUpdateStatus()
+      appUpdater.checkForUpdatesInBackground()
     }
     .task {
       for await event in clerk.auth.events {
@@ -106,17 +117,10 @@ struct ContentView: View {
     .frame(minWidth: 980, minHeight: 700)
     .background(QGDesign.background)
     .foregroundStyle(QGDesign.primaryText)
-    .task {
-      store.refreshAppUpdateStatus()
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-      // SwiftUI's scene phase does not reliably cycle when a macOS user moves
-      // between apps, so listen to AppKit for update checks on every return.
-      store.refreshAppUpdateStatus()
-    }
     .onChange(of: scenePhase) { _, newPhase in
       if newPhase == .active {
         store.refreshAppUpdateStatus()
+        appUpdater.checkForUpdatesInBackground()
         Task {
           await accountStore.refresh(
             using: clerk,
@@ -248,6 +252,7 @@ private struct MacSignedOutLanding: View {
 /// the update affordance the moment a newer Tortoise exists anywhere.
 private struct QGWindowBar: View {
   @EnvironmentObject private var store: ProtectionStore
+  @EnvironmentObject private var appUpdater: AppUpdateCoordinator
   let modeText: String
 
   var body: some View {
@@ -282,11 +287,11 @@ private struct QGWindowBar: View {
           .disabled(store.isWorking)
           .help(store.appUpdateDetail)
           .padding(.trailing, 10)
-        } else if let release = store.remoteAppRelease {
+        } else if store.remoteAppRelease != nil {
           Button {
-            NSWorkspace.shared.open(release.downloadURL)
+            appUpdater.installLatestUpdate()
           } label: {
-            Label("New update available", systemImage: "arrow.down.circle")
+            Label(appUpdater.actionTitle, systemImage: appUpdater.actionSystemImage)
               .font(.system(size: 12, weight: .bold))
           }
           .buttonStyle(.plain)
@@ -294,7 +299,8 @@ private struct QGWindowBar: View {
           .padding(.horizontal, 11)
           .padding(.vertical, 6)
           .background(QGDesign.green.opacity(0.16), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-          .help(store.appUpdateDetail)
+          .disabled(appUpdater.actionDisabled)
+          .help(appUpdater.detailText)
           .padding(.trailing, 10)
         }
 
