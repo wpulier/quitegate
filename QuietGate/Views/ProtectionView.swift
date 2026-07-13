@@ -13,8 +13,8 @@ struct ProtectionView: View {
   var body: some View {
     QGPage(maxWidth: 820) {
       QGScreenHeader(
-        title: "Devices & browser profiles",
-        subtitle: "Mac and iPhone are the devices. Browser profiles sit under the browser and device where they run."
+        title: "Devices & browser connections",
+        subtitle: "Manage this Mac, your iPhone, and each connected Chrome profile in one place."
       )
 
       accountSummary
