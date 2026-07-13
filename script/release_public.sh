@@ -88,4 +88,5 @@ log "Publishing GitHub Release"
 "$ROOT_DIR/script/publish_github_release.sh" "$dmg_path"
 
 repo="$(gh repo view --json nameWithOwner --jq '.nameWithOwner')"
-log "Public download URL: https://github.com/$repo/releases/latest/download/Tortoise.dmg"
+tag="$(basename "$dmg_path" | sed -E 's/^Tortoise-([^-]+)-([^-]+)-notarize\.dmg$/v\1-\2/')"
+log "Public download URL: https://github.com/$repo/releases/download/$tag/Tortoise.dmg"

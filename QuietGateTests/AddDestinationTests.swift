@@ -21,4 +21,9 @@ final class AddDestinationTests: XCTestCase {
       XCTAssertFalse(d.systemImage.isEmpty)
     }
   }
+
+  func testBrowserDestinationNamesTheThingBeingConnected() {
+    XCTAssertEqual(AddDestination.browser.title, "Chrome extension")
+    XCTAssertEqual(AddDestination.browser.systemImage, "puzzlepiece.extension")
+  }
 }

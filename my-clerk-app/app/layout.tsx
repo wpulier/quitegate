@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { clerkAppearance } from "./_components/clerk-appearance";
 import { SiteAuthNav } from "./_components/site-auth-nav";
 import "./globals.css";
 
@@ -46,7 +47,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full overflow-x-hidden bg-[#fbfbef] text-zinc-950">
-        <ClerkProvider localization={clerkLocalization}>
+        <ClerkProvider appearance={clerkAppearance} localization={clerkLocalization}>
           <header className="bg-[#fbfbef] px-4 pt-4">
             <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between rounded-xl border border-zinc-200/80 bg-white/75 px-5 shadow-sm backdrop-blur">
               <Link href="/" className="text-lg font-semibold">

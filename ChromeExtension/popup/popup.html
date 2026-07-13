@@ -5,47 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="popup.css">
   </head>
-  <body>
+  <body data-account-state="loading">
     <main>
       <header>
-        <h1>QuietGate</h1>
-      <p id="syncStatus">Browser tuner</p>
-      <p id="ruleStatus" hidden></p>
+        <div>
+          <p class="product-label">QuietGate</p>
+          <h1>Focus &amp; Adult Blocker</h1>
+        </div>
+        <div class="sync-summary">
+          <p id="syncStatus">Checking account...</p>
+          <p id="ruleStatus" hidden></p>
+        </div>
       </header>
 
       <section class="account-panel" aria-label="QuietGate account">
-        <p id="accountStatus">Checking account...</p>
-        <p id="accountDetail"></p>
-        <div class="button-row">
-          <button id="connectQuietGate" type="button">Sign in</button>
-          <button id="syncQuietGate" type="button">Sync</button>
-          <button id="openDashboard" type="button">Dashboard</button>
+        <div id="signedOutAccount" class="account-state" hidden>
+          <p class="eyebrow">Account required</p>
+          <h2>Set up QuietGate</h2>
+          <p class="account-lead">
+            Sign in or create an account to sync protection, choose what gets
+            quieted, and keep your settings across devices.
+          </p>
+          <button id="connectQuietGate" class="primary-action" type="button">
+            Sign in or create account
+          </button>
+          <p id="accountDetail" class="status-message" role="status">
+            Setup opens securely on yourtortoise.com.
+          </p>
         </div>
-        <button id="requestAllSites" type="button">Enable full web protection</button>
-        <button id="disconnectQuietGate" type="button">Disconnect this extension</button>
-        <p id="permissionStatus"></p>
-        <p id="incognitoStatus"></p>
-        <label class="local-adult">
-          <input id="localAdultBlocking" type="checkbox">
-          Local adult-site blocking when signed out
+
+        <div id="signedInAccount" class="account-state" hidden>
+          <p class="eyebrow">QuietGate account</p>
+          <h2 id="accountStatus">Checking account...</h2>
+          <p id="signedInAccountDetail" class="account-lead"></p>
+          <div class="button-row">
+            <button id="syncQuietGate" class="primary-action" type="button">Sync now</button>
+            <button id="openDashboard" class="secondary-action" type="button">Dashboard</button>
+          </div>
+          <button id="disconnectQuietGate" class="text-action" type="button">
+            Disconnect this extension
+          </button>
+        </div>
+
+        <details id="protectionDetails" class="protection-details">
+          <summary id="protectionSummary">Use basic protection without an account</summary>
+          <div class="protection-body">
+            <p id="localProtectionDetail">
+              QuietGate can block its packaged adult-domain list on this browser,
+              but these settings will not sync across devices.
+            </p>
+            <label class="local-adult">
+              <input id="localAdultBlocking" type="checkbox">
+              Block known adult sites on this browser
+            </label>
+            <button id="requestAllSites" class="secondary-action" type="button">
+              Enable full web protection
+            </button>
+            <p id="permissionStatus"></p>
+            <p id="incognitoStatus"></p>
+          </div>
+        </details>
+      </section>
+
+      <div id="managedControls" class="managed-controls" hidden>
+        <section class="current-site" aria-label="Current site">
+          <p class="eyebrow">Current site</p>
+          <p id="currentSiteStatus">Current site tools</p>
+          <button id="reportAdultSite" class="secondary-action" type="button">Block current site</button>
+        </section>
+
+        <label class="field">
+          <span>Mode</span>
+          <select id="mode">
+            <option value="open">Open</option>
+            <option value="focus">Focus</option>
+            <option value="strict">Strict</option>
+          </select>
         </label>
-      </section>
 
-      <section class="current-site" aria-label="Current site">
-        <p id="currentSiteStatus">Current site tools</p>
-        <button id="reportAdultSite" type="button">Block current site</button>
-      </section>
-
-      <label class="field">
-        <span>Mode</span>
-        <select id="mode">
-          <option value="open">Open</option>
-          <option value="focus">Focus</option>
-          <option value="strict">Strict</option>
-        </select>
-      </label>
-
-      <section aria-label="YouTube rules">
+        <section aria-label="YouTube rules">
         <label><input id="youtubeHome" type="checkbox"> Hide YouTube Home</label>
         <label><input id="youtubeVideoSidebar" type="checkbox"> Hide Video Sidebar</label>
         <label><input id="youtubeRecommendations" type="checkbox"> Hide Recommended</label>
@@ -73,9 +111,9 @@
           <span>Daily limit minutes</span>
           <input id="youtubeDailyLimitMinutes" type="number" min="5" max="480" step="5">
         </label>
-      </section>
+        </section>
 
-      <section aria-label="X rules">
+        <section aria-label="X rules">
         <label><input id="xSensitiveMedia" type="checkbox"> Hide Sensitive Media</label>
         <label><input id="xExplicitContent" type="checkbox"> Hide Explicit-Cue Posts</label>
         <label><input id="xExplicitSearch" type="checkbox"> Hide Explicit Search Results</label>
@@ -83,9 +121,9 @@
         <label><input id="xPhotos" type="checkbox"> Hide Tweet Photos</label>
         <label><input id="xMediaCards" type="checkbox"> Hide Media Cards</label>
         <label><input id="xExploreTrends" type="checkbox"> Hide Explore and Trends</label>
-      </section>
+        </section>
 
-      <section aria-label="Instagram rules">
+        <section aria-label="Instagram rules">
         <label><input id="instagramReels" type="checkbox"> Hide Reels</label>
         <label><input id="instagramExplore" type="checkbox"> Hide Explore</label>
         <label><input id="instagramSuggested" type="checkbox"> Hide Suggested Posts</label>
@@ -93,24 +131,25 @@
         <label><input id="instagramMessages" type="checkbox"> Hide DMs</label>
         <label><input id="instagramNotifications" type="checkbox"> Hide Notifications</label>
         <label><input id="instagramStories" type="checkbox"> Hide Stories</label>
-      </section>
+        </section>
 
-      <section aria-label="Reddit rules">
+        <section aria-label="Reddit rules">
         <label><input id="redditPopularAll" type="checkbox"> Hide Popular and All</label>
         <label><input id="redditRecommendations" type="checkbox"> Hide Recommendations</label>
         <label><input id="redditNSFW" type="checkbox"> Hide NSFW Posts and Communities</label>
         <label><input id="redditMedia" type="checkbox"> Hide Media Posts</label>
         <label><input id="redditSidebars" type="checkbox"> Hide Sidebars</label>
-      </section>
+        </section>
 
-      <label class="field">
-        <span>Explicit action</span>
-        <select id="explicitHideStyle">
-          <option value="post">Whole post</option>
-          <option value="media">Media only</option>
-          <option value="placeholder">Placeholder</option>
-        </select>
-      </label>
+        <label class="field">
+          <span>Explicit action</span>
+          <select id="explicitHideStyle">
+            <option value="post">Whole post</option>
+            <option value="media">Media only</option>
+            <option value="placeholder">Placeholder</option>
+          </select>
+        </label>
+      </div>
     </main>
 
     <script src="popup.js"></script>

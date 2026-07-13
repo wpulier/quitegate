@@ -1289,7 +1289,8 @@ final class BrowserExtensionBridgeTests: XCTestCase {
       to: applicationSupportURL.appendingPathComponent("firefox-status.json"),
       settingsVersion: version,
       seenAt: Date(timeIntervalSince1970: 5),
-      extensionID: "quietgate@willpulier.com"
+      extensionID: "quietgate@willpulier.com",
+      extensionVersion: "0.1.12"
     )
 
     XCTAssertEqual(
@@ -1650,7 +1651,7 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     settingsVersion: String,
     seenAt: Date,
     extensionID: String = "fedpnejbgmllajjlfkahlnjbgfmjjmmf",
-    extensionVersion: String = "0.1.12",
+    extensionVersion: String = "0.1.13",
     scriptVersions: [String: String]? = [
       "youtube": "2026.06.29.1200",
       "x": "2026.06.29.1200",

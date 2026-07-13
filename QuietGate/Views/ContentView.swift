@@ -87,7 +87,7 @@ struct ContentView: View {
     }
     .sheet(isPresented: $authViewIsPresented) {
       AuthView(mode: .signInOrUp)
-        .frame(minWidth: 440, minHeight: 620)
+        .frame(width: 560, height: 620)
     }
   }
 
@@ -155,7 +155,7 @@ private struct MacSignedOutLanding: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      QGWindowBar(modeText: "Account required")
+      QGWindowBar(modeText: "Account setup")
 
       VStack(spacing: 28) {
         Spacer(minLength: 30)
@@ -175,7 +175,7 @@ private struct MacSignedOutLanding: View {
             )
 
           VStack(spacing: 8) {
-            Text("Sign in to Tortoise")
+            Text("Start with your Tortoise account")
               .font(.system(size: 34, weight: .bold))
               .foregroundStyle(QGDesign.primaryText)
             Text("Use one account to sync your Mac, iPhone, browser tuning, and blocking rules.")
@@ -198,8 +198,8 @@ private struct MacSignedOutLanding: View {
         .frame(maxWidth: 520)
 
         Button(action: onSignIn) {
-          Text("Sign in to Tortoise")
-            .frame(minWidth: 210)
+          Text("Sign in or create account")
+            .frame(minWidth: 230)
         }
         .buttonStyle(QGPrimaryButtonStyle())
 
@@ -281,7 +281,7 @@ private struct QGWindowBar: View {
           Button {
             NSWorkspace.shared.open(release.downloadURL)
           } label: {
-            Label("Get \(release.version.displayText)", systemImage: "arrow.down.circle")
+            Label("New update available", systemImage: "arrow.down.circle")
               .font(.system(size: 12, weight: .bold))
           }
           .buttonStyle(.plain)

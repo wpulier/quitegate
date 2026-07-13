@@ -106,12 +106,33 @@ final class AppUpdateServiceTests: XCTestCase {
 
   func testReleaseFeedJSONDecoding() throws {
     let json = """
-    {"tag_name":"v1.2-14","html_url":"https://github.com/wpulier/quitegate/releases/tag/v1.2-14","name":"Tortoise 1.2 (14)"}
+    {"tag_name":"v1.2-14","html_url":"https://github.com/wpulier/quitegate/releases/tag/v1.2-14","name":"Tortoise 1.2 (14)","assets":[{"name":"Tortoise.dmg","browser_download_url":"https://github.com/wpulier/quitegate/releases/download/v1.2-14/Tortoise.dmg"}]}
     """
     let release = try XCTUnwrap(AppReleaseFeed.remoteRelease(fromJSON: Data(json.utf8)))
     XCTAssertEqual(release.version, AppVersionIdentifier(version: "1.2", build: "14"))
-    XCTAssertEqual(release.downloadURL, AppReleaseFeed.stableDownloadURL)
+    XCTAssertEqual(
+      release.downloadURL.absoluteString,
+      "https://github.com/wpulier/quitegate/releases/download/v1.2-14/Tortoise.dmg"
+    )
     XCTAssertEqual(release.releaseURL.absoluteString, "https://github.com/wpulier/quitegate/releases/tag/v1.2-14")
+  }
+
+  func testReleaseFeedSkipsNewerChromeReleaseAndFindsMacUpdate() throws {
+    let json = """
+    [
+      {"tag_name":"chrome-v1.0.1","html_url":"https://github.com/wpulier/quitegate/releases/tag/chrome-v1.0.1"},
+      {"tag_name":"v1.1-16","html_url":"https://github.com/wpulier/quitegate/releases/tag/v1.1-16","assets":[{"name":"Tortoise.dmg","browser_download_url":"https://github.com/wpulier/quitegate/releases/download/v1.1-16/Tortoise.dmg"}]},
+      {"tag_name":"v1.1-15","html_url":"https://github.com/wpulier/quitegate/releases/tag/v1.1-15"}
+    ]
+    """
+
+    let release = try XCTUnwrap(AppReleaseFeed.remoteRelease(fromJSON: Data(json.utf8)))
+
+    XCTAssertEqual(release.version, AppVersionIdentifier(version: "1.1", build: "16"))
+    XCTAssertEqual(
+      release.downloadURL.absoluteString,
+      "https://github.com/wpulier/quitegate/releases/download/v1.1-16/Tortoise.dmg"
+    )
   }
 
   func testReleaseFeedRejectsGarbage() {

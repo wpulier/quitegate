@@ -90,12 +90,11 @@ struct RemoteAppRelease: Equatable {
 }
 
 /// The published-release feed: parsing is pure and unit-tested; the fetch is a
-/// thin URLSession wrapper. Tags follow script/publish_github_release.sh
-/// ("v{version}-{build}"), and the stable asset URL always serves the newest DMG.
+/// thin URLSession wrapper. The repository also publishes browser-extension
+/// releases, so the feed scans releases and selects the newest Mac app tag.
 enum AppReleaseFeed {
   static let repo = "wpulier/quitegate"
-  static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!
-  static let stableDownloadURL = URL(string: "https://github.com/\(repo)/releases/latest/download/Tortoise.dmg")!
+  static let releasesAPIURL = URL(string: "https://api.github.com/repos/\(repo)/releases?per_page=30")!
 
   /// "v1.1-2" → version "1.1", build "2". Nil for anything else.
   static func versionIdentifier(fromTag tag: String) -> AppVersionIdentifier? {
@@ -114,26 +113,67 @@ enum AppReleaseFeed {
     )
   }
 
-  /// Decodes GitHub's "latest release" payload into a release, or nil when the
-  /// payload (or its tag) isn't one of ours.
+  /// Decodes either one GitHub release or a release-list response. Browser
+  /// releases such as `chrome-v1.0.0` are deliberately ignored.
   static func remoteRelease(fromJSON data: Data) -> RemoteAppRelease? {
-    struct Payload: Decodable {
-      let tagName: String
-      let htmlUrl: String
+    if let payloads = try? JSONDecoder().decode([Payload].self, from: data) {
+      return payloads
+        .compactMap(remoteRelease(from:))
+        .max { $0.version < $1.version }
+    }
+    guard let payload = try? JSONDecoder().decode(Payload.self, from: data) else {
+      return nil
+    }
+    return remoteRelease(from: payload)
+  }
+
+  private struct Payload: Decodable {
+    struct Asset: Decodable {
+      let name: String
+      let browserDownloadUrl: String
 
       enum CodingKeys: String, CodingKey {
-        case tagName = "tag_name"
-        case htmlUrl = "html_url"
+        case name
+        case browserDownloadUrl = "browser_download_url"
       }
     }
-    guard let payload = try? JSONDecoder().decode(Payload.self, from: data),
+
+    let tagName: String
+    let htmlUrl: String
+    let draft: Bool?
+    let prerelease: Bool?
+    let assets: [Asset]?
+
+    enum CodingKeys: String, CodingKey {
+      case tagName = "tag_name"
+      case htmlUrl = "html_url"
+      case draft
+      case prerelease
+      case assets
+    }
+  }
+
+  private static func remoteRelease(from payload: Payload) -> RemoteAppRelease? {
+    guard payload.draft != true,
+          payload.prerelease != true,
           let version = versionIdentifier(fromTag: payload.tagName),
           let releaseURL = URL(string: payload.htmlUrl) else {
       return nil
     }
+
+    let assetURL = payload.assets?
+      .first { $0.name == "Tortoise.dmg" }
+      .flatMap { URL(string: $0.browserDownloadUrl) }
+    let fallbackURL = URL(
+      string: "https://github.com/\(repo)/releases/download/\(payload.tagName)/Tortoise.dmg"
+    )
+    guard let downloadURL = assetURL ?? fallbackURL else {
+      return nil
+    }
+
     return RemoteAppRelease(
       version: version,
-      downloadURL: stableDownloadURL,
+      downloadURL: downloadURL,
       releaseURL: releaseURL
     )
   }
@@ -223,7 +263,7 @@ final class AppUpdateService: AppUpdateServicing {
   }
 
   func latestRemoteRelease() async -> RemoteAppRelease? {
-    var request = URLRequest(url: AppReleaseFeed.latestReleaseAPIURL)
+    var request = URLRequest(url: AppReleaseFeed.releasesAPIURL)
     request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
     request.timeoutInterval = 15
     guard let (data, response) = try? await URLSession.shared.data(for: request),

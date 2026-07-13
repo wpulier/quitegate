@@ -237,7 +237,7 @@ struct ProductHeader: View {
         Button {
           NSWorkspace.shared.open(release.downloadURL)
         } label: {
-          QGIconButtonLabel(title: "Get \(release.version.displayText)", systemImage: "arrow.down.circle")
+          QGIconButtonLabel(title: "New update available", systemImage: "arrow.down.circle")
         }
         .buttonStyle(QGPrimaryButtonStyle())
         .help(store.appUpdateDetail)

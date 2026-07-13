@@ -35,7 +35,7 @@ declare global {
 
 export function ExtensionConnectClient({ payload }: { payload: ConnectPayload }) {
   const [status, setStatus] = useState<"pending" | "connected" | "failed">("pending");
-  const [message, setMessage] = useState("Linking Tortoise for Chrome...");
+  const [message, setMessage] = useState("Securely linking this Chrome profile...");
 
   useEffect(() => {
     const sendMessage = window.chrome?.runtime?.sendMessage;
@@ -67,7 +67,7 @@ export function ExtensionConnectClient({ payload }: { payload: ConnectPayload })
 
         if (response?.ok) {
           setStatus("connected");
-          setMessage("Tortoise for Chrome is connected. You can close this tab.");
+          setMessage("QuietGate is connected. Your protection policy is syncing now; you can close this tab.");
           return;
         }
 
@@ -78,25 +78,30 @@ export function ExtensionConnectClient({ payload }: { payload: ConnectPayload })
   }, [payload]);
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-      <p className="text-sm font-medium text-zinc-500">Chrome extension</p>
-      <p className="mt-2 text-2xl font-semibold text-zinc-950">
-        {status === "connected"
-          ? "Connected"
-          : status === "failed"
-            ? "Needs attention"
-            : "Connecting"}
+    <section
+      aria-live="polite"
+      className="w-full rounded-2xl border border-zinc-200 bg-white p-6 shadow-[0_18px_54px_rgba(24,24,27,0.09)] sm:p-8"
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#3e63dd]">
+        Step 2 of 2
       </p>
-      <p className="mt-3 text-sm leading-6 text-zinc-600">{message}</p>
+      <h2 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950">
+        {status === "connected"
+          ? "QuietGate is connected."
+          : status === "failed"
+            ? "Connection needs attention."
+            : "Connecting QuietGate..."}
+      </h2>
+      <p className="mt-4 text-sm leading-6 text-zinc-600">{message}</p>
       {status === "failed" ? (
         <button
-          className="mt-5 rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white"
+          className="mt-7 min-h-12 w-full rounded-lg bg-[#3e63dd] px-5 text-sm font-semibold text-white transition hover:bg-[#3456c7] focus:outline-none focus:ring-2 focus:ring-[#3e63dd] focus:ring-offset-2"
           type="button"
           onClick={() => window.location.reload()}
         >
           Try again
         </button>
       ) : null}
-    </div>
+    </section>
   );
 }

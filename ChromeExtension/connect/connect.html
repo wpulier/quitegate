@@ -6,17 +6,18 @@
     <title>QuietGate Browser Helper</title>
     <link rel="stylesheet" href="../popup/popup.css">
   </head>
-  <body>
+  <body class="connect-page">
     <main>
       <header>
-        <h1>QuietGate</h1>
-        <p id="connectStatus">Connecting Browser Helper...</p>
+        <p class="eyebrow">Chrome connection</p>
+        <h1>Connect QuietGate</h1>
+        <p id="connectStatus">Checking this Chrome profile...</p>
       </header>
 
-      <section aria-label="Connection details">
-        <p id="profileDetail">Connected in this browser profile.</p>
-        <p id="connectDetail">QuietGate is sending this browser the latest site tuning and browser rules.</p>
-        <button id="syncNow" type="button">Apply Now</button>
+      <section class="account-panel account-state" aria-label="Connection details">
+        <p id="profileDetail">Checking the extension installation...</p>
+        <p id="connectDetail">QuietGate will open secure account setup if this profile is signed out.</p>
+        <button class="primary-action" id="syncNow" type="button">Continue</button>
       </section>
     </main>
 

@@ -149,11 +149,11 @@ jobs:
           SHA-256:
           ${SHA256}
 
-          Stable latest download:
-          https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/Tortoise.dmg
+          Tortoise download:
+          https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/Tortoise.dmg
 
-          Legacy latest download:
-          https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/QuietGate.dmg
+          Legacy download:
+          https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/QuietGate.dmg
 
           Versioned download:
           https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${{ steps.dmg.outputs.filename }}
@@ -166,5 +166,5 @@ jobs:
           REPO="${GITHUB_REPOSITORY}"
           FILENAME="$(basename "$DMG_PATH")"
           echo "Download URL: https://github.com/$REPO/releases/download/$TAG/$FILENAME"
-          echo "Stable latest download: https://github.com/$REPO/releases/latest/download/Tortoise.dmg"
-          echo "Legacy latest download: https://github.com/$REPO/releases/latest/download/QuietGate.dmg"
+          echo "Tortoise download: https://github.com/$REPO/releases/download/$TAG/Tortoise.dmg"
+          echo "Legacy download: https://github.com/$REPO/releases/download/$TAG/QuietGate.dmg"

@@ -1,3 +1,10 @@
+const accountConnectRequested = new URLSearchParams(globalThis.location?.search || "").get("connect") === "1";
+let accountConnectOpened = false;
+
+if (accountConnectRequested) {
+  document.body.classList.add("connect-page");
+}
+
 const DEFAULT_SETTINGS = {
   mode: "open",
   features: {
@@ -444,13 +451,20 @@ function setButtonBusy(button, busy, label = null) {
 }
 
 function updateAccountStatus(status, settings = {}) {
+  const signedOutAccount = document.querySelector("#signedOutAccount");
+  const signedInAccount = document.querySelector("#signedInAccount");
+  const managedControls = document.querySelector("#managedControls");
   const accountStatus = document.querySelector("#accountStatus");
   const accountDetail = document.querySelector("#accountDetail");
+  const signedInAccountDetail = document.querySelector("#signedInAccountDetail");
   const connectButton = document.querySelector("#connectQuietGate");
   const syncButton = document.querySelector("#syncQuietGate");
   const dashboardButton = document.querySelector("#openDashboard");
   const disconnectButton = document.querySelector("#disconnectQuietGate");
   const requestAllSitesButton = document.querySelector("#requestAllSites");
+  const protectionDetails = document.querySelector("#protectionDetails");
+  const protectionSummary = document.querySelector("#protectionSummary");
+  const localProtectionDetail = document.querySelector("#localProtectionDetail");
   const permissionStatus = document.querySelector("#permissionStatus");
   const incognitoStatus = document.querySelector("#incognitoStatus");
   const localAdultBlocking = document.querySelector("#localAdultBlocking");
@@ -459,21 +473,32 @@ function updateAccountStatus(status, settings = {}) {
   const deviceName = status?.device?.name || "QuietGate for Chrome";
   const policyVersion = status?.policySettingsVersion || settings.policySettingsVersion || null;
 
-  accountStatus.textContent = signedIn
-    ? `Signed in: ${deviceName}`
-    : "Not signed in";
-  accountStatus.dataset.state = signedIn ? "managed" : "manual";
-  accountDetail.textContent = signedIn
-    ? `Policy ${policyVersion || "pending"} · synced ${formatDate(status?.lastSyncAt || settings.extensionLastSyncAt)}`
-    : "Sign in to sync policy from yourtortoise.com.";
+  document.body.dataset.accountState = signedIn ? "signed-in" : "signed-out";
+  signedOutAccount.hidden = signedIn;
+  signedInAccount.hidden = !signedIn;
+  managedControls.hidden = !signedIn;
+
+  accountStatus.textContent = deviceName;
+  accountStatus.dataset.state = "managed";
+  signedInAccountDetail.textContent = `Policy ${policyVersion || "pending"} · synced ${formatDate(status?.lastSyncAt || settings.extensionLastSyncAt)}`;
+  if (!signedIn && !accountDetail.textContent.trim()) {
+    accountDetail.textContent = "Setup opens securely on yourtortoise.com.";
+  }
 
   connectButton.hidden = signedIn;
   syncButton.hidden = !signedIn;
-  dashboardButton.hidden = false;
+  dashboardButton.hidden = !signedIn;
   disconnectButton.hidden = !signedIn;
   requestAllSitesButton.hidden = Boolean(permissions.optionalAllSites);
   localAdultBlocking.closest("label").hidden = signedIn;
   localAdultBlocking.checked = Boolean(status?.localAdultBlockingEnabled);
+  protectionSummary.textContent = signedIn
+    ? "Browser protection"
+    : "Use basic protection without an account";
+  localProtectionDetail.textContent = signedIn
+    ? "QuietGate uses browser permissions to apply the protection policy synced from your account."
+    : "QuietGate can block its packaged adult-domain list on this browser, but these settings will not sync across devices.";
+  protectionDetails.open = signedIn && !permissions.optionalAllSites;
 
   permissionStatus.textContent = permissions.optionalAllSites
     ? "Full web classifier permission is enabled."
@@ -486,6 +511,15 @@ function updateAccountStatus(status, settings = {}) {
 function updateSyncStatus(settings) {
   const status = document.querySelector("#syncStatus");
   const ruleStatus = document.querySelector("#ruleStatus");
+  if (document.body.dataset.accountState !== "signed-in") {
+    status.textContent = "Sign in to finish setup";
+    status.dataset.state = "manual";
+    ruleStatus.textContent = "";
+    ruleStatus.hidden = true;
+    setControlsDisabled(true);
+    return;
+  }
+
   if (settings.source === "smoke" && !settings.nativeSyncError && !settings.extensionSyncError) {
     const count = settings.blockedRuleCount || 0;
     status.textContent = "Connected.";
@@ -566,6 +600,15 @@ async function load() {
   updateAccountStatus(status || statusBeforeSync || {}, settings);
   updateSyncStatus(settings);
   await refreshCurrentSiteTool();
+
+  const accountStatus = status || statusBeforeSync || {};
+  if (accountConnectRequested && !accountStatus.signedIn && !accountConnectOpened) {
+    accountConnectOpened = true;
+    const response = await sendRuntimeMessage({ type: "quietgate.startExtensionConnect" });
+    document.querySelector("#accountDetail").textContent = response?.ok
+      ? "Finish signing in or creating your account in the tab that opened."
+      : response?.error || "Could not open QuietGate sign-in.";
+  }
 }
 
 async function saveFeature(id, checked) {
@@ -650,7 +693,7 @@ document.querySelector("#connectQuietGate").addEventListener("click", async (eve
     setButtonBusy(button, false);
     return;
   }
-  document.querySelector("#accountDetail").textContent = "Finish sign-in on yourtortoise.com.";
+  document.querySelector("#accountDetail").textContent = "Finish signing in or creating your account on yourtortoise.com.";
   setButtonBusy(button, false);
 });
 

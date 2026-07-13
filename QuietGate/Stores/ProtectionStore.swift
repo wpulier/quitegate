@@ -3381,13 +3381,13 @@ final class ProtectionStore: ObservableObject {
 
       let status = browserExtensionStatus(for: browser)
       if status.ready {
-        try await openBrowserHelperPage(browser)
+        try await openBrowserAccountConnectionPage(browser)
         extensionBridgeMessage =
-          "\(browser.displayName) opened. If it does not connect automatically, click Tortoise in \(browser.displayName), then return here."
+          "\(browser.displayName) opened. Finish signing in in the tab that opens; this profile will then appear under your Mac."
       } else if let storeURL = browser.extensionStoreURL {
-        open(storeURL)
+        open(storeURL, in: browser)
         extensionBridgeMessage =
-          "Install Tortoise in \(browser.displayName), then return here. Tortoise checks the connection automatically."
+          "Add QuietGate to \(browser.displayName), then return here and click Connect Chrome extension once more to finish signing in."
       } else if browser == .firefox {
         prepareBrowserExtensionInstall(browser)
         extensionBridgeMessage =
@@ -4602,6 +4602,31 @@ final class ProtectionStore: ObservableObject {
     try await openBrowserHelperPage(.chrome)
   }
 
+  private func openBrowserAccountConnectionPage(_ browser: BrowserConnectorID) async throws {
+    guard let applicationURL = browserApplicationURL(for: browser) else {
+      throw ChromeTunerLaunchError.chromeMissing
+    }
+    guard browser != .firefox,
+          let accountURL = URL(
+            string: "chrome-extension://\(BrowserExtensionBridge.extensionID)/popup/popup.html?connect=1"
+          ) else {
+      try await openBrowserHelperPage(browser)
+      return
+    }
+
+    let configuration = NSWorkspace.OpenConfiguration()
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+      NSWorkspace.shared.open([accountURL], withApplicationAt: applicationURL, configuration: configuration) {
+        _, error in
+        if let error {
+          continuation.resume(throwing: error)
+        } else {
+          continuation.resume()
+        }
+      }
+    }
+  }
+
   private func openBrowserHelperPage(_ browser: BrowserConnectorID) async throws {
     guard let applicationURL = browserApplicationURL(for: browser) else {
       throw ChromeTunerLaunchError.chromeMissing
@@ -4656,6 +4681,21 @@ final class ProtectionStore: ObservableObject {
 
   private func open(_ url: URL) {
     NSWorkspace.shared.open(url)
+  }
+
+  private func open(_ url: URL, in browser: BrowserConnectorID) {
+    guard let applicationURL = browserApplicationURL(for: browser) else {
+      open(url)
+      return
+    }
+
+    let configuration = NSWorkspace.OpenConfiguration()
+    NSWorkspace.shared.open([url], withApplicationAt: applicationURL, configuration: configuration) {
+      _, error in
+      if error != nil {
+        NSWorkspace.shared.open(url)
+      }
+    }
   }
 
   private static func loadBlockedSites(from defaults: UserDefaults) -> [BlockedSiteRule] {

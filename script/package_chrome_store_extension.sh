@@ -30,6 +30,7 @@ node "$ROOT_DIR/script/rewrite_chrome_store_manifest.mjs" "$DIST_DIR/manifest.js
 
 node --check "$DIST_DIR/background.js"
 node --check "$DIST_DIR/popup/popup.js"
+node --check "$DIST_DIR/connect/connect.js"
 node --check "$DIST_DIR/content/x-page.js"
 node --check "$DIST_DIR/content/x.js"
 node --check "$DIST_DIR/content/reddit.js"

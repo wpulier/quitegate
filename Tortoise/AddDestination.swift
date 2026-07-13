@@ -1,8 +1,7 @@
 import Foundation
 
-/// What the user can add to their Tortoise account. Each maps to the web page
-/// that gets Tortoise onto that thing; after sign-in it appears in the hub.
-/// Account-based — there are no pairing codes.
+/// What the user can add to their Tortoise account. Phone and computer use a
+/// download handoff; the Mac app handles the Chrome-extension connection itself.
 enum AddDestination: String, CaseIterable, Identifiable {
   case phone
   case computer
@@ -14,7 +13,7 @@ enum AddDestination: String, CaseIterable, Identifiable {
     switch self {
     case .phone: return "Phone"
     case .computer: return "Computer"
-    case .browser: return "Browser"
+    case .browser: return "Chrome extension"
     }
   }
 
@@ -22,7 +21,7 @@ enum AddDestination: String, CaseIterable, Identifiable {
     switch self {
     case .phone: return "iphone"
     case .computer: return "desktopcomputer"
-    case .browser: return "globe"
+    case .browser: return "puzzlepiece.extension"
     }
   }
 
@@ -30,7 +29,7 @@ enum AddDestination: String, CaseIterable, Identifiable {
   var caption: String {
     switch self {
     case .phone, .computer: return "Install Tortoise, sign in — it appears here."
-    case .browser: return "Add the extension, sign in — it appears here."
+    case .browser: return "Install it if needed, then connect your account in Chrome."
     }
   }
 

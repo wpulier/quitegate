@@ -27,6 +27,14 @@ function walk(dir, files = []) {
   return files;
 }
 
+function isStoreVersionAtLeastOne(version) {
+  if (!/^\d+(?:\.\d+){0,3}$/.test(version)) {
+    return false;
+  }
+  const [major = 0] = version.split(".").map(Number);
+  return major >= 1;
+}
+
 const manifest = readJSON(path.join(distDir, "manifest.json"));
 const permissions = new Set(manifest.permissions || []);
 const hosts = new Set(manifest.host_permissions || []);
@@ -36,8 +44,8 @@ const contentScriptFiles = (manifest.content_scripts || []).flatMap((script) => 
 if (manifest.name !== "QuietGate: Focus & Adult Blocker") {
   fail("Store manifest name is not the production listing name.");
 }
-if (manifest.version !== "1.0.0") {
-  fail("Store manifest version must start at 1.0.0.");
+if (!isStoreVersionAtLeastOne(manifest.version)) {
+  fail("Store manifest version must be a valid Chrome version at or above 1.0.0.");
 }
 if (manifest.key) {
   fail("Store manifest must not include the development key; Chrome Web Store should assign the production ID.");
