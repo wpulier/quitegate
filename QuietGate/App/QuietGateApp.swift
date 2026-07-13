@@ -56,6 +56,12 @@ struct QuietGateApp: App {
     .windowStyle(.hiddenTitleBar)
     .commands {
       CommandGroup(replacing: .newItem) {}
+      CommandGroup(after: .appInfo) {
+        Button("Check for Updates…") {
+          store.refreshAppUpdateStatus()
+        }
+        .keyboardShortcut("u", modifiers: [.command, .shift])
+      }
       CommandGroup(replacing: .appTermination) {
         Button("Quit Tortoise") {
           NSApp.terminate(nil)
