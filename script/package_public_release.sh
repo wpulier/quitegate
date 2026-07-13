@@ -13,6 +13,12 @@ DERIVED_DATA="$BUILD_ROOT/DerivedData"
 DMG_ROOT="$BUILD_ROOT/dmg-root"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DERIVED_DATA/Build/Products/Release/$APP_NAME.app"
+SPARKLE_FRAMEWORK="$APP_BUNDLE/Contents/Frameworks/Sparkle.framework"
+SPARKLE_VERSION="$SPARKLE_FRAMEWORK/Versions/Current"
+SPARKLE_AUTOUPDATE="$SPARKLE_VERSION/Autoupdate"
+SPARKLE_UPDATER="$SPARKLE_VERSION/Updater.app"
+SPARKLE_DOWNLOADER="$SPARKLE_VERSION/XPCServices/Downloader.xpc"
+SPARKLE_INSTALLER="$SPARKLE_VERSION/XPCServices/Installer.xpc"
 NATIVE_HOST="$APP_BUNDLE/Contents/Resources/quietgate-native-host"
 CHROME_EXTENSION="$APP_BUNDLE/Contents/Resources/ChromeExtension/manifest.json"
 FIREFOX_EXTENSION="$APP_BUNDLE/Contents/Resources/FirefoxExtension/manifest.json"
@@ -151,6 +157,30 @@ detect_developer_id_application() {
     head -n 1
 }
 
+sign_sparkle_components() {
+  local identity="$1"
+  local timestamp_args=()
+
+  if [[ "$identity" != "-" ]]; then
+    timestamp_args=(--timestamp)
+  fi
+
+  # Sparkle ships pre-signed helper executables inside its framework. Xcode's
+  # package embed phase signs the framework wrapper but leaves those helpers
+  # ad-hoc signed, which Apple notarization rejects. Re-sign every code object
+  # from the inside out, retaining Sparkle's required identifiers/entitlements.
+  codesign --force "${timestamp_args[@]}" --options runtime \
+    --preserve-metadata=identifier,entitlements,flags --sign "$identity" "$SPARKLE_AUTOUPDATE"
+  codesign --force "${timestamp_args[@]}" --options runtime \
+    --preserve-metadata=identifier,entitlements,flags --sign "$identity" "$SPARKLE_DOWNLOADER"
+  codesign --force "${timestamp_args[@]}" --options runtime \
+    --preserve-metadata=identifier,entitlements,flags --sign "$identity" "$SPARKLE_INSTALLER"
+  codesign --force "${timestamp_args[@]}" --options runtime \
+    --preserve-metadata=identifier,entitlements,flags --sign "$identity" "$SPARKLE_UPDATER"
+  codesign --force "${timestamp_args[@]}" --options runtime \
+    --preserve-metadata=identifier,entitlements,flags --sign "$identity" "$SPARKLE_FRAMEWORK"
+}
+
 require_public_signing() {
   if [[ -z "$APP_SIGN_IDENTITY" ]]; then
     APP_SIGN_IDENTITY="$(detect_developer_id_application)"
@@ -252,6 +282,10 @@ fi
 xcodebuild "${BUILD_ARGS[@]}"
 
 [[ -d "$APP_BUNDLE" ]] || fail "Release app was not produced at $APP_BUNDLE"
+[[ -x "$SPARKLE_AUTOUPDATE" ]] || fail "Sparkle Autoupdate helper is missing."
+[[ -d "$SPARKLE_UPDATER" ]] || fail "Sparkle Updater app is missing."
+[[ -d "$SPARKLE_DOWNLOADER" ]] || fail "Sparkle Downloader service is missing."
+[[ -d "$SPARKLE_INSTALLER" ]] || fail "Sparkle Installer service is missing."
 [[ -x "$NATIVE_HOST" ]] || fail "Bundled native host is missing or not executable."
 [[ -f "$CHROME_EXTENSION" ]] || fail "Bundled browser extension manifest is missing."
 [[ -f "$FIREFOX_EXTENSION" ]] || fail "Bundled Firefox extension manifest is missing."
@@ -316,10 +350,12 @@ fi
 
 if [[ "$MODE" == "local" ]]; then
   log "Applying local ad-hoc signatures"
+  sign_sparkle_components "-"
   codesign --force --options runtime --sign - "$NATIVE_HOST"
   codesign --force --options runtime --sign - "$APP_BUNDLE"
 else
   log "Applying Developer ID signatures"
+  sign_sparkle_components "$APP_SIGN_IDENTITY"
   codesign --force --timestamp --options runtime --sign "$APP_SIGN_IDENTITY" "$NATIVE_HOST"
   codesign --force --timestamp --options runtime --sign "$APP_SIGN_IDENTITY" "$APP_BUNDLE"
 fi
