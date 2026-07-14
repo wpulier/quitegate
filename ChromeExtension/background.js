@@ -2270,9 +2270,14 @@ function ensureRemoteSyncAlarm() {
   });
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   ensureRemoteSyncAlarm();
   syncQuietGateSettings({ forceApply: true });
+  if (details?.reason === "install") {
+    startExtensionConnect().catch(() => {
+      // The popup remains available if Chrome cannot open onboarding automatically.
+    });
+  }
 });
 
 chrome.runtime.onStartup.addListener(() => {

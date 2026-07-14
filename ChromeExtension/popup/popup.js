@@ -477,12 +477,13 @@ function updateAccountStatus(status, settings = {}) {
   signedOutAccount.hidden = signedIn;
   signedInAccount.hidden = !signedIn;
   managedControls.hidden = !signedIn;
+  protectionDetails.hidden = !signedIn;
 
   accountStatus.textContent = deviceName;
   accountStatus.dataset.state = "managed";
   signedInAccountDetail.textContent = `Policy ${policyVersion || "pending"} · synced ${formatDate(status?.lastSyncAt || settings.extensionLastSyncAt)}`;
   if (!signedIn && !accountDetail.textContent.trim()) {
-    accountDetail.textContent = "Setup opens securely on yourtortoise.com.";
+    accountDetail.textContent = "Secure sign-in opens on yourtortoise.com.";
   }
 
   connectButton.hidden = signedIn;
@@ -492,12 +493,8 @@ function updateAccountStatus(status, settings = {}) {
   requestAllSitesButton.hidden = Boolean(permissions.optionalAllSites);
   localAdultBlocking.closest("label").hidden = signedIn;
   localAdultBlocking.checked = Boolean(status?.localAdultBlockingEnabled);
-  protectionSummary.textContent = signedIn
-    ? "Browser protection"
-    : "Use basic protection without an account";
-  localProtectionDetail.textContent = signedIn
-    ? "QuietGate uses browser permissions to apply the protection policy synced from your account."
-    : "QuietGate can block its packaged adult-domain list on this browser, but these settings will not sync across devices.";
+  protectionSummary.textContent = "Browser protection";
+  localProtectionDetail.textContent = "QuietGate uses browser permissions to apply the protection policy synced from your account.";
   protectionDetails.open = signedIn && !permissions.optionalAllSites;
 
   permissionStatus.textContent = permissions.optionalAllSites
@@ -693,7 +690,7 @@ document.querySelector("#connectQuietGate").addEventListener("click", async (eve
     setButtonBusy(button, false);
     return;
   }
-  document.querySelector("#accountDetail").textContent = "Finish signing in or creating your account on yourtortoise.com.";
+  document.querySelector("#accountDetail").textContent = "Sign in with the same Tortoise account you use in the app.";
   setButtonBusy(button, false);
 });
 

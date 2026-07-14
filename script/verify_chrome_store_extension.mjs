@@ -36,6 +36,9 @@ function isStoreVersionAtLeastOne(version) {
 }
 
 const manifest = readJSON(path.join(distDir, "manifest.json"));
+const popupHTML = fs.readFileSync(path.join(distDir, "popup", "popup.html"), "utf8");
+const popupJS = fs.readFileSync(path.join(distDir, "popup", "popup.js"), "utf8");
+const backgroundJS = fs.readFileSync(path.join(distDir, "background.js"), "utf8");
 const permissions = new Set(manifest.permissions || []);
 const hosts = new Set(manifest.host_permissions || []);
 const optionalHosts = new Set(manifest.optional_host_permissions || []);
@@ -83,6 +86,18 @@ for (const requiredHost of [
 }
 if (contentScriptFiles.includes("content/web-classifier.js")) {
   fail("Global web-classifier.js must not be statically injected in the store build.");
+}
+if (!/<details\s+id="protectionDetails"[^>]*\shidden(?:\s|>)/.test(popupHTML)) {
+  fail("Signed-out popup must hide browser protection controls by default.");
+}
+if (!popupHTML.includes("Use the same Tortoise account as your Mac app")) {
+  fail("Signed-out popup must explain which account to use.");
+}
+if (!popupJS.includes("protectionDetails.hidden = !signedIn")) {
+  fail("Signed-out popup must keep browser protection controls hidden until connected.");
+}
+if (!backgroundJS.includes('details?.reason === "install"') || !backgroundJS.includes("startExtensionConnect().catch")) {
+  fail("Fresh installs must open QuietGate account setup automatically.");
 }
 for (const requiredFile of [
   "background.js",

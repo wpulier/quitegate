@@ -20,17 +20,22 @@
 
       <section class="account-panel" aria-label="QuietGate account">
         <div id="signedOutAccount" class="account-state" hidden>
-          <p class="eyebrow">Account required</p>
-          <h2>Set up QuietGate</h2>
+          <p class="eyebrow">Connect your account</p>
+          <h2>Connect QuietGate</h2>
           <p class="account-lead">
-            Sign in or create an account to sync protection, choose what gets
-            quieted, and keep your settings across devices.
+            Use the same Tortoise account as your Mac app. Sign in with Google
+            or email, and this Chrome profile will connect automatically.
           </p>
+          <ol class="connection-steps" aria-label="How to connect QuietGate">
+            <li>Open secure account setup</li>
+            <li>Sign in to your Tortoise account</li>
+            <li>Return to Chrome connected</li>
+          </ol>
           <button id="connectQuietGate" class="primary-action" type="button">
-            Sign in or create account
+            Connect to Tortoise
           </button>
           <p id="accountDetail" class="status-message" role="status">
-            Setup opens securely on yourtortoise.com.
+            Secure sign-in opens on yourtortoise.com.
           </p>
         </div>
 
@@ -47,8 +52,8 @@
           </button>
         </div>
 
-        <details id="protectionDetails" class="protection-details">
-          <summary id="protectionSummary">Use basic protection without an account</summary>
+        <details id="protectionDetails" class="protection-details" hidden>
+          <summary id="protectionSummary">Browser protection</summary>
           <div class="protection-body">
             <p id="localProtectionDetail">
               QuietGate can block its packaged adult-domain list on this browser,
