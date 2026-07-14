@@ -405,6 +405,23 @@ private struct QGSidebar: View {
             .lineLimit(1)
         }
         Spacer()
+        if accountStore.connectionFailed {
+          Button {
+            Task {
+              await accountStore.refresh(
+                using: clerk,
+                protectionStore: store,
+                appBlockingStore: appBlockingStore
+              )
+            }
+          } label: {
+            Image(systemName: "arrow.clockwise")
+              .font(.system(size: 12, weight: .semibold))
+          }
+          .buttonStyle(.plain)
+          .disabled(accountStore.isSyncing)
+          .help("Retry account connection")
+        }
         Button {
           Task {
             try? await clerk.auth.signOut()

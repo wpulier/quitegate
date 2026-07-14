@@ -100,6 +100,7 @@
 		892955A4A477E4376F3DF52A /* DevicePresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8035DE489271EB4A91BB265 /* DevicePresentationTests.swift */; };
 		8A7AF896F29A4020AAFFD280 /* ManagedAppsShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE21A6D780AE1315B1568046 /* ManagedAppsShield.swift */; };
 		8D20EF9AE25F06A09A01474F /* DomainNormalizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6944D52F2EE3C2932CBF81C8 /* DomainNormalizerTests.swift */; };
+		8FD359A5138252566B2FD104 /* MacAccountStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D4A2915877EAABB7B8C5222 /* MacAccountStoreTests.swift */; };
 		90A5828AF027FF81A3A6CA2D /* UsageHistoryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FABC8634F2CB724D2D0E5D5 /* UsageHistoryModel.swift */; };
 		918CCE47CA5D5E2589A1C008 /* BrowserBlockingProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD060675917B9A856F4283E /* BrowserBlockingProviderTests.swift */; };
 		9191AEB898852CDB30E88AF4 /* TuningCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757A5D57092B4F4269D2951E /* TuningCatalogTests.swift */; };
@@ -338,6 +339,7 @@
 		97E83559A72E96D37ED558E9 /* ProtectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStore.swift; sourceTree = "<group>"; };
 		992885591B8276341DD0BDF4 /* ConnectionStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionStatusTests.swift; sourceTree = "<group>"; };
 		9A4E779C54400A7FC44E8947 /* AppUpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateService.swift; sourceTree = "<group>"; };
+		9D4A2915877EAABB7B8C5222 /* MacAccountStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAccountStoreTests.swift; sourceTree = "<group>"; };
 		9F2C718927D45622BE95F8A6 /* AccessMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessMode.swift; sourceTree = "<group>"; };
 		9F7B76D891082F36C398A7E7 /* SiteUsageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteUsageModels.swift; sourceTree = "<group>"; };
 		A10484E7F6F5747D99616D28 /* ProtectionStoreTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtectionStoreTestDoubles.swift; sourceTree = "<group>"; };
@@ -735,6 +737,7 @@
 				7D3EE7BB77D46C6962113AB7 /* IOSSessionTests.swift */,
 				64068B2176796EB698696941 /* LaunchRecoveryTests.swift */,
 				796DCF69F414995876D12C7D /* LocalMacBlockingProviderTests.swift */,
+				9D4A2915877EAABB7B8C5222 /* MacAccountStoreTests.swift */,
 				F81156D2F66A05B6CD2EB542 /* ManagedAppsShieldTests.swift */,
 				899CA3F2232649843D526BBF /* PlatformControlsTests.swift */,
 				073822B35759D9C7DB8672A9 /* PlatformSafetyModelTests.swift */,
@@ -1176,6 +1179,7 @@
 				4AAA8C9BAAB934827A3D12DA /* IOSSessionTests.swift in Sources */,
 				A31661E70FC2477294B8FBEF /* LaunchRecoveryTests.swift in Sources */,
 				CAB87C4B96F2644084DC7581 /* LocalMacBlockingProviderTests.swift in Sources */,
+				8FD359A5138252566B2FD104 /* MacAccountStoreTests.swift in Sources */,
 				C4FB34486DA6C0A2C152DA64 /* ManagedAppsShieldTests.swift in Sources */,
 				5A780BFD47C88A796A6E723D /* PlatformControlsTests.swift in Sources */,
 				38DCF110DED871E5F07F5A99 /* PlatformSafetyModelTests.swift in Sources */,
@@ -1425,7 +1429,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1508,7 +1512,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 21;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SY7TABCD5M;
 				ENABLE_NS_ASSERTIONS = NO;

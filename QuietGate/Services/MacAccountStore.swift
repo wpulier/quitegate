@@ -76,10 +76,17 @@ final class MacAccountStore: ObservableObject {
     case .conflict:
       return "Settings changed"
     case .failed:
-      return "Reconnect account"
+      return "Connection failed"
     case .stale:
       return "Setup needed"
     }
+  }
+
+  var connectionFailed: Bool {
+    if case .failed = syncState {
+      return true
+    }
+    return false
   }
 
   var connectedDeviceCount: Int {
@@ -174,10 +181,19 @@ final class MacAccountStore: ObservableObject {
         syncMessage = "This Mac is connected. Policy and local enforcement are current."
       }
     } catch {
-      sessionState = .syncUnavailable(error.localizedDescription)
-      syncState = .failed(error.localizedDescription)
-      syncMessage = error.localizedDescription
+      let message = Self.userFacingSyncMessage(for: error)
+      sessionState = .syncUnavailable(message)
+      syncState = .failed(message)
+      syncMessage = message
     }
+  }
+
+  private static func userFacingSyncMessage(for error: Error) -> String {
+    if case .server(let message) = error as? TortoiseAPIError,
+       message.localizedCaseInsensitiveContains("unauthorized") {
+      return "Account connection failed. Retry, or sign out and sign in again."
+    }
+    return error.localizedDescription
   }
 
   /// Refreshes just the cross-device usage summary. Lightweight enough to
