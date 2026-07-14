@@ -1456,13 +1456,32 @@ async function verifyPopupManagedState(context) {
     await popup.waitForFunction(() => document.querySelector("#syncStatus")?.dataset.state === "managed", null, { timeout: 10000 });
     const state = await popup.evaluate(() => ({
       status: document.querySelector("#syncStatus")?.textContent,
-      modeDisabled: document.querySelector("#mode")?.disabled,
+      mode: document.querySelector("#modeStatus")?.textContent,
+      allSitesCollapsed: [...document.querySelectorAll("[data-tune-site]")]
+        .every((button) => button.getAttribute("aria-expanded") === "false"),
+      emptyStateVisible: !document.querySelector("#emptyTuneState")?.hidden,
       featureDisabled: document.querySelector("#youtubeComments")?.disabled,
-      optionDisabled: document.querySelector("#explicitHideStyle")?.disabled,
       limitMinutesDisabled: document.querySelector("#youtubeDailyLimitMinutes")?.disabled
     }));
-    if (!/^Connected(\.| in\b)/.test(state.status || "") || !state.modeDisabled || !state.featureDisabled || !state.optionDisabled || !state.limitMinutesDisabled) {
+    if (
+      state.status !== "Synced with Tortoise" ||
+      state.mode !== "Focus" ||
+      !state.allSitesCollapsed ||
+      !state.emptyStateVisible ||
+      !state.featureDisabled ||
+      !state.limitMinutesDisabled
+    ) {
       throw new Error(`Popup managed state mismatch: ${JSON.stringify(state)}`);
+    }
+
+    await popup.locator('[data-tune-site="youtube"]').click();
+    if (await popup.locator("#youtubePanel").isHidden() || !(await popup.locator("#emptyTuneState").isHidden())) {
+      throw new Error("Popup did not disclose YouTube settings.");
+    }
+
+    await popup.locator('[data-tune-site="x"]').click();
+    if (!(await popup.locator("#youtubePanel").isHidden()) || await popup.locator("#xPanel").isHidden()) {
+      throw new Error("Popup did not keep Tune disclosure to one site at a time.");
     }
   } finally {
     await popup.close();

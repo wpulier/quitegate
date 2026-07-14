@@ -1,160 +1,190 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QuietGate</title>
     <link rel="stylesheet" href="popup.css">
   </head>
   <body data-account-state="loading">
-    <main>
-      <header>
-        <div>
-          <p class="product-label">QuietGate</p>
-          <h1>Focus &amp; Adult Blocker</h1>
-        </div>
-        <div class="sync-summary">
-          <p id="syncStatus">Checking account...</p>
+    <main class="popup-shell">
+      <header class="app-header">
+        <div class="brand-lockup">
+          <p class="product-name">QuietGate</p>
+          <p id="syncStatus" class="connection-copy">Checking account...</p>
           <p id="ruleStatus" hidden></p>
         </div>
-      </header>
 
-      <section class="account-panel" aria-label="QuietGate account">
-        <div id="signedOutAccount" class="account-state" hidden>
-          <p class="eyebrow">Connect your account</p>
-          <h2>Connect QuietGate</h2>
-          <p class="account-lead">
-            Use the same Tortoise account as your Mac app. Sign in with Google
-            or email, and this Chrome profile will connect automatically.
-          </p>
-          <ol class="connection-steps" aria-label="How to connect QuietGate">
-            <li>Open secure account setup</li>
-            <li>Sign in to your Tortoise account</li>
-            <li>Return to Chrome connected</li>
-          </ol>
-          <button id="connectQuietGate" class="primary-action" type="button">
-            Connect to Tortoise
-          </button>
-          <p id="accountDetail" class="status-message" role="status">
-            Secure sign-in opens on yourtortoise.com.
-          </p>
-        </div>
+        <details id="accountMenu" class="account-menu">
+          <summary>
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="accountMenuLabel">Checking</span>
+          </summary>
+          <div class="account-popover">
+            <div id="signedInAccount" class="account-state" hidden>
+              <p class="eyebrow">QuietGate account</p>
+              <h2 id="accountStatus">Checking account...</h2>
+              <p id="signedInAccountDetail" class="account-lead"></p>
+              <div class="button-row">
+                <button id="syncQuietGate" class="primary-action" type="button">Sync now</button>
+                <button id="openDashboard" class="secondary-action" type="button">Dashboard</button>
+              </div>
+              <button id="disconnectQuietGate" class="text-action" type="button">
+                Disconnect this extension
+              </button>
+            </div>
 
-        <div id="signedInAccount" class="account-state" hidden>
-          <p class="eyebrow">QuietGate account</p>
-          <h2 id="accountStatus">Checking account...</h2>
-          <p id="signedInAccountDetail" class="account-lead"></p>
-          <div class="button-row">
-            <button id="syncQuietGate" class="primary-action" type="button">Sync now</button>
-            <button id="openDashboard" class="secondary-action" type="button">Dashboard</button>
-          </div>
-          <button id="disconnectQuietGate" class="text-action" type="button">
-            Disconnect this extension
-          </button>
-        </div>
-
-        <details id="protectionDetails" class="protection-details" hidden>
-          <summary id="protectionSummary">Browser protection</summary>
-          <div class="protection-body">
-            <p id="localProtectionDetail">
-              QuietGate can block its packaged adult-domain list on this browser,
-              but these settings will not sync across devices.
-            </p>
-            <label class="local-adult">
-              <input id="localAdultBlocking" type="checkbox">
-              Block known adult sites on this browser
-            </label>
-            <button id="requestAllSites" class="secondary-action" type="button">
-              Enable full web protection
-            </button>
-            <p id="permissionStatus"></p>
-            <p id="incognitoStatus"></p>
+            <details id="protectionDetails" class="protection-details" hidden>
+              <summary id="protectionSummary">Browser protection</summary>
+              <div class="protection-body">
+                <p id="localProtectionDetail">
+                  QuietGate applies the protection policy synced from your account.
+                </p>
+                <label class="local-adult">
+                  <input id="localAdultBlocking" type="checkbox">
+                  Block known adult sites on this browser
+                </label>
+                <button id="requestAllSites" class="secondary-action" type="button">
+                  Enable full web protection
+                </button>
+                <p id="permissionStatus"></p>
+                <p id="incognitoStatus"></p>
+              </div>
+            </details>
           </div>
         </details>
+      </header>
+
+      <section id="signedOutAccount" class="connect-card" hidden>
+        <p class="eyebrow">Account required</p>
+        <h1>Connect QuietGate</h1>
+        <p class="account-lead">
+          Use the same Tortoise account as your Mac app. Your browser tuning will appear here automatically.
+        </p>
+        <button id="connectQuietGate" class="primary-action" type="button">
+          Sign in or create account
+        </button>
+        <p id="accountDetail" class="status-message" role="status">
+          Secure sign-in opens on yourtortoise.com.
+        </p>
       </section>
 
-      <div id="managedControls" class="managed-controls" hidden>
-        <section class="current-site" aria-label="Current site">
-          <p class="eyebrow">Current site</p>
-          <p id="currentSiteStatus">Current site tools</p>
-          <button id="reportAdultSite" class="secondary-action" type="button">Block current site</button>
+      <section id="managedControls" class="tune-view" hidden aria-labelledby="tuneTitle">
+        <div class="tune-heading">
+          <div>
+            <h1 id="tuneTitle">Tune</h1>
+            <p>Choose a site to see what QuietGate hides.</p>
+          </div>
+          <span id="modeStatus" class="mode-pill">Open</span>
+        </div>
+
+        <div class="site-grid" aria-label="Tunable sites">
+          <button class="site-tile" type="button" data-tune-site="youtube" aria-expanded="false" aria-controls="youtubePanel">
+            <span class="brand-mark"><img src="../assets/brands/youtube.svg" alt=""></span>
+            <span class="site-copy"><strong>YouTube</strong><span id="youtubeCount">0/23 hidden</span></span>
+          </button>
+          <button class="site-tile" type="button" data-tune-site="x" aria-expanded="false" aria-controls="xPanel">
+            <span class="brand-mark brand-mark-x"><img src="../assets/brands/x.svg" alt=""></span>
+            <span class="site-copy"><strong>X</strong><span id="xCount">0/7 hidden</span></span>
+          </button>
+          <button class="site-tile" type="button" data-tune-site="instagram" aria-expanded="false" aria-controls="instagramPanel">
+            <span class="brand-mark"><img src="../assets/brands/instagram.svg" alt=""></span>
+            <span class="site-copy"><strong>Instagram</strong><span id="instagramCount">0/7 hidden</span></span>
+          </button>
+          <button class="site-tile" type="button" data-tune-site="reddit" aria-expanded="false" aria-controls="redditPanel">
+            <span class="brand-mark"><img src="../assets/brands/reddit.svg" alt=""></span>
+            <span class="site-copy"><strong>Reddit</strong><span id="redditCount">0/5 hidden</span></span>
+          </button>
+        </div>
+
+        <div id="emptyTuneState" class="empty-tune-state">
+          <p>Select a site above. Everything stays tucked away until you need it.</p>
+        </div>
+
+        <section id="youtubePanel" class="tune-panel" data-tune-panel="youtube" hidden aria-label="YouTube tune settings">
+          <div class="panel-heading">
+            <span class="brand-mark"><img src="../assets/brands/youtube.svg" alt=""></span>
+            <div><h2>YouTube cleanup</h2><p id="youtubePanelCount">0 of 23 hidden</p></div>
+          </div>
+          <div class="settings-list">
+            <label class="tune-setting"><span>Hide YouTube Home</span><input id="youtubeHome" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Video Sidebar</span><input id="youtubeVideoSidebar" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Recommended</span><input id="youtubeRecommendations" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Live Chat</span><input id="youtubeLiveChat" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Playlists</span><input id="youtubePlaylists" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Fundraisers</span><input id="youtubeFundraisers" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide End Screen Feed</span><input id="youtubeEndScreens" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide End Screen Cards</span><input id="youtubeEndScreenCards" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Shorts</span><input id="youtubeShorts" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Comments</span><input id="youtubeComments" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Mixes</span><input id="youtubeMixes" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Merch, Tickets, Offers</span><input id="youtubeMerch" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Video Info</span><input id="youtubeVideoInfo" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Top Header</span><input id="youtubeTopHeader" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Notifications</span><input id="youtubeNotifications" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Inapt Search Results</span><input id="youtubeSearch" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Explore and Trending</span><input id="youtubeExplore" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide More from YouTube</span><input id="youtubeMoreFromYouTube" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Subscriptions</span><input id="youtubeSubscriptions" type="checkbox"></label>
+            <label class="tune-setting"><span>Disable Autoplay</span><input id="youtubeAutoplay" type="checkbox"></label>
+            <label class="tune-setting"><span>Disable Annotations</span><input id="youtubeAnnotations" type="checkbox"></label>
+            <label class="tune-setting"><span>Track YouTube Time</span><input id="youtubeUsageTracking" type="checkbox"></label>
+            <label class="tune-setting"><span>Enforce Daily Time Limit</span><input id="youtubeDailyLimit" type="checkbox"></label>
+            <label class="minutes-setting"><span>Daily limit</span><input id="youtubeDailyLimitMinutes" type="number" min="5" max="480" step="5"><span>min</span></label>
+          </div>
         </section>
 
-        <label class="field">
-          <span>Mode</span>
-          <select id="mode">
-            <option value="open">Open</option>
-            <option value="focus">Focus</option>
-            <option value="strict">Strict</option>
-          </select>
-        </label>
-
-        <section aria-label="YouTube rules">
-        <label><input id="youtubeHome" type="checkbox"> Hide YouTube Home</label>
-        <label><input id="youtubeVideoSidebar" type="checkbox"> Hide Video Sidebar</label>
-        <label><input id="youtubeRecommendations" type="checkbox"> Hide Recommended</label>
-        <label><input id="youtubeLiveChat" type="checkbox"> Hide Live Chat</label>
-        <label><input id="youtubePlaylists" type="checkbox"> Hide Playlists</label>
-        <label><input id="youtubeFundraisers" type="checkbox"> Hide Fundraisers</label>
-        <label><input id="youtubeEndScreens" type="checkbox"> Hide End Screen Feed</label>
-        <label><input id="youtubeEndScreenCards" type="checkbox"> Hide End Screen Cards</label>
-        <label><input id="youtubeShorts" type="checkbox"> Hide Shorts</label>
-        <label><input id="youtubeComments" type="checkbox"> Hide Comments</label>
-        <label><input id="youtubeMixes" type="checkbox"> Hide Mixes</label>
-        <label><input id="youtubeMerch" type="checkbox"> Hide Merch, Tickets, Offers</label>
-        <label><input id="youtubeVideoInfo" type="checkbox"> Hide Video Info</label>
-        <label><input id="youtubeTopHeader" type="checkbox"> Hide Top Header</label>
-        <label><input id="youtubeNotifications" type="checkbox"> Hide Notifications</label>
-        <label><input id="youtubeSearch" type="checkbox"> Hide Inapt Search Results</label>
-        <label><input id="youtubeExplore" type="checkbox"> Hide Explore and Trending</label>
-        <label><input id="youtubeMoreFromYouTube" type="checkbox"> Hide More from YouTube</label>
-        <label><input id="youtubeSubscriptions" type="checkbox"> Hide Subscriptions</label>
-        <label><input id="youtubeAutoplay" type="checkbox"> Disable Autoplay</label>
-        <label><input id="youtubeAnnotations" type="checkbox"> Disable Annotations</label>
-        <label><input id="youtubeUsageTracking" type="checkbox"> Track Time and Videos</label>
-        <label><input id="youtubeDailyLimit" type="checkbox"> Enforce Daily Time Limit</label>
-        <label class="field">
-          <span>Daily limit minutes</span>
-          <input id="youtubeDailyLimitMinutes" type="number" min="5" max="480" step="5">
-        </label>
+        <section id="xPanel" class="tune-panel" data-tune-panel="x" hidden aria-label="X tune settings">
+          <div class="panel-heading">
+            <span class="brand-mark brand-mark-x"><img src="../assets/brands/x.svg" alt=""></span>
+            <div><h2>X cleanup</h2><p id="xPanelCount">0 of 7 hidden</p></div>
+          </div>
+          <div class="settings-list">
+            <label class="tune-setting"><span>Hide Sensitive Media</span><input id="xSensitiveMedia" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Explicit-Cue Posts</span><input id="xExplicitContent" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Explicit Search Results</span><input id="xExplicitSearch" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Videos and GIFs</span><input id="xVideos" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Tweet Photos</span><input id="xPhotos" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Media Cards</span><input id="xMediaCards" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Explore and Trends</span><input id="xExploreTrends" type="checkbox"></label>
+          </div>
         </section>
 
-        <section aria-label="X rules">
-        <label><input id="xSensitiveMedia" type="checkbox"> Hide Sensitive Media</label>
-        <label><input id="xExplicitContent" type="checkbox"> Hide Explicit-Cue Posts</label>
-        <label><input id="xExplicitSearch" type="checkbox"> Hide Explicit Search Results</label>
-        <label><input id="xVideos" type="checkbox"> Hide Videos and GIFs</label>
-        <label><input id="xPhotos" type="checkbox"> Hide Tweet Photos</label>
-        <label><input id="xMediaCards" type="checkbox"> Hide Media Cards</label>
-        <label><input id="xExploreTrends" type="checkbox"> Hide Explore and Trends</label>
+        <section id="instagramPanel" class="tune-panel" data-tune-panel="instagram" hidden aria-label="Instagram tune settings">
+          <div class="panel-heading">
+            <span class="brand-mark"><img src="../assets/brands/instagram.svg" alt=""></span>
+            <div><h2>Instagram cleanup</h2><p id="instagramPanelCount">0 of 7 hidden</p></div>
+          </div>
+          <div class="settings-list">
+            <label class="tune-setting"><span>Hide Reels</span><input id="instagramReels" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Explore</span><input id="instagramExplore" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Suggested Posts</span><input id="instagramSuggested" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Profile Suggestions</span><input id="instagramProfileSuggestions" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide DMs</span><input id="instagramMessages" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Notifications</span><input id="instagramNotifications" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Stories</span><input id="instagramStories" type="checkbox"></label>
+          </div>
         </section>
 
-        <section aria-label="Instagram rules">
-        <label><input id="instagramReels" type="checkbox"> Hide Reels</label>
-        <label><input id="instagramExplore" type="checkbox"> Hide Explore</label>
-        <label><input id="instagramSuggested" type="checkbox"> Hide Suggested Posts</label>
-        <label><input id="instagramProfileSuggestions" type="checkbox"> Hide Profile Suggestions</label>
-        <label><input id="instagramMessages" type="checkbox"> Hide DMs</label>
-        <label><input id="instagramNotifications" type="checkbox"> Hide Notifications</label>
-        <label><input id="instagramStories" type="checkbox"> Hide Stories</label>
+        <section id="redditPanel" class="tune-panel" data-tune-panel="reddit" hidden aria-label="Reddit tune settings">
+          <div class="panel-heading">
+            <span class="brand-mark"><img src="../assets/brands/reddit.svg" alt=""></span>
+            <div><h2>Reddit cleanup</h2><p id="redditPanelCount">0 of 5 hidden</p></div>
+          </div>
+          <div class="settings-list">
+            <label class="tune-setting"><span>Hide Popular and All</span><input id="redditPopularAll" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Recommendations</span><input id="redditRecommendations" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide NSFW Posts and Communities</span><input id="redditNSFW" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Media Posts</span><input id="redditMedia" type="checkbox"></label>
+            <label class="tune-setting"><span>Hide Sidebars</span><input id="redditSidebars" type="checkbox"></label>
+          </div>
         </section>
 
-        <section aria-label="Reddit rules">
-        <label><input id="redditPopularAll" type="checkbox"> Hide Popular and All</label>
-        <label><input id="redditRecommendations" type="checkbox"> Hide Recommendations</label>
-        <label><input id="redditNSFW" type="checkbox"> Hide NSFW Posts and Communities</label>
-        <label><input id="redditMedia" type="checkbox"> Hide Media Posts</label>
-        <label><input id="redditSidebars" type="checkbox"> Hide Sidebars</label>
-        </section>
-
-        <label class="field">
-          <span>Explicit action</span>
-          <select id="explicitHideStyle">
-            <option value="post">Whole post</option>
-            <option value="media">Media only</option>
-            <option value="placeholder">Placeholder</option>
-          </select>
-        </label>
-      </div>
+        <footer class="managed-note">
+          <span>Managed by your Tortoise account.</span>
+          <button id="footerSyncQuietGate" type="button">Sync</button>
+        </footer>
+      </section>
     </main>
 
     <script src="popup.js"></script>

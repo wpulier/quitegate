@@ -96,6 +96,15 @@ if (!popupHTML.includes("Use the same Tortoise account as your Mac app")) {
 if (!popupJS.includes("protectionDetails.hidden = !signedIn")) {
   fail("Signed-out popup must keep browser protection controls hidden until connected.");
 }
+if (!popupHTML.includes('data-tune-site="youtube"') || !popupHTML.includes('data-tune-site="reddit"')) {
+  fail("Signed-in popup must use the compact Tune site picker.");
+}
+if (!popupHTML.includes('aria-expanded="false"')) {
+  fail("Tune sites must be collapsed by default.");
+}
+if (!popupJS.includes("setupTuneNavigation()")) {
+  fail("Tune site disclosure behavior is missing.");
+}
 if (!backgroundJS.includes('details?.reason === "install"') || !backgroundJS.includes("startExtensionConnect().catch")) {
   fail("Fresh installs must open QuietGate account setup automatically.");
 }
@@ -105,6 +114,10 @@ for (const requiredFile of [
   "content/x-page.js",
   "content/web-classifier.js",
   "assets/icon128.png",
+  "assets/brands/youtube.svg",
+  "assets/brands/x.svg",
+  "assets/brands/instagram.svg",
+  "assets/brands/reddit.svg",
   "rules/adult-domains.json",
   "rules/adult-static-1.json"
 ]) {
