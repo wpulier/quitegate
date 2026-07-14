@@ -202,6 +202,13 @@ function verifyExtensionXPageDetectorSurface() {
   if (!chromeBackground.includes("X_TUNER_VERSION") || !chromeBackground.includes("INSTAGRAM_TUNER_VERSION") || !chromeBackground.includes("tunerNeedsInjection")) {
     throw new Error("Chrome dynamic injection must reinject stale supported-site tabs by tuner version.");
   }
+  if (!chromeBackground.includes("function tunerTargetForURL") ||
+      !chromeBackground.includes("function ensureTunerInTab") ||
+      !chromeBackground.includes("chrome.tabs.onActivated.addListener") ||
+      !chromeBackground.includes("ensureTunerInSupportedTabs().catch") ||
+      !chromeBackground.includes("files: target.js")) {
+    throw new Error("Chrome must self-heal tuners in already-open, restored, and newly activated supported-site tabs.");
+  }
 
   const chromeX = fs.readFileSync(chromeXPath, "utf8");
   if (!chromeX.includes("quietgateXTunerVersion") || !chromeX.includes("__quietgateXTunerController")) {
