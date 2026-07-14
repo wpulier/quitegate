@@ -1430,6 +1430,55 @@ async function ensureXProfileRescue(tabId, settings) {
   });
 }
 
+function tunerTargetForURL(value) {
+  const url = String(value || "").toLowerCase();
+  if (!url) {
+    return null;
+  }
+  return TUNER_TARGETS.find((target) => target.urls.some((pattern) => (
+    url.startsWith(pattern.slice(0, -1).toLowerCase())
+  ))) || null;
+}
+
+async function ensureTunerInTab(tabId, value, settings = null, knownTarget = null) {
+  if (!tabId) {
+    return false;
+  }
+  const target = knownTarget || tunerTargetForURL(value);
+  if (!target) {
+    return false;
+  }
+
+  const state = await tunerState(tabId, target.marker, target.hiddenCountDataset);
+  const normalizedSettings = settings || await currentStoredSettings();
+  if (!tunerNeedsInjection(target, state)) {
+    if (target.id === "x") {
+      await ensureXProfileRescue(tabId, normalizedSettings);
+    }
+    return false;
+  }
+
+  if (target.pageJs) {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: [target.pageJs],
+      world: "MAIN"
+    });
+  }
+  await chrome.scripting.insertCSS({
+    target: { tabId },
+    files: [target.css]
+  });
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: target.js
+  });
+  if (target.id === "x") {
+    await ensureXProfileRescue(tabId, normalizedSettings);
+  }
+  return true;
+}
+
 async function ensureTunerInSupportedTabs() {
   const settings = await currentStoredSettings();
   for (const target of TUNER_TARGETS) {
@@ -1438,37 +1487,8 @@ async function ensureTunerInSupportedTabs() {
       if (!tab.id) {
         continue;
       }
-      const state = await tunerState(tab.id, target.marker, target.hiddenCountDataset);
-      if (!tunerNeedsInjection(target, state)) {
-        if (target.id === "x") {
-          try {
-            await ensureXProfileRescue(tab.id, settings);
-          } catch (_error) {
-            // Some browser-internal or discarded tabs reject injection.
-          }
-        }
-        continue;
-      }
-
       try {
-        if (target.pageJs) {
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: [target.pageJs],
-            world: "MAIN"
-          });
-        }
-        await chrome.scripting.insertCSS({
-          target: { tabId: tab.id },
-          files: [target.css]
-        });
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: [target.js]
-        });
-        if (target.id === "x") {
-          await ensureXProfileRescue(tab.id, settings);
-        }
+        await ensureTunerInTab(tab.id, tab.url, settings, target);
       } catch (_error) {
         if (target.id === "x") {
           try {
@@ -2272,7 +2292,12 @@ function ensureRemoteSyncAlarm() {
 
 chrome.runtime.onInstalled.addListener((details) => {
   ensureRemoteSyncAlarm();
-  syncQuietGateSettings({ forceApply: true });
+  ensureTunerInSupportedTabs().catch(() => {
+    // Restored or discarded tabs get another attempt when activated.
+  });
+  syncQuietGateSettings({ forceApply: true }).catch(() => {
+    // The popup can retry account sync without blocking local tuner injection.
+  });
   if (details?.reason === "install") {
     startExtensionConnect().catch(() => {
       // The popup remains available if Chrome cannot open onboarding automatically.
@@ -2282,7 +2307,12 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 chrome.runtime.onStartup.addListener(() => {
   ensureRemoteSyncAlarm();
-  syncQuietGateSettings();
+  ensureTunerInSupportedTabs().catch(() => {
+    // Restored or discarded tabs get another attempt when activated.
+  });
+  syncQuietGateSettings().catch(() => {
+    // The periodic alarm and popup can retry remote policy sync.
+  });
 });
 
 if (chrome.alarms?.onAlarm) {
@@ -2303,9 +2333,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     redirectBlockedYouTubeRoute(tabId, url);
   }
 
-  if (/^https:\/\/(?:x\.com|twitter\.com|mobile\.x\.com)\//i.test(url)) {
-    ensureTunerInSupportedTabs();
+  if (tunerTargetForURL(url)) {
+    ensureTunerInTab(tabId, url).catch(() => {
+      // A loading or discarded tab gets another attempt on completion/activation.
+    });
   }
+});
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  chrome.tabs.get(tabId)
+    .then((tab) => ensureTunerInTab(tabId, tab?.url || ""))
+    .catch(() => {
+      // Browser-internal tabs and tabs still being restored cannot be scripted.
+    });
 });
 
 function messageError(error) {
