@@ -693,7 +693,10 @@ final class BrowserExtensionBridgeTests: XCTestCase {
     XCTAssertEqual(manifest?["type"] as? String, "stdio")
     XCTAssertEqual(
       manifest?["allowed_origins"] as? [String],
-      ["chrome-extension://fedpnejbgmllajjlfkahlnjbgfmjjmmf/"]
+      [
+        "chrome-extension://gdonnnhgjfmdejnhbhbfhinhmkgjalee/",
+        "chrome-extension://fedpnejbgmllajjlfkahlnjbgfmjjmmf/",
+      ]
     )
     XCTAssertTrue(FileManager.default.isExecutableFile(atPath: bridge.installedNativeHostURL.path))
     XCTAssertTrue(bridge.nativeMessagingHostInstalled())
@@ -1095,7 +1098,7 @@ final class BrowserExtensionBridgeTests: XCTestCase {
       [
         "extensions": [
           "settings": [
-            "fedpnejbgmllajjlfkahlnjbgfmjjmmf": [
+            "gdonnnhgjfmdejnhbhbfhinhmkgjalee": [
               "state": 1
             ]
           ]

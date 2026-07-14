@@ -41,7 +41,13 @@ protocol BrowserExtensionBridging {
 
 final class BrowserExtensionBridge: BrowserExtensionBridging {
   static let hostName = "com.willpulier.quietgate"
-  static let chromiumExtensionID = "fedpnejbgmllajjlfkahlnjbgfmjjmmf"
+  /// The published Chrome Web Store extension ID.
+  static let chromiumExtensionID = "gdonnnhgjfmdejnhbhbfhinhmkgjalee"
+  /// Kept so source-checkout/unpacked builds signed with the legacy manifest
+  /// key can still use native messaging while the store build is canonical.
+  static let legacyChromiumExtensionID = "fedpnejbgmllajjlfkahlnjbgfmjjmmf"
+  static let chromiumExtensionIDs = [chromiumExtensionID, legacyChromiumExtensionID]
+  static let chromiumExtensionOrigins = chromiumExtensionIDs.map { "chrome-extension://\($0)/" }
   static let firefoxExtensionID = "quietgate@willpulier.com"
   static let extensionID = chromiumExtensionID
 
@@ -203,8 +209,19 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
         guard let data = try? Data(contentsOf: settingsURL),
               let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let extensions = object["extensions"] as? [String: Any],
-              let settings = extensions["settings"] as? [String: Any],
-              let extensionSettings = settings[Self.chromiumExtensionID] as? [String: Any] else {
+              let settings = extensions["settings"] as? [String: Any] else {
+          continue
+        }
+
+        let candidates = Self.chromiumExtensionIDs.compactMap {
+          settings[$0] as? [String: Any]
+        }
+        let hasInstallEvidence: ([String: Any]) -> Bool = {
+          $0["state"] != nil || $0["manifest"] != nil
+        }
+        guard let extensionSettings = candidates.first(where: {
+          hasInstallEvidence($0) && $0["state"] as? Int != 0
+        }) ?? candidates.first(where: hasInstallEvidence) else {
           continue
         }
 
@@ -213,10 +230,6 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
         // installed extension carries "state" (and usually "manifest"). Without
         // that evidence the profile must not count as having the extension, or
         // uninstalled profiles show as active forever.
-        guard extensionSettings["state"] != nil || extensionSettings["manifest"] != nil else {
-          continue
-        }
-
         sawExtensionSettings = true
         if extensionSettings["state"] as? Int == 0 {
           sawDisabledState = true
@@ -288,7 +301,7 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
         description: "Tortoise \(browser.displayName) settings bridge",
         path: installedNativeHostURL.path,
         type: "stdio",
-        allowedOrigins: ["chrome-extension://\(Self.chromiumExtensionID)/"]
+        allowedOrigins: Self.chromiumExtensionOrigins
       )
       data = try Self.manifestData(manifest)
     }
@@ -354,7 +367,7 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
     return manifest.name == Self.hostName &&
       manifest.path == installedNativeHostURL.path &&
       manifest.type == "stdio" &&
-      manifest.allowedOrigins == ["chrome-extension://\(Self.chromiumExtensionID)/"]
+      manifest.allowedOrigins == Self.chromiumExtensionOrigins
   }
 
   func chromeHelperSnapshot() -> ChromeHelperSnapshot? {
@@ -406,7 +419,10 @@ final class BrowserExtensionBridge: BrowserExtensionBridging {
     guard let snapshot = helperSnapshot(for: browser) else {
       return extensionStatus.ready ? .needsChromeOpen : .notInstalled
     }
-    guard snapshot.extensionID == Self.extensionID(for: browser) else {
+    let validExtensionIDs = browser == .firefox
+      ? [Self.firefoxExtensionID]
+      : Self.chromiumExtensionIDs
+    guard validExtensionIDs.contains(snapshot.extensionID) else {
       return .error("\(browser.displayName) reported the wrong Tortoise extension.")
     }
     if let selectedProfile = extensionStatus.selectedProfile?

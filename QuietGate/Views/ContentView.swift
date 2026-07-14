@@ -94,11 +94,17 @@ struct ContentView: View {
     .onChange(of: clerk.session?.tasks, initial: true) { _, newValue in
       if newValue?.isEmpty == false {
         authViewIsPresented = true
+      } else if clerk.session?.status == .active {
+        authViewIsPresented = false
+      }
+    }
+    .onChange(of: clerk.session?.status) { _, newValue in
+      if newValue == .active, clerk.session?.tasks?.isEmpty != false {
+        authViewIsPresented = false
       }
     }
     .sheet(isPresented: $authViewIsPresented) {
-      AuthView(mode: .signInOrUp)
-        .frame(width: 560, height: 620)
+      MacAuthSheet(isPresented: $authViewIsPresented)
     }
   }
 
@@ -155,6 +161,25 @@ struct ContentView: View {
     case .strict:
       return store.timedSessionLockedActive ? "Locked strict" : "Strict mode"
     }
+  }
+}
+
+private struct MacAuthSheet: View {
+  @Binding var isPresented: Bool
+
+  var body: some View {
+    AuthView(mode: .signInOrUp, isDismissible: false)
+      .overlay(alignment: .topTrailing) {
+        Button("Close", systemImage: "xmark") {
+          isPresented = false
+        }
+        .labelStyle(.iconOnly)
+        .buttonStyle(.borderless)
+        .keyboardShortcut(.cancelAction)
+        .help("Close")
+        .padding(12)
+      }
+      .frame(width: 420, height: 500)
   }
 }
 
@@ -405,6 +430,23 @@ private struct QGSidebar: View {
             .lineLimit(1)
         }
         Spacer()
+        if accountStore.connectionFailed {
+          Button {
+            Task {
+              await accountStore.refresh(
+                using: clerk,
+                protectionStore: store,
+                appBlockingStore: appBlockingStore
+              )
+            }
+          } label: {
+            Image(systemName: "arrow.clockwise")
+              .font(.system(size: 12, weight: .semibold))
+          }
+          .buttonStyle(.plain)
+          .disabled(accountStore.isSyncing)
+          .help("Retry account connection")
+        }
         Button {
           Task {
             try? await clerk.auth.signOut()

@@ -3,7 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HOST_NAME="com.willpulier.quietgate"
-CHROMIUM_EXTENSION_ID="fedpnejbgmllajjlfkahlnjbgfmjjmmf"
+CHROMIUM_EXTENSION_ID="gdonnnhgjfmdejnhbhbfhinhmkgjalee"
+LEGACY_CHROMIUM_EXTENSION_ID="fedpnejbgmllajjlfkahlnjbgfmjjmmf"
 FIREFOX_EXTENSION_ID="quietgate@willpulier.com"
 
 APP_SUPPORT_DIR="$HOME/Library/Application Support/QuietGate"
@@ -26,7 +27,8 @@ trap 'rm -f "$TMP_CHROMIUM_MANIFEST" "$TMP_FIREFOX_MANIFEST"' EXIT
 cat > "$TMP_CHROMIUM_MANIFEST" <<JSON
 {
   "allowed_origins": [
-    "chrome-extension://$CHROMIUM_EXTENSION_ID/"
+    "chrome-extension://$CHROMIUM_EXTENSION_ID/",
+    "chrome-extension://$LEGACY_CHROMIUM_EXTENSION_ID/"
   ],
   "description": "QuietGate browser settings bridge",
   "name": "$HOST_NAME",

@@ -61,7 +61,10 @@ QuietGate writes the current mode to:
 Click Install Sync in QuietGate's Tuning view to register the native messaging
 host for this extension ID:
 
-`fedpnejbgmllajjlfkahlnjbgfmjjmmf`
+`gdonnnhgjfmdejnhbhbfhinhmkgjalee` (Chrome Web Store)
+
+Source-checkout builds that retain the manifest signing key use the legacy
+development ID `fedpnejbgmllajjlfkahlnjbgfmjjmmf`; the native host accepts both.
 
 After that, opening YouTube, X, Instagram, Reddit, a blocked-domain page, the
 connect page, or the extension popup asks the native host for the latest

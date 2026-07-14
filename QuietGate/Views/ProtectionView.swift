@@ -69,6 +69,16 @@ struct ProtectionView: View {
             .lineLimit(2)
         }
         Spacer()
+        if accountStore.connectionFailed {
+          Button {
+            refreshStatusLater()
+          } label: {
+            Label("Retry", systemImage: "arrow.clockwise")
+          }
+          .buttonStyle(QGPrimaryButtonStyle())
+          .disabled(refreshInFlight || accountStore.isSyncing)
+          .help("Retry account connection")
+        }
         VStack(alignment: .trailing, spacing: 2) {
           Text("\(connectionCount)")
             .font(.system(size: 28, weight: .bold))

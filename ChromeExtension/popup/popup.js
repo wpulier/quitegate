@@ -113,153 +113,71 @@ const featureIds = [
   "redditSidebars"
 ];
 
-function modeFeatures(mode) {
-  if (mode === "strict") {
-    return {
-      youtubeHome: true,
-      youtubeVideoSidebar: true,
-      youtubeShorts: true,
-      youtubeComments: true,
-      youtubeRecommendations: true,
-      youtubeSearch: true,
-      youtubeEndScreens: true,
-      youtubeEndScreenCards: true,
-      youtubeLiveChat: true,
-      youtubeAutoplay: true,
-      youtubePlaylists: true,
-      youtubeFundraisers: true,
-      youtubeMixes: true,
-      youtubeMerch: true,
-      youtubeVideoInfo: true,
-      youtubeTopHeader: true,
-      youtubeNotifications: true,
-      youtubeExplore: true,
-      youtubeMoreFromYouTube: true,
-      youtubeSubscriptions: true,
-      youtubeAnnotations: true,
-      youtubeUsageTracking: true,
-      youtubeDailyLimit: true,
-      xSensitiveMedia: true,
-      xExplicitContent: true,
-      xExplicitSearch: true,
-      xVideos: true,
-      xPhotos: true,
-      xMediaCards: true,
-      xExploreTrends: true,
-      instagramReels: true,
-      instagramExplore: true,
-      instagramSuggested: true,
-      instagramProfileSuggestions: true,
-      instagramMessages: true,
-      instagramNotifications: true,
-      instagramStories: true,
-      redditPopularAll: true,
-      redditRecommendations: true,
-      redditNSFW: true,
-      redditMedia: true,
-      redditSidebars: true
-    };
-  }
-
-  if (mode === "focus") {
-    return {
-      youtubeHome: true,
-      youtubeVideoSidebar: false,
-      youtubeShorts: true,
-      youtubeComments: false,
-      youtubeRecommendations: false,
-      youtubeSearch: false,
-      youtubeEndScreens: false,
-      youtubeEndScreenCards: false,
-      youtubeLiveChat: false,
-      youtubeAutoplay: false,
-      youtubePlaylists: false,
-      youtubeFundraisers: false,
-      youtubeMixes: false,
-      youtubeMerch: false,
-      youtubeVideoInfo: false,
-      youtubeTopHeader: false,
-      youtubeNotifications: false,
-      youtubeExplore: false,
-      youtubeMoreFromYouTube: false,
-      youtubeSubscriptions: false,
-      youtubeAnnotations: false,
-      youtubeUsageTracking: true,
-      youtubeDailyLimit: false,
-      xSensitiveMedia: true,
-      xExplicitContent: false,
-      xExplicitSearch: false,
-      xVideos: true,
-      xPhotos: false,
-      xMediaCards: false,
-      xExploreTrends: false,
-      instagramReels: true,
-      instagramExplore: true,
-      instagramSuggested: true,
-      instagramProfileSuggestions: true,
-      instagramMessages: true,
-      instagramNotifications: true,
-      instagramStories: true,
-      redditPopularAll: true,
-      redditRecommendations: true,
-      redditNSFW: false,
-      redditMedia: false,
-      redditSidebars: false
-    };
-  }
-
-  return {
-    youtubeHome: false,
-    youtubeVideoSidebar: false,
-    youtubeShorts: false,
-    youtubeComments: false,
-    youtubeRecommendations: false,
-    youtubeSearch: false,
-    youtubeEndScreens: false,
-    youtubeEndScreenCards: false,
-    youtubeLiveChat: false,
-    youtubeAutoplay: false,
-    youtubePlaylists: false,
-    youtubeFundraisers: false,
-    youtubeMixes: false,
-    youtubeMerch: false,
-    youtubeVideoInfo: false,
-    youtubeTopHeader: false,
-    youtubeNotifications: false,
-    youtubeExplore: false,
-    youtubeMoreFromYouTube: false,
-    youtubeSubscriptions: false,
-    youtubeAnnotations: false,
-    youtubeUsageTracking: false,
-    youtubeDailyLimit: false,
-    xSensitiveMedia: false,
-    xExplicitContent: false,
-    xExplicitSearch: false,
-    xVideos: false,
-    xPhotos: false,
-    xMediaCards: false,
-    xExploreTrends: false,
-    instagramReels: false,
-    instagramExplore: false,
-    instagramSuggested: false,
-    instagramProfileSuggestions: false,
-    instagramMessages: false,
-    instagramNotifications: false,
-    instagramStories: false,
-    redditPopularAll: false,
-    redditRecommendations: false,
-    redditNSFW: false,
-    redditMedia: false,
-    redditSidebars: false
-  };
-}
+const siteFeatureIds = {
+  youtube: featureIds.filter((id) => id.startsWith("youtube")),
+  x: featureIds.filter((id) => id.startsWith("x")),
+  instagram: featureIds.filter((id) => id.startsWith("instagram")),
+  reddit: featureIds.filter((id) => id.startsWith("reddit"))
+};
 
 function setControlsDisabled(disabled) {
-  document.querySelector("#mode").disabled = disabled;
-  document.querySelector("#explicitHideStyle").disabled = disabled;
-  document.querySelector("#youtubeDailyLimitMinutes").disabled = disabled;
+  const dailyLimit = document.querySelector("#youtubeDailyLimitMinutes");
+  if (dailyLimit) {
+    dailyLimit.disabled = disabled;
+  }
   for (const id of featureIds) {
-    document.querySelector(`#${id}`).disabled = disabled;
+    const control = document.querySelector(`#${id}`);
+    if (control) {
+      control.disabled = disabled;
+    }
+  }
+}
+
+function modeLabel(mode) {
+  if (mode === "strict") {
+    return "Strict";
+  }
+  if (mode === "focus") {
+    return "Focus";
+  }
+  return "Open";
+}
+
+function updateTuneCounts(features) {
+  for (const [siteID, ids] of Object.entries(siteFeatureIds)) {
+    const active = ids.filter((id) => Boolean(features[id])).length;
+    const tileCount = document.querySelector(`#${siteID}Count`);
+    const panelCount = document.querySelector(`#${siteID}PanelCount`);
+    if (tileCount) {
+      tileCount.textContent = `${active}/${ids.length} hidden`;
+    }
+    if (panelCount) {
+      panelCount.textContent = `${active} of ${ids.length} hidden`;
+    }
+  }
+}
+
+function setupTuneNavigation() {
+  const buttons = [...document.querySelectorAll("[data-tune-site]")];
+  const panels = [...document.querySelectorAll("[data-tune-panel]")];
+  const emptyState = document.querySelector("#emptyTuneState");
+
+  const selectSite = (siteID) => {
+    const nextSite = buttons.find((button) => button.getAttribute("aria-expanded") === "true")?.dataset.tuneSite === siteID
+      ? null
+      : siteID;
+
+    for (const button of buttons) {
+      button.setAttribute("aria-expanded", String(button.dataset.tuneSite === nextSite));
+    }
+    for (const panel of panels) {
+      panel.hidden = panel.dataset.tunePanel !== nextSite;
+    }
+    emptyState.hidden = Boolean(nextSite);
+  };
+
+  for (const button of buttons) {
+    button.addEventListener("click", () => selectSite(button.dataset.tuneSite));
   }
 }
 
@@ -324,78 +242,6 @@ function sendRuntimeMessage(message) {
   });
 }
 
-function queryActiveTab() {
-  const tabs = tabsAPI();
-  return new Promise((resolve) => {
-    if (!tabs) {
-      resolve(null);
-      return;
-    }
-    try {
-      const result = tabs.query({ active: true, currentWindow: true }, (values) => {
-        resolve(values?.[0] || null);
-      });
-      if (result && typeof result.then === "function") {
-        result.then((values) => resolve(values?.[0] || null)).catch(() => resolve(null));
-      }
-    } catch (_error) {
-      resolve(null);
-    }
-  });
-}
-
-function normalizePageDomain(url) {
-  try {
-    const parsed = new URL(url);
-    if (!/^https?:$/.test(parsed.protocol)) {
-      return null;
-    }
-    return parsed.hostname.toLowerCase().replace(/^www\./, "");
-  } catch (_error) {
-    return null;
-  }
-}
-
-async function refreshCurrentSiteTool() {
-  const button = document.querySelector("#reportAdultSite");
-  const status = document.querySelector("#currentSiteStatus");
-  const tab = await queryActiveTab();
-  const domain = normalizePageDomain(tab?.url || "");
-  if (!domain) {
-    button.disabled = true;
-    status.textContent = "No website tab selected.";
-    return;
-  }
-  button.disabled = false;
-  button.dataset.url = tab.url;
-  button.dataset.domain = domain;
-  status.textContent = domain;
-}
-
-async function reportCurrentSite() {
-  const button = document.querySelector("#reportAdultSite");
-  const status = document.querySelector("#currentSiteStatus");
-  const url = button.dataset.url || "";
-  const domain = button.dataset.domain || normalizePageDomain(url);
-  if (!domain) {
-    return;
-  }
-  button.disabled = true;
-  button.textContent = "Saving...";
-  const response = await sendRuntimeMessage({
-    type: "quietgate.reportMissedAdultSite",
-    payload: { url, domain, title: "" }
-  });
-  if (response?.ok) {
-    status.textContent = `${response.domain || domain} is blocked.`;
-    button.textContent = "Blocked";
-    return;
-  }
-  status.textContent = response?.error || "Open QuietGate to add this site.";
-  button.textContent = "Block current site";
-  button.disabled = false;
-}
-
 function normalizeProfileMetadata(profile) {
   if (!profile || typeof profile !== "object") {
     return null;
@@ -457,6 +303,8 @@ function updateAccountStatus(status, settings = {}) {
   const accountStatus = document.querySelector("#accountStatus");
   const accountDetail = document.querySelector("#accountDetail");
   const signedInAccountDetail = document.querySelector("#signedInAccountDetail");
+  const accountMenuLabel = document.querySelector("#accountMenuLabel");
+  const accountMenu = document.querySelector("#accountMenu");
   const connectButton = document.querySelector("#connectQuietGate");
   const syncButton = document.querySelector("#syncQuietGate");
   const dashboardButton = document.querySelector("#openDashboard");
@@ -477,12 +325,18 @@ function updateAccountStatus(status, settings = {}) {
   signedOutAccount.hidden = signedIn;
   signedInAccount.hidden = !signedIn;
   managedControls.hidden = !signedIn;
+  protectionDetails.hidden = !signedIn;
+  accountMenu.hidden = !signedIn;
+  accountMenuLabel.textContent = signedIn ? "Connected" : "Connect";
+  if (!signedIn) {
+    accountMenu.open = false;
+  }
 
   accountStatus.textContent = deviceName;
   accountStatus.dataset.state = "managed";
   signedInAccountDetail.textContent = `Policy ${policyVersion || "pending"} · synced ${formatDate(status?.lastSyncAt || settings.extensionLastSyncAt)}`;
   if (!signedIn && !accountDetail.textContent.trim()) {
-    accountDetail.textContent = "Setup opens securely on yourtortoise.com.";
+    accountDetail.textContent = "Secure sign-in opens on yourtortoise.com.";
   }
 
   connectButton.hidden = signedIn;
@@ -492,12 +346,8 @@ function updateAccountStatus(status, settings = {}) {
   requestAllSitesButton.hidden = Boolean(permissions.optionalAllSites);
   localAdultBlocking.closest("label").hidden = signedIn;
   localAdultBlocking.checked = Boolean(status?.localAdultBlockingEnabled);
-  protectionSummary.textContent = signedIn
-    ? "Browser protection"
-    : "Use basic protection without an account";
-  localProtectionDetail.textContent = signedIn
-    ? "QuietGate uses browser permissions to apply the protection policy synced from your account."
-    : "QuietGate can block its packaged adult-domain list on this browser, but these settings will not sync across devices.";
+  protectionSummary.textContent = "Browser protection";
+  localProtectionDetail.textContent = "QuietGate uses browser permissions to apply the protection policy synced from your account.";
   protectionDetails.open = signedIn && !permissions.optionalAllSites;
 
   permissionStatus.textContent = permissions.optionalAllSites
@@ -522,7 +372,7 @@ function updateSyncStatus(settings) {
 
   if (settings.source === "smoke" && !settings.nativeSyncError && !settings.extensionSyncError) {
     const count = settings.blockedRuleCount || 0;
-    status.textContent = "Connected.";
+    status.textContent = "Synced with Tortoise";
     ruleStatus.textContent = count === 1
       ? "Connected. 1 browser rule active."
       : `Connected. ${count} browser rules active.`;
@@ -535,7 +385,7 @@ function updateSyncStatus(settings) {
 
   if (settings.source === "remote" && !settings.extensionSyncError) {
     const count = settings.blockedRuleCount || 0;
-    status.textContent = "Synced from QuietGate account";
+    status.textContent = "Synced with Tortoise";
     ruleStatus.textContent = count === 1
       ? "1 browser rule active."
       : `${count} browser rules active.`;
@@ -590,16 +440,15 @@ async function load() {
     ...(settings.options || {})
   };
 
-  document.querySelector("#mode").value = settings.mode || DEFAULT_SETTINGS.mode;
-  document.querySelector("#explicitHideStyle").value = options.explicitHideStyle;
   document.querySelector("#youtubeDailyLimitMinutes").value = options.youtubeDailyLimitMinutes;
+  document.querySelector("#modeStatus").textContent = modeLabel(settings.mode || DEFAULT_SETTINGS.mode);
 
   for (const id of featureIds) {
     document.querySelector(`#${id}`).checked = Boolean(features[id]);
   }
+  updateTuneCounts(features);
   updateAccountStatus(status || statusBeforeSync || {}, settings);
   updateSyncStatus(settings);
-  await refreshCurrentSiteTool();
 
   const accountStatus = status || statusBeforeSync || {};
   if (accountConnectRequested && !accountStatus.signedIn && !accountConnectOpened) {
@@ -611,79 +460,6 @@ async function load() {
   }
 }
 
-async function saveFeature(id, checked) {
-  const settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
-  await chrome.storage.local.set({
-    ...settings,
-    source: "popup",
-    features: {
-      ...DEFAULT_SETTINGS.features,
-      ...(settings.features || {}),
-      [id]: checked
-    }
-  });
-}
-
-async function saveExplicitHideStyle(value) {
-  const settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
-  await chrome.storage.local.set({
-    ...settings,
-    source: "popup",
-    options: {
-      ...DEFAULT_SETTINGS.options,
-      ...(settings.options || {}),
-      explicitHideStyle: value
-    }
-  });
-}
-
-async function saveYouTubeDailyLimitMinutes(value) {
-  const settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
-  const minutes = Math.min(Math.max(Number(value) || DEFAULT_SETTINGS.options.youtubeDailyLimitMinutes, 5), 480);
-  await chrome.storage.local.set({
-    ...settings,
-    source: "popup",
-    options: {
-      ...DEFAULT_SETTINGS.options,
-      ...(settings.options || {}),
-      youtubeDailyLimitMinutes: minutes
-    }
-  });
-}
-
-document.querySelector("#mode").addEventListener("change", async (event) => {
-  const mode = event.target.value;
-  const features = modeFeatures(mode);
-
-  await chrome.storage.local.set({
-    mode,
-    features,
-    source: "popup"
-  });
-
-  for (const id of featureIds) {
-    document.querySelector(`#${id}`).checked = Boolean(features[id]);
-  }
-});
-
-for (const id of featureIds) {
-  document.querySelector(`#${id}`).addEventListener("change", (event) => {
-    saveFeature(id, event.target.checked);
-  });
-}
-
-document.querySelector("#explicitHideStyle").addEventListener("change", (event) => {
-  saveExplicitHideStyle(event.target.value);
-});
-
-document.querySelector("#youtubeDailyLimitMinutes").addEventListener("change", (event) => {
-  saveYouTubeDailyLimitMinutes(event.target.value);
-});
-
-document.querySelector("#reportAdultSite").addEventListener("click", () => {
-  reportCurrentSite();
-});
-
 document.querySelector("#connectQuietGate").addEventListener("click", async (event) => {
   const button = event.currentTarget;
   setButtonBusy(button, true, "Opening...");
@@ -693,11 +469,19 @@ document.querySelector("#connectQuietGate").addEventListener("click", async (eve
     setButtonBusy(button, false);
     return;
   }
-  document.querySelector("#accountDetail").textContent = "Finish signing in or creating your account on yourtortoise.com.";
+  document.querySelector("#accountDetail").textContent = "Sign in with the same Tortoise account you use in the app.";
   setButtonBusy(button, false);
 });
 
 document.querySelector("#syncQuietGate").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setButtonBusy(button, true, "Syncing...");
+  await sendRuntimeMessage({ type: "quietgate.syncRemotePolicy", forceApply: true });
+  setButtonBusy(button, false);
+  await load();
+});
+
+document.querySelector("#footerSyncQuietGate").addEventListener("click", async (event) => {
   const button = event.currentTarget;
   setButtonBusy(button, true, "Syncing...");
   await sendRuntimeMessage({ type: "quietgate.syncRemotePolicy", forceApply: true });
@@ -739,4 +523,5 @@ document.querySelector("#localAdultBlocking").addEventListener("change", async (
   await load();
 });
 
+setupTuneNavigation();
 load();

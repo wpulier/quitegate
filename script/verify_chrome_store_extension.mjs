@@ -36,6 +36,9 @@ function isStoreVersionAtLeastOne(version) {
 }
 
 const manifest = readJSON(path.join(distDir, "manifest.json"));
+const popupHTML = fs.readFileSync(path.join(distDir, "popup", "popup.html"), "utf8");
+const popupJS = fs.readFileSync(path.join(distDir, "popup", "popup.js"), "utf8");
+const backgroundJS = fs.readFileSync(path.join(distDir, "background.js"), "utf8");
 const permissions = new Set(manifest.permissions || []);
 const hosts = new Set(manifest.host_permissions || []);
 const optionalHosts = new Set(manifest.optional_host_permissions || []);
@@ -84,12 +87,37 @@ for (const requiredHost of [
 if (contentScriptFiles.includes("content/web-classifier.js")) {
   fail("Global web-classifier.js must not be statically injected in the store build.");
 }
+if (!/<details\s+id="protectionDetails"[^>]*\shidden(?:\s|>)/.test(popupHTML)) {
+  fail("Signed-out popup must hide browser protection controls by default.");
+}
+if (!popupHTML.includes("Use the same Tortoise account as your Mac app")) {
+  fail("Signed-out popup must explain which account to use.");
+}
+if (!popupJS.includes("protectionDetails.hidden = !signedIn")) {
+  fail("Signed-out popup must keep browser protection controls hidden until connected.");
+}
+if (!popupHTML.includes('data-tune-site="youtube"') || !popupHTML.includes('data-tune-site="reddit"')) {
+  fail("Signed-in popup must use the compact Tune site picker.");
+}
+if (!popupHTML.includes('aria-expanded="false"')) {
+  fail("Tune sites must be collapsed by default.");
+}
+if (!popupJS.includes("setupTuneNavigation()")) {
+  fail("Tune site disclosure behavior is missing.");
+}
+if (!backgroundJS.includes('details?.reason === "install"') || !backgroundJS.includes("startExtensionConnect().catch")) {
+  fail("Fresh installs must open QuietGate account setup automatically.");
+}
 for (const requiredFile of [
   "background.js",
   "blocked/blocked.html",
   "content/x-page.js",
   "content/web-classifier.js",
   "assets/icon128.png",
+  "assets/brands/youtube.svg",
+  "assets/brands/x.svg",
+  "assets/brands/instagram.svg",
+  "assets/brands/reddit.svg",
   "rules/adult-domains.json",
   "rules/adult-static-1.json"
 ]) {

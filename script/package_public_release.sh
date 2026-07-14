@@ -56,7 +56,6 @@ BUILD_NUMBER_OVERRIDE="${QUIETGATE_BUILD_NUMBER:-}"
 TORTOISE_API_BASE_URL="${TORTOISE_API_BASE_URL:-https://www.yourtortoise.com}"
 CLERK_PUBLISHABLE_KEY="${CLERK_PUBLISHABLE_KEY:-${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}}"
 CLERK_KEY_SOURCE="environment"
-TORTOISE_ALLOW_TEST_CLERK="${TORTOISE_ALLOW_TEST_CLERK:-0}"
 
 usage() {
   cat <<'USAGE'
@@ -204,14 +203,13 @@ if [[ -z "$CLERK_PUBLISHABLE_KEY" && -f "$ROOT_DIR/my-clerk-app/.env.local" ]]; 
 fi
 
 [[ -n "$CLERK_PUBLISHABLE_KEY" ]] || fail "CLERK_PUBLISHABLE_KEY or NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required for the Mac app."
-[[ "$TORTOISE_ALLOW_TEST_CLERK" =~ ^(0|1)$ ]] || fail "TORTOISE_ALLOW_TEST_CLERK must be 0 or 1."
 
 case "$CLERK_PUBLISHABLE_KEY" in
   pk_live_*)
     log "Using production Clerk publishable key from $CLERK_KEY_SOURCE."
     ;;
   pk_test_*)
-    if [[ "$MODE" != "local" && "$TORTOISE_ALLOW_TEST_CLERK" != "1" ]]; then
+    if [[ "$MODE" != "local" ]]; then
       fail "Refusing to package a signed public Mac build with a Clerk test publishable key from $CLERK_KEY_SOURCE. Export CLERK_PUBLISHABLE_KEY=pk_live_... before publishing."
     fi
     log "Using Clerk test publishable key for local preview."

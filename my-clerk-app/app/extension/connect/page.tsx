@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { ZodError } from "zod";
+import { ExtensionAccountGate } from "@/app/extension/connect/ExtensionAccountGate";
 import { ExtensionConnectClient } from "@/app/extension/connect/ExtensionConnectClient";
 import { parseExtensionLinkRequest } from "@/lib/extension-contract";
 import { createExtensionLinkCode, ExtensionAuthError } from "@/lib/quietgate-extension";
@@ -111,34 +111,7 @@ export default async function ExtensionConnectPage({ searchParams }: PageProps) 
 
         <div className="flex min-w-0 items-center bg-[#f7f7f1] p-5 sm:p-10 lg:p-12">
           {!userId ? (
-            <section className="w-full rounded-2xl border border-zinc-200 bg-white p-6 shadow-[0_18px_54px_rgba(24,24,27,0.09)] sm:p-8" aria-labelledby="connect-account-title">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#3e63dd]">
-                Step 1 of 2
-              </p>
-              <h2 id="connect-account-title" className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950">
-                Start with your account.
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-zinc-600">
-                New to Tortoise? Create an account. Already protected on another
-                device? Sign in and we will bring you back here automatically.
-              </p>
-              <div className="mt-7 grid gap-3">
-                <SignUpButton fallbackRedirectUrl={returnPath} forceRedirectUrl={returnPath} mode="modal">
-                  <button className="min-h-12 rounded-lg bg-[#3e63dd] px-5 text-sm font-semibold text-white transition hover:bg-[#3456c7] focus:outline-none focus:ring-2 focus:ring-[#3e63dd] focus:ring-offset-2">
-                    Create account
-                  </button>
-                </SignUpButton>
-                <SignInButton fallbackRedirectUrl={returnPath} forceRedirectUrl={returnPath} mode="modal">
-                  <button className="min-h-12 rounded-lg border border-zinc-300 bg-white px-5 text-sm font-semibold text-zinc-900 transition hover:border-zinc-400 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-[#3e63dd] focus:ring-offset-2">
-                    Sign in
-                  </button>
-                </SignInButton>
-              </div>
-              <p className="mt-5 text-xs leading-5 text-zinc-500">
-                Authentication is handled securely by Clerk. QuietGate receives
-                only the account access needed to sync your settings.
-              </p>
-            </section>
+            <ExtensionAccountGate returnPath={returnPath} />
           ) : payload ? (
             <ExtensionConnectClient payload={payload} />
           ) : (

@@ -23,7 +23,7 @@ const scopedHosts = [
 
 manifest.name = "QuietGate: Focus & Adult Blocker";
 manifest.description = "Block distracting feeds and adult content on supported sites with account-synced QuietGate policy.";
-manifest.version = "1.0.1";
+manifest.version = "1.0.3";
 delete manifest.key;
 manifest.permissions = [...new Set([
   ...(manifest.permissions || []).filter((permission) => permission !== "nativeMessaging"),
