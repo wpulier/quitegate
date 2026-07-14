@@ -9,7 +9,7 @@ The dad-test install flow depends on these public URLs being real before launch:
 ```env
 NEXT_PUBLIC_MAC_DOWNLOAD_URL=https://github.com/wpulier/quitegate/releases/latest/download/Tortoise.dmg
 NEXT_PUBLIC_IOS_TESTFLIGHT_URL=https://testflight.apple.com/join/762eByyC
-NEXT_PUBLIC_CHROME_EXTENSION_URL=https://chromewebstore.google.com/detail/fedpnejbgmllajjlfkahlnjbgfmjjmmf
+NEXT_PUBLIC_CHROME_EXTENSION_URL=https://chromewebstore.google.com/detail/quietgate-focus-adult-blo/gdonnnhgjfmdejnhbhbfhinhmkgjalee
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 CLERK_JWT_AUDIENCE=tortoise-api

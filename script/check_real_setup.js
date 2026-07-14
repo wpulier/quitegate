@@ -4,7 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const CHROMIUM_EXTENSION_ID = "fedpnejbgmllajjlfkahlnjbgfmjjmmf";
+const CHROMIUM_EXTENSION_ID = "gdonnnhgjfmdejnhbhbfhinhmkgjalee";
 const FIREFOX_EXTENSION_ID = "quietgate@willpulier.com";
 const HOST_NAME = "com.willpulier.quietgate";
 const STALE_AFTER_MS = Number(process.env.QG_BROWSER_HELPER_STALE_MS || 24 * 60 * 60 * 1000);

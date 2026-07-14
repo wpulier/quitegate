@@ -1,9 +1,13 @@
 import Darwin
 import Foundation
 
-let allowedChromiumExtensionID = "fedpnejbgmllajjlfkahlnjbgfmjjmmf"
+let allowedChromiumExtensionID = "gdonnnhgjfmdejnhbhbfhinhmkgjalee"
+let legacyChromiumExtensionID = "fedpnejbgmllajjlfkahlnjbgfmjjmmf"
 let allowedFirefoxExtensionID = "quietgate@willpulier.com"
-let allowedOrigin = "chrome-extension://\(allowedChromiumExtensionID)/"
+let allowedOrigins: Set<String> = [
+  "chrome-extension://\(allowedChromiumExtensionID)/",
+  "chrome-extension://\(legacyChromiumExtensionID)/",
+]
 let allowedBrowserIDs: Set<String> = ["chrome", "edge", "brave", "arc", "firefox"]
 let supportedSiteIDs: [String] = ["youtube", "x", "instagram", "reddit"]
 let supportedSiteIDSet = Set(supportedSiteIDs)
@@ -950,7 +954,7 @@ func callerOrigin() -> String? {
 
 func callerIsAllowed() -> Bool {
   let arguments = CommandLine.arguments.dropFirst()
-  return arguments.contains(allowedOrigin) ||
+  return arguments.contains(where: allowedOrigins.contains) ||
     arguments.contains(allowedFirefoxExtensionID)
 }
 
