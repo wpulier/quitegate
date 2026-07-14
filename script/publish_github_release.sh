@@ -85,6 +85,7 @@ legacy_sha="$asset_dir/QuietGate.dmg.sha256"
 versioned_sha="$asset_dir/$filename.sha256"
 appcast="$asset_dir/appcast.xml"
 repo="$(gh repo view --json nameWithOwner --jq '.nameWithOwner')"
+target_commit="$(git rev-parse HEAD)"
 asset_url="https://github.com/$repo/releases/download/$tag/$filename"
 sparkle_asset_url="https://github.com/$repo/releases/download/$tag/Tortoise.dmg"
 stable_url="https://github.com/$repo/releases/latest/download/Tortoise.dmg"
@@ -155,6 +156,7 @@ fi
 
 log "Creating GitHub Release $tag"
 gh release create "$tag" "$DMG_PATH" "$versioned_sha" "$stable_dmg" "$stable_sha" "$legacy_dmg" "$legacy_sha" "$appcast" \
+  --target "$target_commit" \
   --title "Tortoise ${version} (${build})" \
   --notes-file "$notes_file"
 
